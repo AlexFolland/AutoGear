@@ -71,19 +71,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                             HasteRating = 1,
                             CritRating = 0.25, MasteryRating = 0.5,
                             RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40}
-            else
-                --                        str agi sta  int  spi  arm    sp crit hit haste mp5 red yellow blue meta
-                weighting = MakeWeighting(0,  0,  0.1, 0.4, 0.3, 0.001, 1, 0.9, 0,  0.8,  1,  25, 24,    23,  35)
             end
-        elseif (UnitClass("player") == "Druid") then
-            --                        str agi sta  int  spi  arm    sp crit hit haste mp5 red yellow blue meta
-            weighting = MakeWeighting(0,  0,  0.1, 0.3, 0.4, 0.001, 1, 0,   0,  0.9,  1,  25, 24,    23,  28)
-        elseif (UnitClass("player") == "Shaman") then
-            --                        str agi sta  int  spi  arm    sp crit hit haste mp5  red yellow blue meta
-            weighting = MakeWeighting(0,  0,  0.1, 0.3, 0.4, 0.001, 1, 0,   0,  1.1,  1.5, 25, 24,    23,  28)
-        elseif (UnitClass("player") == "Mage") then
-            --                        str agi sta   int spi  arm    sp   crit hit  haste mp5 red yellow blue meta
-            weighting = MakeWeighting(0,  0,  0.05, 1,  0.0, 0.001, 0.9, 0.9, 0.8, 0.7,  1,  25, 24,    23,  28)
         else
             weighting = nil
         end
