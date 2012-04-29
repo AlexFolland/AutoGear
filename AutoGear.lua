@@ -65,9 +65,12 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                          CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05,
                          RedSockets = 30, YellowSockets = 25, BlueSockets = 24, MetaSockets = 40}
         elseif (UnitClass("player") == "Priest") then
-            if (GetSpec() == "Holy") then                
-                --                        str agi sta  int  spi  arm    sp crit hit haste mp5  red yellow blue meta
-                weighting = MakeWeighting(0,  0,  0.1, 0.6, 0.4, 0.001, 1, 0.4, 0,  1.1,  1.5, 25, 24,    23,  35)
+            if (GetSpec() == "Discipline") then                
+               weighting = {Intellect = 1, Spirit = 1,
+                            Armor = 0.0001, SpellPower = 0.8,
+                            HasteRating = 1,
+                            CritRating = 0.25, MasteryRating = 0.5,
+                            RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40}
             else
                 --                        str agi sta  int  spi  arm    sp crit hit haste mp5 red yellow blue meta
                 weighting = MakeWeighting(0,  0,  0.1, 0.4, 0.3, 0.001, 1, 0.9, 0,  0.8,  1,  25, 24,    23,  35)
