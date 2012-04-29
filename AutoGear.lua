@@ -1,7 +1,7 @@
 --AutoGear
 
 -- to do:
--- sell all greys when a vendor is open
+-- fix setting the weighting on first load
 -- repair all when a vendor is open
 -- accomodate for unique-equipped
 -- fix equipping right when receiving
@@ -107,7 +107,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
         if (better and canNeed) then roll = 1 else roll = 2 end
         if (rollItemInfo.Name) then print("AutoGear:  "..rollItemInfo.Name) end
-        for k,v in ipairs(rollItemInfo) do
+        for k,v in pairs(rollItemInfo) do
             print("AutoGear:  "..k..": "..v)
         end
         if (rollItemScore) then print("AutoGear:  Roll item's score: "..rollItemScore) end
@@ -209,7 +209,7 @@ function ScanBags()
                     anythingBetter = 1
                     local newAction = {}
                     newAction.action = "equip"
-                    newAction.t = GetTicks() --do it right away
+                    newAction.t = GetTicks() + 0.5 --do it after a short delay
                     newAction.container = bag
                     newAction.slot = i
                     newAction.replaceSlot = replaceSlot
