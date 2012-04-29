@@ -57,6 +57,13 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             AttackPower, ArmorPenetration, CritRating, HitRating, ExpertiseRating,
             RedSockets, YellowSockets, BlueSockets, MetaSockets,
             MasteryRating
+            
+            weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
+                         Armor = 0, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                         SpellPower = 0, SpellPenetration = 0, HasteRating = 0, Mp5 = 0,
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0, HitRating = 0, ExpertiseRating = 0,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         MasteryRating = 0}
         ]]
         if (UnitClass("player") == "Paladin") then
             weighting = {Strength = 1, Agility = 0.3, Stamina = 0.8, Intellect = 0.05, Spirit = 0.001,
@@ -66,11 +73,20 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                          RedSockets = 30, YellowSockets = 25, BlueSockets = 24, MetaSockets = 40}
         elseif (UnitClass("player") == "Priest") then
             if (GetSpec() == "Discipline") then                
-               weighting = {Intellect = 1, Spirit = 1,
-                            Armor = 0.0001, SpellPower = 0.8,
-                            HasteRating = 1,
-                            CritRating = 0.25, MasteryRating = 0.5,
-                            RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40}
+                weighting = {Intellect = 1, Spirit = 1,
+                             Armor = 0.0001, SpellPower = 0.8,
+                             HasteRating = 1,
+                             CritRating = 0.25, MasteryRating = 0.5,
+                             RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40}
+            end
+        elseif (UnitClass("player") == "Druid") then
+            if (GetSpec() == "Balance") then                
+                weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
+                             Armor = 0, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                             SpellPower = 0, SpellPenetration = 0, HasteRating = 0, Mp5 = 0,
+                             AttackPower = 0, ArmorPenetration = 0, CritRating = 0, HitRating = 0, ExpertiseRating = 0,
+                             RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                             MasteryRating = 0}
             end
         else
             weighting = nil
@@ -91,9 +107,9 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
         if (better and canNeed) then roll = 1 else roll = 2 end
         if (rollItemInfo.Name) then print("AutoGear:  "..rollItemInfo.Name) end
-		for k,v in ipairs(rollItemInfo) do
-			print("AutoGear:  "..k..": "..v)
-		end
+        for k,v in ipairs(rollItemInfo) do
+            print("AutoGear:  "..k..": "..v)
+        end
         if (rollItemScore) then print("AutoGear:  Roll item's score: "..rollItemScore) end
         if (equippedItemScore) then print("AutoGear:  Equipped item's score: "..equippedItemScore) end
         print("AutoGear:  Slot: "..(rollItemInfo.Slot or "none"))
@@ -130,21 +146,21 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     elseif (event == "EQUIP_BIND_CONFIRM") then
         EquipPendingItem(arg1)
     elseif (event == "MERCHANT_SHOW") then
-		-- sell all grey items
-		print("AutoGear:  Selling all grey items and repairing.")
-		for i = 0, NUM_BAG_SLOTS do
-			slotMax = GetContainerNumSlots(i)
-			for j = 0, slotMax do
-				_, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
-				if (link) then _,_,name = string.find(link, "^.*%[(.*)%].*$") end
-				if (link and string_find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
-					UseContainerItem(i, j)
-				end
-			end
-		end
-		if (GetRepairAllCost() > 0 and GetRepairAllCost() < GetMoney()) then
-			RepairAllItems()
-		end
+        -- sell all grey items
+        print("AutoGear:  Selling all grey items and repairing.")
+        for i = 0, NUM_BAG_SLOTS do
+            slotMax = GetContainerNumSlots(i)
+            for j = 0, slotMax do
+                _, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
+                if (link) then _,_,name = string.find(link, "^.*%[(.*)%].*$") end
+                if (link and string_find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
+                    UseContainerItem(i, j)
+                end
+            end
+        end
+        if (GetRepairAllCost() > 0 and GetRepairAllCost() < GetMoney()) then
+            RepairAllItems()
+        end
     elseif (event == "QUEST_DETAIL") then
         AcceptQuest()
     elseif (not event == "ADDON_LOADED") then
@@ -153,23 +169,23 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
 end)
 
 function IsQuestItem(container, slot)
-	return ItemContainsText(container, slot, "Quest Item")
+    return ItemContainsText(container, slot, "Quest Item")
 end
 
 function ItemContainsText(container, slot, search)
-	AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE");
-	AutoGearTooltip:ClearLines()
-	AutoGearTooltip:SetBagItem(container, slot)
-	for i=1, AutoGearTooltip:NumLines() do
-		local mytext = getglobal("AutoGearTooltipTextLeft" .. i)
-		if (mytext) then
-			local text = mytext:GetText()
-			if (text == search) then
-				return 1
-			end
-		end
-	end
-	return nil
+    AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE");
+    AutoGearTooltip:ClearLines()
+    AutoGearTooltip:SetBagItem(container, slot)
+    for i=1, AutoGearTooltip:NumLines() do
+        local mytext = getglobal("AutoGearTooltipTextLeft" .. i)
+        if (mytext) then
+            local text = mytext:GetText()
+            if (text == search) then
+                return 1
+            end
+        end
+    end
+    return nil
 end
 
 
