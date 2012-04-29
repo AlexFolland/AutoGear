@@ -1,0 +1,6 @@
+## Interface: 40300
+## Title: AutoGear
+## Notes: Auto roll and auto equip loot.
+
+AutoGear.lua
+## SavedVariables: AutoGearDB
