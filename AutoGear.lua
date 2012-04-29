@@ -137,8 +137,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
 			for j = 0, slotMax do
 				_, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
 				if (link) then _,_,name = string.find(link, "^.*%[(.*)%].*$") end
-				sellThis = nil
-				if (link and not locked and quality <= 0 and not IsQuestItem(i,j)) then
+				if (link and string_find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
 					UseContainerItem(i, j)
 				end
 			end
