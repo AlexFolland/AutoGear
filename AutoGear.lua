@@ -80,13 +80,13 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                              RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40}
             end
         elseif (UnitClass("player") == "Druid") then
-            if (GetSpec() == "Balance") then                
-                weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
-                             Armor = 0, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                             SpellPower = 0, SpellPenetration = 0, HasteRating = 0, Mp5 = 0,
-                             AttackPower = 0, ArmorPenetration = 0, CritRating = 0, HitRating = 0, ExpertiseRating = 0,
-                             RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                             MasteryRating = 0}
+            if (GetSpec() == "Balance") then        
+                --slapped together; not necessarily completely accurate
+                weighting = {Intellect = 1, Spirit = 0.4,
+                             SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.7, Mp5 = 0.01,
+                             CritRating = 0.3, HitRating = 0.4,
+                             RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                             MasteryRating = 0.4}
             end
         else
             weighting = nil
