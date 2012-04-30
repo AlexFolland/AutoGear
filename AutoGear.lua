@@ -100,41 +100,45 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         StaticPopup_Hide("PARTY_INVITE")
         mainF:UnregisterEvent("PARTY_MEMBERS_CHANGED")
     elseif (event == "START_LOOT_ROLL") then
-        local roll = nil
-        reason = "(no reason set)"
-        local rollItemInfo = ReadItemInfo(nil,arg1)
-        local better, replaceSlot, rollItemScore, equippedItemScore = DetermineIfBetter(rollItemInfo, weighting)
-        local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
-        if (better and canNeed) then roll = 1 else roll = 2 end
-        if (rollItemInfo.Name) then print("AutoGear:  "..rollItemInfo.Name) end
-        for k,v in pairs(rollItemInfo) do
-            print("AutoGear:  "..k..": "..v)
-        end
-        if (rollItemScore) then print("AutoGear:  Roll item's score: "..rollItemScore) end
-        if (equippedItemScore) then print("AutoGear:  Equipped item's score: "..equippedItemScore) end
-        print("AutoGear:  Slot: "..(rollItemInfo.Slot or "none"))
-        if (rollItemInfo.Usable) then print("AutoGear:  This item can be worn.") else print("AutoGear:  This item cannot be worn.  "..reason) end
-        if (roll == 1) then
-            print("AutoGear:  I would roll NEED on this item and replace "..(replaceSlot or "nil")..".")
-        elseif (roll == 2) then
-            local extra, extra2
-            if (replaceItem) then extra = ", to not replace my "..replaceSlot else extra = "" end
-            if (GetAllBagsNumFreeSlots() == 0) then extra2 = ", even though my bags are full" else extra2 = "" end
-            print("AutoGear:  I would roll GREED on this item"..extra..extra2..".")
-        else
-            print("AutoGear:  I don't know what I would roll on this item.")
-        end
-        if (roll) then
-            local newAction = {}
-            newAction.action = "roll"
-            if (roll == 1) then
-                newAction.t = GetTicks() + math.random(5000,10000)
-            else
-                newAction.t = GetTicks() + math.random(2000,3000)
+        if (weighting) then
+            local roll = nil
+            reason = "(no reason set)"
+            local rollItemInfo = ReadItemInfo(nil,arg1)
+            local better, replaceSlot, rollItemScore, equippedItemScore = DetermineIfBetter(rollItemInfo, weighting)
+            local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
+            if (better and canNeed) then roll = 1 else roll = 2 end
+            if (rollItemInfo.Name) then print("AutoGear:  "..rollItemInfo.Name) end
+            for k,v in pairs(rollItemInfo) do
+                print("AutoGear:  "..k..": "..v)
             end
-            newAction.rollID = arg1
-            newAction.rollType = roll
-            table.insert(futureAction, newAction)
+            if (rollItemScore) then print("AutoGear:  Roll item's score: "..rollItemScore) end
+            if (equippedItemScore) then print("AutoGear:  Equipped item's score: "..equippedItemScore) end
+            print("AutoGear:  Slot: "..(rollItemInfo.Slot or "none"))
+            if (rollItemInfo.Usable) then print("AutoGear:  This item can be worn.") else print("AutoGear:  This item cannot be worn.  "..reason) end
+            if (roll == 1) then
+                print("AutoGear:  I would roll NEED on this item and replace "..(replaceSlot or "nil")..".")
+            elseif (roll == 2) then
+                local extra, extra2
+                if (replaceItem) then extra = ", to not replace my "..replaceSlot else extra = "" end
+                if (GetAllBagsNumFreeSlots() == 0) then extra2 = ", even though my bags are full" else extra2 = "" end
+                print("AutoGear:  I would roll GREED on this item"..extra..extra2..".")
+            else
+                print("AutoGear:  I don't know what I would roll on this item.")
+            end
+            if (roll) then
+                local newAction = {}
+                newAction.action = "roll"
+                if (roll == 1) then
+                    newAction.t = GetTicks() + math.random(5000,10000)
+                else
+                    newAction.t = GetTicks() + math.random(2000,3000)
+                end
+                newAction.rollID = arg1
+                newAction.rollType = roll
+                table.insert(futureAction, newAction)
+            end
+        else
+            print("AutoGear:  No weighting set for this class.")
         end
     elseif (event == "CONFIRM_LOOT_ROLL") then
         ConfirmLootRoll(arg1, arg2)
@@ -147,7 +151,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         EquipPendingItem(arg1)
     elseif (event == "MERCHANT_SHOW") then
         -- sell all grey items
-        print("AutoGear:  Selling all grey items and repairing.")
+        local soldSomething = nil
         for i = 0, NUM_BAG_SLOTS do
             slotMax = GetContainerNumSlots(i)
             for j = 0, slotMax do
@@ -155,10 +159,15 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                 if (link) then _,_,name = string.find(link, "^.*%[(.*)%].*$") end
                 if (link and string.find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
                     UseContainerItem(i, j)
+                    soldSomething = 1
                 end
             end
         end
+        if (soldSomething) then
+            print("AutoGear:  Selling all grey items.")
+        end
         if (GetRepairAllCost() > 0 and GetRepairAllCost() < GetMoney()) then
+            print("AutoGear:  Repairing all items for "..cash_to_string(GetRepairAllCost())..".")
             RepairAllItems()
         end
     elseif (event == "QUEST_DETAIL") then
@@ -167,6 +176,22 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         print("AutoGear:  "..event)
     end
 end)
+
+-- from Attrition addon
+local function cash_to_string(cash)
+	if not cash then return "" end
+
+	local gold   = floor(cash / (100 * 100))
+	local silver = math.fmod(floor(cash / 100), 100)
+	local copper = math.fmod(floor(cash), 100)
+	gold         = gold   > 0 and "|cffeeeeee"..gold  .."|r|cffffd700g|r" or ""
+	silver       = silver > 0 and "|cffeeeeee"..silver.."|r|cffc7c7cfs|r" or ""
+	copper       = copper > 0 and "|cffeeeeee"..copper.."|r|cffeda55fc|r" or ""
+	copper       = (silver ~= "" and copper ~= "") and " "..copper or copper
+	silver       = (gold   ~= "" and silver ~= "") and " "..silver or silver
+
+	return gold..silver..copper
+end
 
 function IsQuestItem(container, slot)
     return ItemContainsText(container, slot, "Quest Item")
