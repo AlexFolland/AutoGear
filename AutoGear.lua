@@ -73,7 +73,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         _,class = UnitClass("player")
         if (class == "PALADIN") then
             weighting = {Strength = 1, Agility = 0.3, Stamina = 0.8, Intellect = 0.05, Spirit = -0.2,
-                         Armor = 0.5, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
+                         Armor = 0.05, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
                          AttackPower = 0.4, HasteRating = 0.5, ArmorPenetration = 0.1,
                          CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05,
                          RedSockets = 30, YellowSockets = 25, BlueSockets = 24, MetaSockets = 40}
