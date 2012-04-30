@@ -1,10 +1,9 @@
 --AutoGear
 
 -- to do:
--- fix setting the weighting on first load
--- repair all when a vendor is open
 -- accomodate for unique-equipped
 -- fix equipping right when receiving
+-- for every slot, attempt to put only the best item on, rather than all of the better ones at once
 
 local reason
 local futureAction = {}
@@ -22,7 +21,7 @@ mainF:SetScript("OnUpdate", function()
     main()
 end)
 
-function GetTicks()    return GetTime() * 1000 end
+function GetTicks() return GetTime() * 1000 end
 
 mainF:RegisterEvent("ADDON_LOADED")
 mainF:RegisterEvent("PARTY_INVITE_REQUEST")
@@ -69,43 +68,16 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         while (not UnitClass("player")) do
         end
         -- create the stat weights
-        local class
-        _,class = UnitClass("player")
-        if (class == "PALADIN") then
-            weighting = {Strength = 1, Agility = 0.3, Stamina = 0.8, Intellect = 0.05, Spirit = -0.2,
-                         Armor = 0.05, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
-                         AttackPower = 0.4, HasteRating = 0.5, ArmorPenetration = 0.1,
-                         CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05,
-                         RedSockets = 30, YellowSockets = 25, BlueSockets = 24, MetaSockets = 40}
-        elseif (class == "PRIEST") then
-            if (GetSpec() == "Discipline") then                
-                weighting = {Intellect = 1, Spirit = 1,
-                             Armor = 0.0001, SpellPower = 0.8,
-                             HasteRating = 1,
-                             CritRating = 0.25, MasteryRating = 0.5,
-                             RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40}
-            end
-        elseif (class == "DRUID") then
-            if (GetSpec() == "Balance") then        
-                --slapped together; not necessarily completely accurate
-                weighting = {Intellect = 1, Spirit = 0.4,
-                             SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.7, Mp5 = 0.01,
-                             CritRating = 0.3, HitRating = 0.4,
-                             RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
-                             MasteryRating = 0.4}
-            end
-        else
-            weighting = nil
-        end
+        SetStatWeights()
     elseif (event == "PARTY_INVITE_REQUEST") then
-        if (arg1 == partner) then
-            AcceptGroup()
-            mainF:RegisterEvent("PARTY_MEMBERS_CHANGED")
-        end
+        print("AutoGear:  Automatically accepting party invite.")
+        AcceptGroup()
+        mainF:RegisterEvent("PARTY_MEMBERS_CHANGED")
     elseif (event == "PARTY_MEMBERS_CHANGED") then --for closing the invite window once I have joined the group
         StaticPopup_Hide("PARTY_INVITE")
         mainF:UnregisterEvent("PARTY_MEMBERS_CHANGED")
     elseif (event == "START_LOOT_ROLL") then
+        if (not weighting) then SetStatWeights() end
         if (weighting) then
             local roll = nil
             reason = "(no reason set)"
@@ -187,6 +159,37 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         print("AutoGear:  "..event)
     end
 end)
+
+function SetStatWeights()
+    local class
+    _,class = UnitClass("player")
+    if (class == "PALADIN") then
+        weighting = {Strength = 1, Agility = 0.3, Stamina = 0.8, Intellect = 0.05, Spirit = -0.2,
+                     Armor = 0.05, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
+                     AttackPower = 0.4, HasteRating = 0.5, ArmorPenetration = 0.1,
+                     CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05,
+                     RedSockets = 30, YellowSockets = 25, BlueSockets = 24, MetaSockets = 40}
+    elseif (class == "PRIEST") then
+        if (GetSpec() == "Discipline") then                
+            weighting = {Intellect = 1, Spirit = 1,
+                         Armor = 0.0001, SpellPower = 0.8,
+                         HasteRating = 1,
+                         CritRating = 0.25, MasteryRating = 0.5,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40}
+        end
+    elseif (class == "DRUID") then
+        if (GetSpec() == "Balance") then        
+            --slapped together; not necessarily completely accurate
+            weighting = {Intellect = 1, Spirit = 0.4,
+                         SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.7, Mp5 = 0.01,
+                         CritRating = 0.3, HitRating = 0.4,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         MasteryRating = 0.4}
+        end
+    else
+        weighting = nil
+    end
+end
 
 -- from Attrition addon
 function CashToString(cash)
@@ -509,6 +512,7 @@ SlashCmdList["AutoGear"] = function(msg)
     if (not param2) then param2 = "(nil)" end
     if (not param3) then param3 = "(nil)" end
     if (param1 == "scan") then
+        if (not weighting) then SetStatWeights() end
         if (not weighting) then
             print("AutoGear:  No weighting set for this class.")
             return
