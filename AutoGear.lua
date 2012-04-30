@@ -151,9 +151,11 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         if (soldSomething) then
             print("AutoGear:  Sold all grey items for "..CashToString(totalSellValue)..".")
         end
-        if (GetRepairAllCost() > 0 and GetRepairAllCost() < GetMoney()) then
+        if (GetRepairAllCost() > 0 and GetRepairAllCost() <= GetMoney()) then
             print("AutoGear:  Repaired all items for "..CashToString(GetRepairAllCost())..".")
             RepairAllItems()
+        elseif (GetRepairAllCost() > GetMoney()) then
+            print("AutoGear:  Not enough money to repair all items ("..CashToString(GetRepairAllCost())..").")
         end
     elseif (event == "QUEST_DETAIL") then
         AcceptQuest()
@@ -314,11 +316,14 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
     for i=1, AutoGearTooltip:NumLines() do
         local mytext = getglobal("AutoGearTooltipTextLeft"..i)
         if (mytext) then
+            local r, g, b, a = mytext:GetTextColor()
             local text = mytext:GetText():lower()
             if (i==1) then info.Name = mytext:GetText() end
             local multiplier = 1.0
             if (string.find(text, "chance to")) then multiplier = multiplier/3.0 end
             if (string.find(text, "use:")) then multiplier = multiplier/6.0 end
+            -- don't count greyed out set bonus lines
+            if (r < 0.5 and g < 0.5 and b < 0.5 and string.find(text, "set:")) then multiplier = 0 end
             -- note: these proc checks may not be correct for all cases
             if (string.find(text, "deal damage")) then multiplier = multiplier * (weighting.DamageProc or 0) end
             if (string.find(text, "damage and healing")) then multiplier = multiplier * math.max((weighting.HealingProc or 0), (weighting.DamageProc or 0))
@@ -331,37 +336,39 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
             end
             local value = 0
             _,_,value = string.find(text, "(%d+)")
-            if (value) then value = value * multiplier end
-            if (string.find(text, "strength")) then info.Strength = value end
-            if (string.find(text, "agility")) then info.Agility = value end
-            if (string.find(text, "stamina")) then info.Stamina = value end
+            if (value) then
+                value = value * multiplier
+            else
+                value = 0
+            end
+            if (string.find(text, "strength")) then info.Strength = (info.Strength or 0) + value end
+            if (string.find(text, "agility")) then info.Agility = (info.Agility or 0) + value end
+            if (string.find(text, "intellect")) then info.Intellect = (info.Intellect or 0) + value end
+            if (string.find(text, "stamina")) then info.Stamina = (info.Stamina or 0) + value end
+            if (string.find(text, "spirit")) then info.Spirit = (info.Spirit or 0) + value end
             if (string.find(text, "armor") and
-               (not string.find(text, "penetration"))) then info.Armor = value end
-            if (string.find(text, "attack power")) then info.AttackPower = value end
-            if (string.find(text, "armor penetration")) then info.SpellPenetration = value end
-            -- added " and not info.Spirit" because AutoGear was reading a set bonus (Spiritmend Leggings) as the spirit value -- Alex, 2012-04-30
-            if (string.find(text, "spirit") and not info.Spirit) then info.Spirit = value end
-            if (string.find(text, "intellect")) then info.Intellect = value end
+               (not string.find(text, "penetration"))) then info.Armor = (info.Armor or 0) + value end
+            if (string.find(text, "attack power")) then info.AttackPower = (info.AttackPower or 0) + value end
+            if (string.find(text, "armor penetration")) then info.SpellPenetration = (info.SpellPenetration or 0) + value end
             if (string.find(text, "spell power") or 
                 string.find(text, "frost spell damage") and spec=="Frost" or
                 string.find(text, "fire spell damage") and spec=="Fire" or
                 string.find(text, "arcane spell damage") and spec=="Arcane" or
-                string.find(text, "nature spell damage") and spec=="Balance") then info.SpellPower = value end
-            if (string.find(text, "critical strike rating")) then info.CritRating = value end
-            if (string.find(text, "hit rating")) then info.HitRating = value end
-            if (string.find(text, "haste rating")) then info.HasteRating = value end
-            if (string.find(text, "mana per 5")) then info.Mp5 = value end
+                string.find(text, "nature spell damage") and spec=="Balance") then info.SpellPower = (info.SpellPower or 0) + value end
+            if (string.find(text, "critical strike rating")) then info.CritRating = (info.CritRating or 0) + value end
+            if (string.find(text, "hit rating")) then info.HitRating = (info.HitRating or 0) + value end
+            if (string.find(text, "haste rating")) then info.HasteRating = (info.HasteRating or 0) + value end
+            if (string.find(text, "mana per 5")) then info.Mp5 = (info.Mp5 or 0) + value end
             if (string.find(text, "meta socket")) then info.MetaSockets = info.MetaSockets + 1 end
             if (string.find(text, "red socket")) then info.RedSockets = info.RedSockets + 1 end
             if (string.find(text, "yellow socket")) then info.YellowSockets = info.YellowSockets + 1 end
             if (string.find(text, "blue socket")) then info.BlueSockets = info.BlueSockets + 1 end
-            if (string.find(text, "dodge rating")) then info.DodgeRating = value end
-            if (string.find(text, "parry rating")) then info.ParryRating = value end
-            if (string.find(text, "block rating")) then info.BlockRating = value end
-            if (string.find(text, "mastery rating")) then info.MasteryRating = value end
-            if (string.find(text, "expertise rating")) then info.ExpertiseRating = value end
-            if (string.find(text, "spell penetration")) then info.SpellPower = value end
-
+            if (string.find(text, "dodge rating")) then info.DodgeRating = (info.DodgeRating or 0) + value end
+            if (string.find(text, "parry rating")) then info.ParryRating = (info.ParryRating or 0) + value end
+            if (string.find(text, "block rating")) then info.BlockRating = (info.BlockRating or 0) + value end
+            if (string.find(text, "mastery rating")) then info.MasteryRating = (info.MasteryRating or 0) + value end
+            if (string.find(text, "expertise rating")) then info.ExpertiseRating = (info.ExpertiseRating or 0) + value end
+            
             if (text=="head") then info.Slot = "HeadSlot" end
             if (text=="neck") then info.Slot = "NeckSlot" end
             if (text=="shoulder") then info.Slot = "ShoulderSlot" end
