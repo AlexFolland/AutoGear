@@ -4,6 +4,8 @@
 -- accomodate for unique-equipped
 -- fix equipping right when receiving
 -- for every slot, attempt to put only the best item on, rather than all of the better ones at once
+-- choose loot rewards
+-- save info between sessions
 
 local reason
 local futureAction = {}
@@ -110,9 +112,9 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                 local newAction = {}
                 newAction.action = "roll"
                 if (roll == 1) then
-                    newAction.t = GetTicks() + math.random(5000,10000)
+                    newAction.t = GetTicks() + math.random(1500,2000)
                 else
-                    newAction.t = GetTicks() + math.random(2000,3000)
+                    newAction.t = GetTicks() + math.random(1000,1500)
                 end
                 newAction.rollID = arg1
                 newAction.rollType = roll
