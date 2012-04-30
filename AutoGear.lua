@@ -170,10 +170,10 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             end
         end
         if (soldSomething) then
-            print("AutoGear:  Selling all grey items.")
+            print("AutoGear:  Sold all grey items.")
         end
         if (GetRepairAllCost() > 0 and GetRepairAllCost() < GetMoney()) then
-            print("AutoGear:  Repairing all items for "..CashToString(GetRepairAllCost())..".")
+            print("AutoGear:  Repaired all items for "..CashToString(GetRepairAllCost())..".")
             RepairAllItems()
         end
     elseif (event == "QUEST_DETAIL") then
