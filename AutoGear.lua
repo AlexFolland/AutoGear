@@ -166,7 +166,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                 if (link) then
                     local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
                     if (string.find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
-                        totalSellValue = totalSellValue + select(11, GetItemInfo(link)) * count)
+                        totalSellValue = totalSellValue + select(11, GetItemInfo(link)) * count
                         PickupContainerItem(i, j)
                         PickupMerchantItem()
                         soldSomething = 1
