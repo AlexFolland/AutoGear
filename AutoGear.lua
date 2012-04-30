@@ -319,7 +319,7 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
             local multiplier = 1.0
             if (string.find(text, "chance to")) then multiplier = multiplier/3.0 end
             if (string.find(text, "use:")) then multiplier = multiplier/6.0 end
-            -- note: these proc checks may not be correct or all the cases
+            -- note: these proc checks may not be correct for all cases
             if (string.find(text, "deal damage")) then multiplier = multiplier * (weighting.DamageProc or 0) end
             if (string.find(text, "damage and healing")) then multiplier = multiplier * math.max((weighting.HealingProc or 0), (weighting.DamageProc or 0))
             elseif (string.find(text, "healing spells")) then multiplier = multiplier * (weighting.HealingProc or 0)
@@ -339,7 +339,8 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
                (not string.find(text, "penetration"))) then info.Armor = value end
             if (string.find(text, "attack power")) then info.AttackPower = value end
             if (string.find(text, "armor penetration")) then info.SpellPenetration = value end
-            if (string.find(text, "spirit")) then info.Spirit = value end
+            -- added " and not info.Spirit" because AutoGear was reading a set bonus (Spiritmend Leggings) as the spirit value -- Alex, 2012-04-30
+            if (string.find(text, "spirit") and not info.Spirit) then info.Spirit = value end
             if (string.find(text, "intellect")) then info.Intellect = value end
             if (string.find(text, "spell power") or 
                 string.find(text, "frost spell damage") and spec=="Frost" or
