@@ -158,19 +158,24 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     elseif (event == "MERCHANT_SHOW") then
         -- sell all grey items
         local soldSomething = nil
+        local totalSellValue = 0
         for i = 0, NUM_BAG_SLOTS do
             slotMax = GetContainerNumSlots(i)
             for j = 0, slotMax do
                 _, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
-                if (link) then _,_,name = string.find(link, "^.*%[(.*)%].*$") end
-                if (link and string.find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
-                    UseContainerItem(i, j)
-                    soldSomething = 1
+                if (link) then
+                    local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
+                    if (string.find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
+                        totalSellValue = totalSellValue + select(11, GetItemInfo(link)) * count)
+                        PickupContainerItem(i, j)
+                        PickupMerchantItem()
+                        soldSomething = 1
+                    end
                 end
             end
         end
         if (soldSomething) then
-            print("AutoGear:  Sold all grey items.")
+            print("AutoGear:  Sold all grey items for "..CashToString(totalSellValue)..".")
         end
         if (GetRepairAllCost() > 0 and GetRepairAllCost() < GetMoney()) then
             print("AutoGear:  Repaired all items for "..CashToString(GetRepairAllCost())..".")
