@@ -85,6 +85,9 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             local better, replaceSlot, rollItemScore, equippedItemScore = DetermineIfBetter(rollItemInfo, weighting)
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
             if (better and canNeed) then roll = 1 else roll = 2 end
+            if (better and not canNeed) then
+                print("AutoGear:  I would roll NEED, but NEED is not an option for this item.")
+            end
             if (rollItemInfo.Name) then print("AutoGear:  "..rollItemInfo.Name) end
             for k,v in pairs(rollItemInfo) do
                 print("AutoGear:  "..k..": "..v)
@@ -94,12 +97,12 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             print("AutoGear:  Slot: "..(rollItemInfo.Slot or "none"))
             if (rollItemInfo.Usable) then print("AutoGear:  This item can be worn.") else print("AutoGear:  This item cannot be worn.  "..reason) end
             if (roll == 1) then
-                print("AutoGear:  I would roll NEED on this item and replace "..(replaceSlot or "nil")..".")
+                print("AutoGear:  Rolling NEED on this item to replace "..(replaceSlot or "nil")..".")
             elseif (roll == 2) then
                 local extra, extra2
                 if (replaceItem) then extra = ", to not replace my "..replaceSlot else extra = "" end
                 if (GetAllBagsNumFreeSlots() == 0) then extra2 = ", even though my bags are full" else extra2 = "" end
-                print("AutoGear:  I would roll GREED on this item"..extra..extra2..".")
+                print("AutoGear:  Rolling GREED on this item"..extra..extra2..".")
             else
                 print("AutoGear:  I don't know what I would roll on this item.")
             end
