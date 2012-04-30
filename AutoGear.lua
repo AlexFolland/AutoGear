@@ -183,11 +183,11 @@ function SetStatWeights()
     elseif (class == "DRUID") then
         if (GetSpec() == "Balance") then        
             --slapped together; not necessarily completely accurate
-            weighting = {Intellect = 1, Spirit = 0.4,
-                         SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.7, Mp5 = 0.01,
-                         CritRating = 0.3, HitRating = 0.4,
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
-                         MasteryRating = 0.4}
+            weighting = {Intellect = 1, Spirit = 0.1,
+						 SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.8, Mp5 = 0.01,
+						 CritRating = 0.4, HitRating = 0.05,
+						 RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+						 MasteryRating = 0.6}
         end
     else
         weighting = nil
