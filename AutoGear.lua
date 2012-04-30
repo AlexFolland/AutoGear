@@ -66,7 +66,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                          MasteryRating = 0}
         ]]
         if (UnitClass("player") == "Paladin") then
-            weighting = {Strength = 1, Agility = 0.3, Stamina = 0.8, Intellect = 0.05, Spirit = 0.001,
+            weighting = {Strength = 1, Agility = 0.3, Stamina = 0.8, Intellect = 0.05, Spirit = -0.2,
                          Armor = 0.5, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.2,
                          AttackPower = 0.4, HasteRating = 0.5, ArmorPenetration = 0.1,
                          CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05,
@@ -153,7 +153,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             for j = 0, slotMax do
                 _, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
                 if (link) then _,_,name = string.find(link, "^.*%[(.*)%].*$") end
-                if (link and string_find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
+                if (link and string.find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
                     UseContainerItem(i, j)
                 end
             end
