@@ -57,7 +57,8 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             SpellPower, SpellPenetration, HasteRating, Mp5,
             AttackPower, ArmorPenetration, CritRating, HitRating, ExpertiseRating,
             RedSockets, YellowSockets, BlueSockets, MetaSockets,
-            MasteryRating
+            MasteryRating,
+            HealingProc, DamageProc, DamageSpellProc, MeleeProc, RangedProc (multipliers)
             
             weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
                          Armor = 0, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -89,10 +90,6 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             if (better and canNeed) then roll = 1 else roll = 2 end
             if (better and not canNeed) then
                 print("AutoGear:  I would roll NEED, but NEED is not an option for this item.")
-            end
-            if (rollItemInfo.Name) then print("AutoGear:  "..rollItemInfo.Name) end
-            for k,v in pairs(rollItemInfo) do
-                print("AutoGear:  "..k..": "..v)
             end
             if (rollItemScore) then print("AutoGear:  Roll item's score: "..rollItemScore) end
             if (equippedItemScore) then print("AutoGear:  Equipped item's score: "..equippedItemScore) end
@@ -173,23 +170,26 @@ function SetStatWeights()
                      Armor = 0.05, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
                      AttackPower = 0.4, HasteRating = 0.5, ArmorPenetration = 0.1,
                      CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05,
-                     RedSockets = 30, YellowSockets = 25, BlueSockets = 24, MetaSockets = 40}
+                     RedSockets = 30, YellowSockets = 25, BlueSockets = 24, MetaSockets = 40,
+                     MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0}
     elseif (class == "PRIEST") then
         if (GetSpec() == "Discipline") then                
             weighting = {Intellect = 1, Spirit = 1,
                          Armor = 0.0001, SpellPower = 0.8,
                          HasteRating = 1,
                          CritRating = 0.25, MasteryRating = 0.5,
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40}
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40,
+                         HealingProc = 1.0, DamageSpellProc = 0.5, DamageProc = 0.5}
         end
     elseif (class == "DRUID") then
         if (GetSpec() == "Balance") then        
             --slapped together; not necessarily completely accurate
             weighting = {Intellect = 1, Spirit = 0.1,
-						 SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.8, Mp5 = 0.01,
-						 CritRating = 0.4, HitRating = 0.05,
-						 RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
-						 MasteryRating = 0.6}
+                         SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.8, Mp5 = 0.01,
+                         CritRating = 0.4, HitRating = 0.05,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         MasteryRating = 0.6,
+                         DamageSpellProc = 1.0, DamageProc = 1.0}
         end
     else
         weighting = nil
@@ -198,18 +198,18 @@ end
 
 -- from Attrition addon
 function CashToString(cash)
-	if not cash then return "" end
+    if not cash then return "" end
 
-	local gold   = floor(cash / (100 * 100))
-	local silver = math.fmod(floor(cash / 100), 100)
-	local copper = math.fmod(floor(cash), 100)
-	gold         = gold   > 0 and "|cffeeeeee"..gold  .."|r|cffffd700g|r" or ""
-	silver       = silver > 0 and "|cffeeeeee"..silver.."|r|cffc7c7cfs|r" or ""
-	copper       = copper > 0 and "|cffeeeeee"..copper.."|r|cffeda55fc|r" or ""
-	copper       = (silver ~= "" and copper ~= "") and " "..copper or copper
-	silver       = (gold   ~= "" and silver ~= "") and " "..silver or silver
+    local gold   = floor(cash / (100 * 100))
+    local silver = math.fmod(floor(cash / 100), 100)
+    local copper = math.fmod(floor(cash), 100)
+    gold         = gold   > 0 and "|cffeeeeee"..gold  .."|r|cffffd700g|r" or ""
+    silver       = silver > 0 and "|cffeeeeee"..silver.."|r|cffc7c7cfs|r" or ""
+    copper       = copper > 0 and "|cffeeeeee"..copper.."|r|cffeda55fc|r" or ""
+    copper       = (silver ~= "" and copper ~= "") and " "..copper or copper
+    silver       = (gold   ~= "" and silver ~= "") and " "..silver or silver
 
-	return gold..silver..copper
+    return gold..silver..copper
 end
 
 function IsQuestItem(container, slot)
@@ -238,18 +238,29 @@ function ScanBags()
         return nil
     end
     local info
+    local replaceInfo
     local anythingBetter = nil
     for bag = 0, NUM_BAG_SLOTS do
         local slotMax = GetContainerNumSlots(bag)
-        --print("AutoGear:  Searching through "..slotMax.." bag slots")
         for i = 0, slotMax do
             _,_,_,_,_,_, link = GetContainerItemInfo(bag, i)
             if (link) then
-                --print("AutoGear:  Reading item info")
                 info = ReadItemInfo(nil,nil,bag,i)
                 local better, replaceSlot, newScore, oldScore = DetermineIfBetter(info, weighting)
+                if (replaceSlot) then
+                    replaceInfo = ReadItemInfo(GetInventorySlotInfo(replaceSlot))
+                end
+                if (replaceInfo and not replaceInfo.Name) then
+                    replaceInfo.Name = "nothing"
+                elseif (not replaceInfo) then
+                    replaceInfo = {}
+                    replaceInfo.Name = "nothing"
+                    oldScore = 0
+                end
                 if (better) then
-                    print("AutoGear:  "..info.Name.." was determined to be better ("..(newScore or "").." versus "..(oldScore or "")..").  Creating a future action to equip it.")
+                    print("AutoGear:  "..info.Name.." ("..string.format("%.2f", newScore)..") was determined to be better than "..replaceInfo.Name.." ("..string.format("%.2f", oldScore)..").  Will equip it soon.")
+                    PrintItem(replaceInfo)
+                    PrintItem(info)
                     anythingBetter = 1
                     local newAction = {}
                     newAction.action = "equip"
@@ -272,6 +283,15 @@ function ScanBags()
         end
     end
     return anythingBetter
+end
+
+function PrintItem(info)
+    print("AutoGear:      "..info.Name..":")
+    for k,v in pairs(info) do
+        if (k ~= "Name" and weighting[k]) then
+            print("AutoGear:          "..k..": "..string.format("%.2f", v).." * "..weighting[k].." = "..string.format("%.2f", v * weighting[k]))
+        end
+    end
 end
 
 function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
@@ -297,8 +317,18 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
             local text = mytext:GetText():lower()
             if (i==1) then info.Name = mytext:GetText() end
             local multiplier = 1.0
-            if (string.find(text, "chance to")) then multiplier = 1.0/3.0 end
-            if (string.find(text, "use:")) then multiplier = 1.0/6.0 end
+            if (string.find(text, "chance to")) then multiplier = multiplier/3.0 end
+            if (string.find(text, "use:")) then multiplier = multiplier/6.0 end
+            -- note: these proc checks may not be correct or all the cases
+            if (string.find(text, "deal damage")) then multiplier = multiplier * (weighting.DamageProc or 0) end
+            if (string.find(text, "damage and healing")) then multiplier = multiplier * math.max((weighting.HealingProc or 0), (weighting.DamageProc or 0))
+            elseif (string.find(text, "healing spells")) then multiplier = multiplier * (weighting.HealingProc or 0)
+            elseif (string.find(text, "damage spells")) then multiplier = multiplier * (weighting.DamageSpellProc or 0)
+            end
+            if (string.find(text, "melee and ranged")) then multiplier = multiplier * math.max((weighting.MeleeProc or 0), (weighting.RangedProc or 0))
+            elseif (string.find(text, "melee attacks")) then multiplier = multiplier * (weighting.MeleeProc or 0)
+            elseif (string.find(text, "ranged attacks")) then multiplier = multiplier * (weighting.RangedProc or 0)
+            end
             local value = 0
             _,_,value = string.find(text, "(%d+)")
             if (value) then value = value * multiplier end
@@ -510,7 +540,8 @@ function PutItemInEmptyBagSlot()
 end
 
 _G["SLASH_AutoGear1"] = "/AutoGear";
-_G["SLASH_AutoGear2"] = "/ag";
+_G["SLASH_AutoGear2"] = "/autogear";
+_G["SLASH_AutoGear3"] = "/ag";
 SlashCmdList["AutoGear"] = function(msg)
     param1, param2, param3 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
     if (not param1) then param1 = "(nil)" end
@@ -526,26 +557,9 @@ SlashCmdList["AutoGear"] = function(msg)
         anythingBetter = ScanBags()
         if not anythingBetter then print ("AutoGear:  Nothing better was found.") end
     else
-        print("AutoGear:  Unrecognized command.")
+        print("AutoGear:  Unrecognized command.  Use '/ag scan' to scan all bags.")
     end
 end
-
---credit for roman_to_arabic and GetTempBuffName goes to Elkano's BuffBars
-local roman_to_arabic = setmetatable({I = 1, V = 5, X = 10, L = 50, C = 100, D = 500, M = 1000}, {__index=function(self, roman)
-    local arabic = 0
-    local maxval = 0
-    for i = roman:len(), 1, -1 do
-        local digitval = self[roman:sub(i,i)]
-        if digitval < maxval then
-            arabic = arabic - digitval
-        else
-            arabic = arabic + digitval
-            maxval = digitval
-        end
-    end
-    self[roman] = arabic
-    return arabic
-end})
 
 function main()
     if (GetTicks() - tUpdate > 50) then
