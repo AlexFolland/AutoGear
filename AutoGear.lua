@@ -65,13 +65,19 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          MasteryRating = 0}
         ]]
-        if (UnitClass("player") == "Paladin") then
+        -- wait for player information
+        while (not UnitClass("player")) do
+        end
+        -- create the stat weights
+        local class
+        _,class = UnitClass("player")
+        if (class == "PALADIN") then
             weighting = {Strength = 1, Agility = 0.3, Stamina = 0.8, Intellect = 0.05, Spirit = -0.2,
-                         Armor = 0.5, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.2,
+                         Armor = 0.5, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
                          AttackPower = 0.4, HasteRating = 0.5, ArmorPenetration = 0.1,
                          CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05,
                          RedSockets = 30, YellowSockets = 25, BlueSockets = 24, MetaSockets = 40}
-        elseif (UnitClass("player") == "Priest") then
+        elseif (class == "PRIEST") then
             if (GetSpec() == "Discipline") then                
                 weighting = {Intellect = 1, Spirit = 1,
                              Armor = 0.0001, SpellPower = 0.8,
@@ -79,7 +85,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                              CritRating = 0.25, MasteryRating = 0.5,
                              RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40}
             end
-        elseif (UnitClass("player") == "Druid") then
+        elseif (class == "DRUID") then
             if (GetSpec() == "Balance") then        
                 --slapped together; not necessarily completely accurate
                 weighting = {Intellect = 1, Spirit = 0.4,
@@ -167,7 +173,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             print("AutoGear:  Selling all grey items.")
         end
         if (GetRepairAllCost() > 0 and GetRepairAllCost() < GetMoney()) then
-            print("AutoGear:  Repairing all items for "..cash_to_string(GetRepairAllCost())..".")
+            print("AutoGear:  Repairing all items for "..CashToString(GetRepairAllCost())..".")
             RepairAllItems()
         end
     elseif (event == "QUEST_DETAIL") then
@@ -178,7 +184,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
 end)
 
 -- from Attrition addon
-local function cash_to_string(cash)
+function CashToString(cash)
 	if not cash then return "" end
 
 	local gold   = floor(cash / (100 * 100))
