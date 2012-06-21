@@ -9,6 +9,8 @@
 -- roll need on mounts that the character doesn't have
 -- add weights for weapon speed and damage
 -- make gem weights have level tiers
+-- add an experience weight and make sure the character is gaining exp (to handle BoAs)
+-- check for switching spec event
 
 local reason
 local futureAction = {}
