@@ -5,10 +5,9 @@
 -- fix equipping right when receiving
 -- for every slot, attempt to put only the best item on, rather than all of the better ones at once
 -- choose quest loot rewards
--- save info between sessions
 -- roll need on mounts that the character doesn't have
 -- add weights for weapon speed and damage
--- make gem weights have level tiers
+-- make gem weights have level tiers (70-79, 80-84, 85)
 -- check for switching spec event
 
 
