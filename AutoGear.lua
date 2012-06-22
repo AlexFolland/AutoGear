@@ -210,8 +210,6 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
         end
     elseif (class == "DRUID") then
-
-
         if (GetSpec() == "Untalented") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 2.97, Spirit = 0.05,
                          Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -221,13 +219,13 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
         elseif (GetSpec() == "Balance") then        
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 2.97, Spirit = 0.05,
-                         Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 2.3, SpellPenetration = 0.05, HasteRating = 2.15, Mp5 = 0.05,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.87, HitRating = 2.4, 
-                         ExpertiseRating = 0, MasteryRating = 1.45, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
+                         Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                         SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.8, Mp5 = 0.01,
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.4, HitRating = 0.05, 
+                         ExpertiseRating = 0, MasteryRating = 0.6, ExperienceGained = 100,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0}
         elseif (GetSpec() == "Restoration") then        
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.75,
                          Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -325,13 +323,12 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
         elseif (GetSpec() == "Protection") then
-            weighting = {Strength = 0.28, Agility = 0, Stamina = 0.35, Intellect = 0, Spirit = 0,
-                         Armor = 0.16, DodgeRating = 1, ParryRating = 1, BlockRating = 0,
-                         SpellPower = 0, SpellPenetration = 0, HasteRating = 0, Mp5 = 0,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0, HitRating = 0.05, 
-                         ExpertiseRating = 0.1, MasteryRating = 0.99, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
+            weighting = {Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = -0.2,
+                         Armor = 0.05, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
+                         AttackPower = 0.4, HasteRating = 0.5, ArmorPenetration = 0.1,
+                         CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05,
+                         RedSockets = 40, YellowSockets = 35, BlueSockets = 40, MetaSockets = 50,
+                         MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0}
         elseif (GetSpec() == "Retribution") then
             weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -351,13 +348,13 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
         elseif (GetSpec() == "Discipline") then                
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.8,
-                         Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 0.55, SpellPenetration = 0, HasteRating = 0.5, Mp5 = 0,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.4, HitRating = 0, 
-                         ExpertiseRating = 0, MasteryRating = 0.6, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
+            weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
+                         Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                         SpellPower = 0.8, SpellPenetration = 0, HasteRating = 1, Mp5 = 0,
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.25, HitRating = 0, 
+                         ExpertiseRating = 0, MasteryRating = 0.5, ExperienceGained = 100, 
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40,
+                         HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0}
         elseif (GetSpec() == "Holy") then                
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.77,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
