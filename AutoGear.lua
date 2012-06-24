@@ -340,7 +340,7 @@ function SetStatWeights()
         end
     elseif (class == "PRIEST") then
         if (GetSpec() == "Untalented") then                
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.55, Spirit = 0.05,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.75, SpellPenetration = 0, HasteRating = 2, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, CritRating = 1.6, HitRating = 1.95, 
@@ -356,12 +356,12 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40,
                          HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0}
         elseif (GetSpec() == "Holy") then                
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.77,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.51, SpellPenetration = 0, HasteRating = 0.47, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, CritRating = 0.47, HitRating = 0, 
                          ExpertiseRating = 0, MasteryRating = 0.36, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         RedSockets = 40, YellowSockets = 40, BlueSockets = 40, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
         elseif (GetSpec() == "Shadow") then                
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.55, Spirit = 0.05,
