@@ -9,6 +9,7 @@
 -- add weights for weapon speed and damage
 -- make gem weights have level tiers (70-79, 80-84, 85)
 -- check for switching spec event
+-- go through all quest text
 
 
 local reason
@@ -238,21 +239,21 @@ function SetStatWeights()
         end
     elseif (class == "HUNTER") then
         if (GetSpec() == "Untalented") then
-            weighting = {Strength = 0, Agility = 3.96, Stamina = 0.05, Intellect = 0, Spirit = 0,
-                         Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 0, SpellPenetration = 0, HasteRating = 1.42, Mp5 = 0,
-                         AttackPower = 1.36, ArmorPenetration = 0, CritRating = 1.6, HitRating = 1.65, 
-                         ExpertiseRating = 0, MasteryRating = 1.2, ExperienceGained = 100,
+            weighting = {Strength = 0.5, Agility = 1, Stamina = 0.1, Intellect = -0.5, Spirit = -0.5,
+                         Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                         SpellPower = 0, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
+                         AttackPower = 0.9, ArmorPenetration = 0.8, CritRating = 0.8, HitRating = 0.4, 
+                         ExpertiseRating = 0.1, MasteryRating = 0, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
+                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1}
         elseif (GetSpec() == "Beast Mastery") then                
-            weighting = {Strength = 0, Agility = 3.96, Stamina = 0.05, Intellect = 0, Spirit = 0,
-                         Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 0, SpellPenetration = 0, HasteRating = 1.42, Mp5 = 0,
-                         AttackPower = 1.36, ArmorPenetration = 0, CritRating = 1.6, HitRating = 1.65, 
-                         ExpertiseRating = 0, MasteryRating = 1.2, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
+            weighting = {Strength = 0.5, Agility = 1, Stamina = 0.1, Intellect = -0.5, Spirit = -0.5,
+                         Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                         SpellPower = 0, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
+                         AttackPower = 0.9, ArmorPenetration = 0.8, CritRating = 0.8, HitRating = 0.4, 
+                         ExpertiseRating = 0.1, MasteryRating = 0.9, ExperienceGained = 100,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1}
         elseif (GetSpec() == "Marksmanship") then                
             weighting = {Strength = 0, Agility = 3.72, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
