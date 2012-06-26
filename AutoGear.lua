@@ -77,9 +77,6 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
 
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0}
         ]]
-        -- wait for player information
-        while (not UnitClass("player")) do
-        end
         -- create the stat weights
         SetStatWeights()
     elseif (event == "PARTY_INVITE_REQUEST") then
@@ -175,6 +172,9 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
 end)
 
 function SetStatWeights()
+    -- wait for player information
+    while (not UnitClass("player")) do
+    end
     local class
     _,class = UnitClass("player")
     if (class == "DEATH KNIGHT") then
