@@ -10,6 +10,8 @@
 -- make gem weights have level tiers (70-79, 80-84, 85)
 -- check for switching spec event
 -- go through all quest text
+-- repair using guild funds
+-- choose weapon types based on class and spec
 
 
 local reason
@@ -89,7 +91,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         StaticPopup_Hide("PARTY_INVITE")
         mainF:UnregisterEvent("PARTY_MEMBERS_CHANGED")
     elseif (event == "START_LOOT_ROLL") then
-        if (not weighting) then SetStatWeights() end
+        SetStatWeights()
         if (weighting) then
             local roll = nil
             reason = "(no reason set)"
@@ -304,13 +306,13 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (GetSpec() == "Fire") then                
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.94, Spirit = 0.05,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 2.9, SpellPenetration = 0, HasteRating = 2.21, Mp5 = 0,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 2.01, HitRating = 3.44, 
-                         ExpertiseRating = 0, MasteryRating = 1.42, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         SpellPower = 0.8, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 1.2, HitRating = 0, 
+                         ExpertiseRating = 0, MasteryRating = 1, ExperienceGained = 100,
+                         RedSockets = 20, YellowSockets = 20, BlueSockets = 15, MetaSockets = 20,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (GetSpec() == "Frost") then                
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0,
@@ -455,13 +457,13 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (GetSpec() == "Enhancement") then                
-            weighting = {Strength = 1.64, Agility = 4.03, Stamina = 0.05, Intellect = 0, Spirit = 0,
+            weighting = {Strength = 0.7, Agility = 1, Stamina = 0.1, Intellect = 0.1, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 0, SpellPenetration = 0, HasteRating = 1.37, Mp5 = 0,
-                         AttackPower = 1.54, ArmorPenetration = 0, CritRating = 1.54, HitRating = 4, 
-                         ExpertiseRating = 2.8, MasteryRating = 2.35, ExperienceGained = 100, 
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         SpellPower = 0, SpellPenetration = 0, HasteRating = 0.6, Mp5 = 0,
+                         AttackPower = 0.9, ArmorPenetration = 0.4, CritRating = 0.9, HitRating = 0.8, 
+                         ExpertiseRating = 0.3, MasteryRating = 1, ExperienceGained = 100, 
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
         elseif (GetSpec() == "Restoration") then                
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
@@ -592,6 +594,7 @@ end
 
 
 function ScanBags()
+    SetStatWeights()
     if (not weighting) then
         return nil
     end
@@ -924,6 +927,8 @@ SlashCmdList["AutoGear"] = function(msg)
         print("AutoGear:  Scanning bags for upgrades.")
         anythingBetter = ScanBags()
         if not anythingBetter then print ("AutoGear:  Nothing better was found.") end
+    elseif (param1 == "spec") then
+        print("AutoGear:  Looks like you are "..GetSpec().." spec.")
     else
         print("AutoGear:  Unrecognized command.  Use '/ag scan' to scan all bags.")
     end
