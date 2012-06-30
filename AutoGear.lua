@@ -727,7 +727,11 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
             if (string.find(text, "block rating")) then info.BlockRating = (info.BlockRating or 0) + value end
             if (string.find(text, "mastery rating")) then info.MasteryRating = (info.MasteryRating or 0) + value end
             if (string.find(text, "expertise rating")) then info.ExpertiseRating = (info.ExpertiseRating or 0) + value end
-            if (string.find(text, "experience gained")) then info.ExperienceGained = (info.ExperienceGained or 0) + value end
+            if (string.find(text, "experience gained")) then
+                if (UnitLevel("player") < 85 and not IsXPUserDisabled()) then
+                    info.ExperienceGained = (info.ExperienceGained or 0) + value
+                end
+            end
             if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
             
             if (text=="head") then info.Slot = "HeadSlot" end
