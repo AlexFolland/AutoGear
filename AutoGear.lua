@@ -12,6 +12,10 @@
 -- go through all quest text
 -- repair using guild funds
 -- choose weapon types based on class and spec
+-- allow rolling on gear within 4 levels if it's red
+-- need on bags properly
+-- other non-gear it should let you roll
+-- fix ignoring grey set bonuses
 
 
 local reason
@@ -120,9 +124,9 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                 local newAction = {}
                 newAction.action = "roll"
                 if (roll == 1) then
-                    newAction.t = GetTicks() + math.random(1500,2000)
+                    newAction.t = GetTicks()-- + math.random(1500,2000)
                 else
-                    newAction.t = GetTicks() + math.random(1000,1500)
+                    newAction.t = GetTicks()-- + math.random(1000,1500)
                 end
                 newAction.rollID = arg1
                 newAction.rollType = roll
