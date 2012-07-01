@@ -315,18 +315,18 @@ function SetStatWeights()
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, CritRating = 1.2, HitRating = 0, 
-                         ExpertiseRating = 0, MasteryRating = 1, ExperienceGained = 100,
+                         ExpertiseRating = 0, MasteryRating = 0.9, ExperienceGained = 100,
                          RedSockets = 20, YellowSockets = 20, BlueSockets = 15, MetaSockets = 20,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (GetSpec() == "Frost") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0,
-                         Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 2.66, SpellPenetration = 0, HasteRating = 1.61, Mp5 = 0,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 1.97, HitRating = 3.08, 
-                         ExpertiseRating = 0, MasteryRating = 1.43, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
+                         Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                         SpellPower = 0.9, SpellPenetration = 0.3, HasteRating = 0.8, Mp5 = 0,
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.8, HitRating = 0.7, 
+                         ExpertiseRating = 0, MasteryRating = 0.9, ExperienceGained = 100,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         end
     elseif (class == "PALADIN") then
@@ -1054,9 +1054,17 @@ function main()
             if (curAction.action == "roll") then
                 if (GetTicks() > curAction.t) then
                     if (curAction.rollType == 1) then
-                        print ("AutoGear:  Rolling NEED on "..curAction.info.Name..".")
+                        if (curAction.info and curAction.info.Name) then
+                            print ("AutoGear:  Rolling NEED on "..curAction.info.Name..".")
+                        else
+                            print ("AutoGear:  Rolling NEED.")
+                        end
                     elseif (curAction.rollType == 2) then
-                        print ("AutoGear:  Rolling GREED on "..curAction.info.Name..".")
+                        if (curAction.info and curAction.info.Name) then
+                            print ("AutoGear:  Rolling GREED on "..curAction.info.Name..".")
+                        else
+                            print ("AutoGear:  Rolling GREED.")
+                        end
                     end
                     RollOnLoot(curAction.rollID, curAction.rollType)
                     table.remove(futureAction, i)
