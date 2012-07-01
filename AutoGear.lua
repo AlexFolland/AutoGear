@@ -1,16 +1,16 @@
 --AutoGear
 
 -- to do:
--- fix equipping right when receiving
+-- fix trying to equip items that are too high level
 -- for every slot, attempt to put only the best item on, rather than all of the better ones at once
     --make sure no offhand is equipped unless there is a main hand (unless there are no main hands available)
+-- handle dual wielding 2h using titan's grip
 -- roll on off hands when they're better than 1/3rd of a 2-hander, but equip intelligently
 -- choose quest loot rewards
 -- roll need on mounts that the character doesn't have
 -- add a weight for weapon damage
 -- make gem weights have level tiers (70-79, 80-84, 85)
 -- go through all quest text
--- repair using guild funds
 -- identify bag rolls and roll need when appropriate
 -- other non-gear it should let you roll
 -- add a ui
@@ -168,11 +168,22 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         if (soldSomething) then
             print("AutoGear:  Sold all grey items for "..CashToString(totalSellValue)..".")
         end
-        if (GetRepairAllCost() > 0 and GetRepairAllCost() <= GetMoney()) then
-            print("AutoGear:  Repaired all items for "..CashToString(GetRepairAllCost())..".")
-            RepairAllItems()
-        elseif (GetRepairAllCost() > GetMoney()) then
-            print("AutoGear:  Not enough money to repair all items ("..CashToString(GetRepairAllCost())..").")
+        local cashString = CashToString(GetRepairAllCost())
+        if (GetRepairAllCost() > 0) then
+            if (CanGuildBankRepair()) then
+                RepairAllItems(1) --guild repair
+                if (GetRepairAllCost() == 0) then
+                    print("AutoGear:  Repaired all items for "..cashString.." using guild funds.")
+                end
+            end
+        end
+        if (GetRepairAllCost() > 0) then
+            if (GetRepairAllCost() <= GetMoney()) then
+                print("AutoGear:  Repaired all items for "..cashString..".")
+                RepairAllItems()
+            elseif (GetRepairAllCost() > GetMoney()) then
+                print("AutoGear:  Not enough money to repair all items ("..cashString..").")
+            end
         end
     elseif (event == "QUEST_DETAIL") then
         AcceptQuest()
@@ -180,6 +191,16 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         print("AutoGear:  "..event)
     end
 end)
+
+if (canRepair==1) then
+RepairAllItems(1);
+end
+if (GetRepairAllCost() > 0 and GetRepairAllCost() <= GetMoney()) then
+print("AutoGear: Repaired all items for "..CashToString(GetRepairAllCost())..".")
+RepairAllItems(0)
+elseif (GetRepairAllCost() > GetMoney()) then
+print("AutoGear: Not enough money to repair all items ("..CashToString(GetRepairAllCost())..").")
+end
 
 function SetStatWeights()
     -- wait for player information
