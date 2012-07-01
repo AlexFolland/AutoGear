@@ -1,22 +1,17 @@
 --AutoGear
 
 -- to do:
--- accomodate for unique-equipped
 -- fix equipping right when receiving
 -- for every slot, attempt to put only the best item on, rather than all of the better ones at once
 -- choose quest loot rewards
 -- roll need on mounts that the character doesn't have
--- add weights for weapon speed and damage
+-- add a weight for weapon damage
 -- make gem weights have level tiers (70-79, 80-84, 85)
--- check for switching spec event
 -- go through all quest text
 -- repair using guild funds
--- choose weapon types based on class and spec
--- allow rolling on gear within 4 levels if it's red
--- need on bags properly
+-- identify bag rolls and roll need when appropriate
 -- other non-gear it should let you roll
--- fix ignoring grey set bonuses
-
+-- add a ui
 
 local reason
 local futureAction = {}
@@ -25,6 +20,8 @@ local tUpdate = 0
 
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate");
+
+local weaponTypes = {dagger=1, sword=1, mace=1, shield=1, thrown=1, axe=1, bow=1, gun=1, polearm=1, staff=1, ["fist weapon"]=1, ["fishing pole"]=1}
 
 --the main frame
 mainF = CreateFrame("Frame", nil, UIParent)
@@ -141,7 +138,10 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         ConfirmLootRoll(arg1, arg2)
     elseif (event == "ITEM_PUSH") then
         --print("AutoGear:  Received an item.  Checking for gear upgrades.")
-        ScanBags()
+        --make sure a fishing pole isn't replaced while fishing
+        if (GetMainHandType() ~= "Fishing Poles") then
+            ScanBags()
+        end
     elseif (event == "EQUIP_BIND_CONFIRM") then
         EquipPendingItem(arg1)
     elseif (event == "MERCHANT_SHOW") then
@@ -185,6 +185,7 @@ function SetStatWeights()
     end
     local class
     _,class = UnitClass("player")
+    weapons = "any"
     if (class == "DEATH KNIGHT") then
         if (GetSpec() == "Blood") then
             weighting = {Strength = 0.28, Agility = 0.005, Stamina = 0.4, Intellect = 0, Spirit = 0,
@@ -224,7 +225,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 1}
-        elseif (GetSpec() == "Balance") then        
+        elseif (GetSpec() == "Balance") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.8, Mp5 = 0.01,
@@ -233,7 +234,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Feral") then        
+        elseif (GetSpec() == "Feral") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.8, Mp5 = 0.01,
@@ -242,7 +243,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Restoration") then        
+        elseif (GetSpec() == "Restoration") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.75,
                          Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.85, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0.05,
@@ -262,7 +263,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
                          DPS = 2}
-        elseif (GetSpec() == "Beast Mastery") then                
+        elseif (GetSpec() == "Beast Mastery") then
             weighting = {Strength = 0.5, Agility = 1, Stamina = 0.1, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
@@ -271,7 +272,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
                          DPS = 2}
-        elseif (GetSpec() == "Marksmanship") then                
+        elseif (GetSpec() == "Marksmanship") then
             weighting = {Strength = 0, Agility = 3.72, Stamina = 0.05, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.61, Mp5 = 0,
@@ -280,7 +281,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Survival") then                
+        elseif (GetSpec() == "Survival") then
             weighting = {Strength = 0, Agility = 3.74, Stamina = 0.05, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.33, Mp5 = 0,
@@ -291,7 +292,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "MAGE") then
-        if (GetSpec() == "Untalented") then                
+        if (GetSpec() == "Untalented") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.8, SpellPenetration = 0.005, HasteRating = 1.28, Mp5 = .005,
@@ -300,7 +301,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Arcane") then                
+        elseif (GetSpec() == "Arcane") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.8, SpellPenetration = 0.005, HasteRating = 1.28, Mp5 = .005,
@@ -309,7 +310,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Fire") then                
+        elseif (GetSpec() == "Fire") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
@@ -318,7 +319,7 @@ function SetStatWeights()
                          RedSockets = 20, YellowSockets = 20, BlueSockets = 15, MetaSockets = 20,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Frost") then                
+        elseif (GetSpec() == "Frost") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.66, SpellPenetration = 0, HasteRating = 1.61, Mp5 = 0,
@@ -348,6 +349,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (GetSpec() == "Protection") then
+            weapons = "weapon and shield"
             weighting = {Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = -0.2,
                          Armor = 0.05, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
                          AttackPower = 0.4, HasteRating = 0.5, ArmorPenetration = 0.1,
@@ -356,6 +358,7 @@ function SetStatWeights()
                          MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
                          DPS = 2}
         elseif (GetSpec() == "Retribution") then
+            weapons = "2h"
             weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.79, Mp5 = 0,
@@ -366,7 +369,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "PRIEST") then
-        if (GetSpec() == "Untalented") then                
+        if (GetSpec() == "Untalented") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.75, SpellPenetration = 0, HasteRating = 2, Mp5 = 0,
@@ -375,7 +378,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Discipline") then                
+        elseif (GetSpec() == "Discipline") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
                          Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0, HasteRating = 1, Mp5 = 0,
@@ -384,7 +387,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40,
                          HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Holy") then                
+        elseif (GetSpec() == "Holy") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.51, SpellPenetration = 0, HasteRating = 0.47, Mp5 = 0,
@@ -393,7 +396,7 @@ function SetStatWeights()
                          RedSockets = 40, YellowSockets = 40, BlueSockets = 40, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Shadow") then                
+        elseif (GetSpec() == "Shadow") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.55, Spirit = 0.05,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.75, SpellPenetration = 0, HasteRating = 2, Mp5 = 0,
@@ -404,7 +407,8 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "ROGUE") then
-        if (GetSpec() == "Untalented") then                
+        if (GetSpec() == "Untalented") then
+            weapons = "dagger and any"
             weighting = {Strength = 0.05, Agility = 2.6, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.2, Mp5 = 0,
@@ -413,7 +417,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Assassination") then                
+        elseif (GetSpec() == "Assassination") then
             weighting = {Strength = 0, Agility = 2.6, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.2, Mp5 = 0,
@@ -422,7 +426,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Combat") then                
+        elseif (GetSpec() == "Combat") then
             weighting = {Strength = 0, Agility = 2.83, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.87, Mp5 = 0,
@@ -431,7 +435,8 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Subtlety") then                
+        elseif (GetSpec() == "Subtlety") then
+            weapons = "dagger and any"
             weighting = {Strength = 0, Agility = 3.6, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.35, Mp5 = 0,
@@ -442,7 +447,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "SHAMAN") then
-        if (GetSpec() == "Untalented") then                
+        if (GetSpec() == "Untalented") then
             weighting = {Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 1, SpellPenetration = 1, HasteRating = 1, Mp5 = 0,
@@ -451,7 +456,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Elemental") then                
+        elseif (GetSpec() == "Elemental") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.36, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.62, SpellPenetration = 0, HasteRating = 1.73, Mp5 = 0,
@@ -460,7 +465,8 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Enhancement") then                
+        elseif (GetSpec() == "Enhancement") then
+            weapons = "dual wield"
             weighting = {Strength = 0.7, Agility = 1, Stamina = 0.1, Intellect = 0.1, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.6, Mp5 = 0,
@@ -469,7 +475,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Restoration") then                
+        elseif (GetSpec() == "Restoration") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.75, SpellPenetration = 0, HasteRating = 0.6, Mp5 = 0,
@@ -480,7 +486,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "WARLOCK") then
-        if (GetSpec() == "Untalented") then                
+        if (GetSpec() == "Untalented") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.81, SpellPenetration = 0.05, HasteRating = 2.32, Mp5 = 0,
@@ -489,7 +495,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Affliction") then                
+        elseif (GetSpec() == "Affliction") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.81, SpellPenetration = 0.05, HasteRating = 2.32, Mp5 = 0,
@@ -498,7 +504,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Demonology") then                
+        elseif (GetSpec() == "Demonology") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.79, Spirit = 0.005,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.91, SpellPenetration = 0.05, HasteRating = 2.37, Mp5 = 0,
@@ -507,7 +513,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Destruction") then                
+        elseif (GetSpec() == "Destruction") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.3, Spirit = 0.005,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.62, SpellPenetration = 0.05, HasteRating = 2.08, Mp5 = 0,
@@ -518,7 +524,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "WARRIOR") then
-        if (GetSpec() == "Untalented") then                
+        if (GetSpec() == "Untalented") then
             weighting = {Strength = 2.02, Agility = 0.01, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
@@ -527,7 +533,8 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Arms") then                
+        elseif (GetSpec() == "Arms") then
+            weapons = "2h"
             weighting = {Strength = 2.02, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
@@ -536,7 +543,8 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Fury") then                
+        elseif (GetSpec() == "Fury") then
+            weapons = "dual wield"
             weighting = {Strength = 2.98, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.37, Mp5 = 0,
@@ -545,7 +553,8 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Protection") then                
+        elseif (GetSpec() == "Protection") then
+            weapons = "weapon and shield"
             weighting = {Strength = 0.29, Agility = 0, Stamina = 1.5, Intellect = 0, Spirit = 0,
                          Armor = 0.16, DodgeRating = 1, ParryRating = 1.03, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0, Mp5 = 0,
@@ -620,7 +629,6 @@ function ScanBags()
                 elseif (not replaceInfo) then
                     replaceInfo = {}
                     replaceInfo.Name = "nothing"
-                    oldScore = 0
                 end
                 if (better) then
                     print("AutoGear:  "..info.Name.." ("..string.format("%.2f", newScore)..") was determined to be better than "..replaceInfo.Name.." ("..string.format("%.2f", oldScore)..").  Will equip it soon.")
@@ -634,12 +642,7 @@ function ScanBags()
                     newAction.slot = i
                     newAction.replaceSlot = replaceSlot
                     newAction.info = info
-                    local id = GetInventoryItemID("player", GetInventorySlotInfo("MainHandSlot"))
-                    local mainHandType, _
-                    if (id) then
-                        _, _, _, _, _, _, _, _, mainHandType = GetItemInfo(id)
-                    end
-                    if (info.Slot == "SecondaryHandSlot" and mainHandType and string.find(mainHandType:lower(), "2h")) then
+                    if (replaceSlot == "SecondaryHandSlot" and string.find(GetMainHandType(), "Two")) then
                         newAction.removeMainHandFirst = 1
                     end
                     table.insert(futureAction, newAction)
@@ -648,6 +651,19 @@ function ScanBags()
         end
     end
     return anythingBetter
+end
+
+function GetMainHandType()
+    local id = GetInventoryItemID("player", GetInventorySlotInfo("MainHandSlot"))
+    local mainHandType, _
+    if (id) then
+        _, _, _, _, _, _, mainHandType = GetItemInfo(id)
+    end
+    if mainHandType then
+        return mainHandType
+    else
+        return ""
+    end
 end
 
 function PrintItem(info)
@@ -686,7 +702,7 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
             if (string.find(text, "chance to")) then multiplier = multiplier/3.0 end
             if (string.find(text, "use:")) then multiplier = multiplier/6.0 end
             -- don't count greyed out set bonus lines
-            if (r < 0.5 and g < 0.5 and b < 0.5 and string.find(text, "set:")) then multiplier = 0 end
+            if (r < 0.8 and g < 0.8 and b < 0.8 and string.find(text, "set:")) then multiplier = 0 end
             -- note: these proc checks may not be correct for all cases
             if (string.find(text, "deal damage")) then multiplier = multiplier * (weighting.DamageProc or 0) end
             if (string.find(text, "damage and healing")) then multiplier = multiplier * math.max((weighting.HealingProc or 0), (weighting.DamageProc or 0))
@@ -703,6 +719,12 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
                 value = value * multiplier
             else
                 value = 0
+            end
+            if (string.find(text, "unique")) then
+                if (PlayerIsWearingItem(info.Name)) then
+                    cannotUse = 1
+                    reason = "(this item is unique and you already have one)"
+                end
             end
             if (string.find(text, "strength")) then info.Strength = (info.Strength or 0) + value end
             if (string.find(text, "agility")) then info.Agility = (info.Agility or 0) + value end
@@ -752,16 +774,54 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
             if (text=="feet") then info.Slot = "FeetSlot" end
             if (text=="finger") then info.Slot = "Finger0Slot" end
             if (text=="trinket") then info.Slot = "Trinket0Slot" end
-            if (text=="main hand") then info.Slot = "MainHandSlot" end
-            if (text=="two-hand") then info.Slot = "MainHandSlot"; info.IncludeOffHand=1 end
-            if (text=="held in off-hand") then info.Slot = "SecondaryHandSlot" end
-            if (text=="off hand") then info.Slot = "SecondaryHandSlot" end
-            if (text=="one-hand") then
+            if (text=="main hand") then
+                if (weapons == "dagger and any" and GetWeaponType() ~= "dagger") then
+                    cannotUse = 1
+                    reason = "(this spec needs a dagger main hand)"
+                elseif (weapons == "2h") then
+                    cannotUse = 1
+                    reason = "(this spec needs a two-hand weapon)"
+                end
                 info.Slot = "MainHandSlot"
-                if GetSpellInfo("Dual Wielding") then
-                    info.Slot = "SecondaryHandSlot"
-                    -- TO DO: add logic so this will work for either slot, maybe like this:
-                    --info.Slot2 = "SecondaryHandSlot"
+            end
+            if (text=="two-hand") then
+                if (weapons == "weapon and shield") then
+                    cannotUse = 1
+                    reason = "(this spec needs weapon and shield)"
+                elseif (weapons == "dual wield") then
+                    cannotUse = 1
+                    reason = "(this spec should dual wield)"
+                end
+                info.Slot = "MainHandSlot"; info.IncludeOffHand=1
+            end
+            if (text=="held in off-hand") then
+                if (weapons == "2h" or weapons == "dual wield" or weapons == "weapon and shield") then
+                    cannotUse = 1
+                    reason = "(this spec needs the off-hand for a weapon or shield)"
+                end
+                info.Slot = "SecondaryHandSlot"
+            end
+            if (text=="off hand") then
+                if (weapons == "2h") then
+                    cannotUse = 1
+                    reason = "(this spec should use a two-hand weapon)"
+                elseif (weapons == "weapon and shield" and GetWeaponType ~= "shield") then
+                    cannotUse = 1
+                    reason = "(this spec needs a shield in the off-hand)"
+                elseif (weapons == "dual wield" and GetWeaponType == "shield") then
+                    cannotUse = 1
+                    reason = "(this spec should dual wield and not use a shield)"
+                end
+                info.Slot = "SecondaryHandSlot"
+            end
+            if (text=="one-hand") then
+                if (weapons == "2h") then
+                    cannotUse = 1
+                    reason = "(this spec should use a two-hand weapon)"
+                end
+                info.Slot = "MainHandSlot"
+                if (weapons == "dual wield" or weapons == "dagger and any") then
+                    info.Slot2 = "SecondaryHandSlot"
                 end
             end
             if (text=="ranged" or text=="relic") then info.Slot = "RangedSlot" end
@@ -773,8 +833,15 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
             --check for red text
             local r, g, b, a = mytext:GetTextColor()
             if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and mytext:GetText()) then --this is red text
-                reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(mytext:GetText() or "nil").."'')"
-                cannotUse = 1
+                if (string.find(text, "requires level")) then
+                    if (value - UnitLevel("player") > 5) then
+                        cannotUse = 1
+                        reason = "(item is more than 5 levels above you)"
+                    end
+                else
+                    reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(mytext:GetText() or "nil").."'')"
+                    cannotUse = 1
+                end
             end
         end
         
@@ -800,14 +867,30 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
     return info
 end
 
+function GetWeaponType()
+    --this function assumes the tooltip has already been set
+    --search the right text for a recognized weapon type
+    rightText = getglobal("AutoGearTooltipTextRight"..i)
+    if (rightText) then
+        local text = rightText:GetText():lower()
+        if (weaponTypes[text]) then return text end
+    end
+end
+
+function PlayerIsWearingItem(name)
+    --search all worn items and the 4 top-level bag slots
+    for i = 0, 23 do
+        local id = GetInventoryItemID("player", i)
+        if (id) then
+            if GetItemInfo(id) == name then return 1 end
+        end
+    end
+    return nil
+end
+
 function DetermineIfBetter(newItemInfo, weighting)
     local newItemScore = DetermineItemScore(newItemInfo, weighting)
-    local id = GetInventoryItemID("player", GetInventorySlotInfo("MainHandSlot"))
-    local mainHandType, _
-    if (id) then
-        _, _, _, _, _, _, _, _, mainHandType = GetItemInfo(id)
-    end
-    local equippedItemScore
+    local equippedItemScore, replaceSlot
     if (newItemInfo.Usable) then
         if (string.find(newItemInfo.Slot:lower(), "trinket")) then
             local trinket0Score = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("Trinket0Slot")), weighting)
@@ -834,10 +917,30 @@ function DetermineIfBetter(newItemInfo, weighting)
             local offHandScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("SecondaryHandSlot")), weighting)
             equippedItemScore = mainHandScore + offHandScore
             replaceSlot = "MainHandSlot"
-        -- check if the new item is an offhand and a 2-hander is equipped
-        elseif (newItemInfo.Slot=="SecondaryHandSlot" and mainHandType and string.find(mainHandType:lower(), "2h")) then
+        --check if the new item is a one-handed weapon and a 2-hander is equipped
+        elseif ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and string.find(GetMainHandType(), "Two")) then
             --take only half(?) of the 2-hander's score
             equippedItemScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
+            replaceSlot = newItemInfo.Slot
+        elseif (newItemInfo.Slot2) then
+            local equipped1, equipped2
+            if ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and string.find(GetMainHandType(), "Two")) then
+                equipped1 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
+            else
+                equipped1 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot)), weighting)
+            end
+            if ((newItemInfo.Slot2=="MainHandSlot" or newItemInfo.Slot2=="SecondaryHandSlot") and string.find(GetMainHandType(), "Two")) then
+                equipped2 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
+            else
+                equipped2 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot2)), weighting)
+            end
+            if (equipped1 < equipped2) then
+                equippedItemScore = equipped1
+                replaceSlot = newItemInfo.Slot
+            else
+                equippedItemScore = equipped2
+                replaceSlot = newItemInfo.Slot2
+            end
         elseif (newItemInfo.Slot) then
             equippedItemScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot)), weighting)
             replaceSlot = newItemInfo.Slot
@@ -912,7 +1015,7 @@ function PutItemInEmptyBagSlot()
             if (i == 0) then
                 PutItemInBackpack()
             else
-                PutItemInBag(24-i)
+                PutItemInBag(23-i)
             end
         end
     end
@@ -936,7 +1039,7 @@ SlashCmdList["AutoGear"] = function(msg)
         anythingBetter = ScanBags()
         if not anythingBetter then print ("AutoGear:  Nothing better was found.") end
     elseif (param1 == "spec") then
-        print("AutoGear:  Looks like you are "..GetSpec().." spec.")
+        print("AutoGear:  Looks like you are "..GetSpec()..".")
     else
         print("AutoGear:  Unrecognized command.  Use '/ag scan' to scan all bags.")
     end
@@ -951,9 +1054,9 @@ function main()
             if (curAction.action == "roll") then
                 if (GetTicks() > curAction.t) then
                     if (curAction.rollType == 1) then
-                        print ("AutoGear:  Rolling NEED.")
+                        print ("AutoGear:  Rolling NEED on "..curAction.info.Name..".")
                     elseif (curAction.rollType == 2) then
-                        print ("AutoGear:  Rolling GREED.")
+                        print ("AutoGear:  Rolling GREED on "..curAction.info.Name..".")
                     end
                     RollOnLoot(curAction.rollID, curAction.rollType)
                     table.remove(futureAction, i)
