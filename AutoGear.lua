@@ -3,6 +3,8 @@
 -- to do:
 -- fix equipping right when receiving
 -- for every slot, attempt to put only the best item on, rather than all of the better ones at once
+    --make sure no offhand is equipped unless there is a main hand (unless there are no main hands available)
+-- roll on off hands when they're better than 1/3rd of a 2-hander, but equip intelligently
 -- choose quest loot rewards
 -- roll need on mounts that the character doesn't have
 -- add a weight for weapon damage
@@ -41,19 +43,19 @@ mainF:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 mainF:RegisterEvent("ITEM_PUSH")
 mainF:RegisterEvent("EQUIP_BIND_CONFIRM")
 mainF:RegisterEvent("MERCHANT_SHOW")
---mainF:RegisterEvent("LOOT_BIND_CONFIRM") --only from looting, not rolling on loot
-mainF:RegisterEvent("QUEST_ACCEPTED")        --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
-mainF:RegisterEvent("QUEST_ACCEPT_CONFIRM")    --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
-mainF:RegisterEvent("QUEST_COMPLETE")        --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
-mainF:RegisterEvent("QUEST_DETAIL")            --Fires when details of an available quest are presented by a questgiver
-mainF:RegisterEvent("QUEST_FINISHED")        --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
-mainF:RegisterEvent("QUEST_GREETING")        --Fires when a questgiver presents a greeting along with a list of active or available quests
-mainF:RegisterEvent("QUEST_ITEM_UPDATE")    --Fires when information about items in a questgiver dialog is updated
-mainF:RegisterEvent("QUEST_LOG_UPDATE")        --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
-mainF:RegisterEvent("QUEST_POI_UPDATE")        --This event is not yet documented
-mainF:RegisterEvent("QUEST_PROGRESS")        --Fires when interacting with a questgiver about an active quest
-mainF:RegisterEvent("QUEST_QUERY_COMPLETE")    --Fires when quest completion information is available from the server
-mainF:RegisterEvent("QUEST_WATCH_UPDATE")    --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
+--mainF:RegisterEvent("LOOT_BIND_CONFIRM")      --only from looting, not rolling on loot
+mainF:RegisterEvent("QUEST_ACCEPTED")           --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
+mainF:RegisterEvent("QUEST_ACCEPT_CONFIRM")     --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
+mainF:RegisterEvent("QUEST_COMPLETE")           --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
+mainF:RegisterEvent("QUEST_DETAIL")             --Fires when details of an available quest are presented by a questgiver
+mainF:RegisterEvent("QUEST_FINISHED")           --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
+mainF:RegisterEvent("QUEST_GREETING")           --Fires when a questgiver presents a greeting along with a list of active or available quests
+mainF:RegisterEvent("QUEST_ITEM_UPDATE")        --Fires when information about items in a questgiver dialog is updated
+mainF:RegisterEvent("QUEST_LOG_UPDATE")         --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
+mainF:RegisterEvent("QUEST_POI_UPDATE")         --This event is not yet documented
+mainF:RegisterEvent("QUEST_PROGRESS")           --Fires when interacting with a questgiver about an active quest
+mainF:RegisterEvent("QUEST_QUERY_COMPLETE")     --Fires when quest completion information is available from the server
+mainF:RegisterEvent("QUEST_WATCH_UPDATE")       --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
 mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     if (event == "ADDON_LOADED" and arg1 == "AutoGear") then
         if (not AutoGearDB) then AutoGearDB = {} end
@@ -65,7 +67,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             SpellPower, SpellPenetration, HasteRating, Mp5,
 
             AttackPower, ArmorPenetration, CritRating, HitRating, 
-            ExpertiseRating,MasteryRating,ExperienceGained
+            ExpertiseRating, MasteryRating, ExperienceGained
             RedSockets, YellowSockets, BlueSockets, MetaSockets,
 
             HealingProc, DamageProc, DamageSpellProc, MeleeProc, RangedProc (multipliers)
@@ -642,7 +644,7 @@ function ScanBags()
                     newAction.slot = i
                     newAction.replaceSlot = replaceSlot
                     newAction.info = info
-                    if (replaceSlot == "SecondaryHandSlot" and string.find(GetMainHandType(), "Two")) then
+                    if (replaceSlot == "SecondaryHandSlot" and TwoHandEquipped()) then
                         newAction.removeMainHandFirst = 1
                     end
                     table.insert(futureAction, newAction)
@@ -664,6 +666,13 @@ function GetMainHandType()
     else
         return ""
     end
+end
+
+function TwoHandEquipped()
+    return string.find(GetMainHandType(), "Two") or
+        string.find(GetMainHandType(), "Staves") or
+        string.find(GetMainHandType(), "Fishing Poles") or
+        string.find(GetMainHandType(), "Polearms") 
 end
 
 function PrintItem(info)
@@ -918,18 +927,18 @@ function DetermineIfBetter(newItemInfo, weighting)
             equippedItemScore = mainHandScore + offHandScore
             replaceSlot = "MainHandSlot"
         --check if the new item is a one-handed weapon and a 2-hander is equipped
-        elseif ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and string.find(GetMainHandType(), "Two")) then
+        elseif ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and TwoHandEquipped()) then
             --take only half(?) of the 2-hander's score
             equippedItemScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
             replaceSlot = newItemInfo.Slot
         elseif (newItemInfo.Slot2) then
             local equipped1, equipped2
-            if ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and string.find(GetMainHandType(), "Two")) then
+            if ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and TwoHandEquipped()) then
                 equipped1 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
             else
                 equipped1 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot)), weighting)
             end
-            if ((newItemInfo.Slot2=="MainHandSlot" or newItemInfo.Slot2=="SecondaryHandSlot") and string.find(GetMainHandType(), "Two")) then
+            if ((newItemInfo.Slot2=="MainHandSlot" or newItemInfo.Slot2=="SecondaryHandSlot") and TwoHandEquipped()) then
                 equipped2 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
             else
                 equipped2 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot2)), weighting)
@@ -1090,10 +1099,15 @@ function main()
                     elseif (curAction.waitingOnEmptyMainHand and not GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
                         print("AutoGear:  Mainhand detected to be clear.  Equipping now.")
                         curAction.waitingOnEmptyMainHand = nil
+                    elseif (curAction.ensuringEquipped) then
+                        if (GetInventoryItemID("player", GetInventorySlotInfo(curAction.replaceSlot)) == GetContainerItemID(curAction.container, curAction.slot)) then
+                            curAction.ensuringEquipped = nil
+                            table.remove(futureAction, i)
+                        end
                     else
                         PickupContainerItem(curAction.container, curAction.slot)
                         EquipCursorItem(GetInventorySlotInfo(curAction.replaceSlot))
-                        table.remove(futureAction, i)
+                        curAction.ensuringEquipped = 1
                     end
                 end
             end
