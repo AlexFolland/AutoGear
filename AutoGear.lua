@@ -172,6 +172,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         if (GetRepairAllCost() > 0) then
             if (CanGuildBankRepair()) then
                 RepairAllItems(1) --guild repair
+                --fix this.  it doesn't see 0 yet, even if it repaired
                 if (GetRepairAllCost() == 0) then
                     print("AutoGear:  Repaired all items for "..cashString.." using guild funds.")
                 end
@@ -363,13 +364,13 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (GetSpec() == "Holy") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.75,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.9,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 0.8, SpellPenetration = 0, HasteRating = 0.4, Mp5 = 0,
+                         SpellPower = 0.7, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, CritRating = 0.35, HitRating = 0, 
                          ExpertiseRating = 0, MasteryRating = 0.3, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (GetSpec() == "Protection") then
             weapons = "weapon and shield"
@@ -849,9 +850,13 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
                     cannotUse = 1
                     reason = "(this spec should use a two-hand weapon)"
                 end
-                info.Slot = "MainHandSlot"
-                if (weapons == "dual wield" or weapons == "dagger and any") then
+                if (weapons == "dagger and any" and GetWeaponType() ~= "dagger") then
+                    info.Slot = "SecondaryHandSlot"
+                elseif (weapons == "dual wield" or weapons == "dagger and any") then
+                    info.Slot = "MainHandSlot"
                     info.Slot2 = "SecondaryHandSlot"
+                else
+                    info.Slot = "MainHandSlot"
                 end
             end
             if (text=="ranged" or text=="relic") then info.Slot = "RangedSlot" end
@@ -900,10 +905,12 @@ end
 function GetWeaponType()
     --this function assumes the tooltip has already been set
     --search the right text for a recognized weapon type
-    rightText = getglobal("AutoGearTooltipTextRight"..i)
-    if (rightText) then
-        local text = rightText:GetText():lower()
-        if (weaponTypes[text]) then return text end
+    for i=1, AutoGearTooltip:NumLines() do
+        rightText = getglobal("AutoGearTooltipTextRight"..i)
+        if (rightText and rightText:GetText()) then
+            local text = rightText:GetText():lower()
+            if (weaponTypes[text]) then return text end
+        end
     end
 end
 
@@ -942,6 +949,7 @@ function DetermineIfBetter(newItemInfo, weighting)
                 replaceSlot = "Finger1Slot"
                 equippedItemScore = finger1Score
             end
+        --this is reportedly not happening
         elseif (newItemInfo.IncludeOffHand) then
             local mainHandScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting)
             local offHandScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("SecondaryHandSlot")), weighting)
