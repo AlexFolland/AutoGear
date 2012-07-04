@@ -258,7 +258,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Feral") then
+        elseif (GetSpec() == "Feral Combat") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.8, Mp5 = 0.01,
@@ -461,13 +461,13 @@ function SetStatWeights()
                          DPS = 2}
         elseif (GetSpec() == "Subtlety") then
             weapons = "dagger and any"
-            weighting = {Strength = 0, Agility = 3.6, Stamina = 0.05, Intellect = 0, Spirit = 0,
-                         Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 0, SpellPenetration = 0, HasteRating = 1.35, Mp5 = 0,
-                         AttackPower = 1.26, ArmorPenetration = 0, CritRating = 1.1, HitRating = 1.4, 
-                         ExpertiseRating = 1.15, MasteryRating = 0.9, ExperienceGained = 100, 
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+            weighting = {Strength = 0.3, Agility = 1, Stamina = 0.2, Intellect = 0, Spirit = 0,
+                         Armor = 0.001, DodgeRating = 0.1, ParryRating = 0.1, BlockRating = 0,
+                         SpellPower = 0, SpellPenetration = 0, HasteRating = 0.5, Mp5 = 0,
+                         AttackPower = 0.4, ArmorPenetration = 0, CritRating = 0.7, HitRating = 0.6, 
+                         ExpertiseRating = 0, MasteryRating = 0.9, ExperienceGained = 100, 
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
         end
     elseif (class == "SHAMAN") then
@@ -481,13 +481,13 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (GetSpec() == "Elemental") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.36, Spirit = 0,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 2.62, SpellPenetration = 0, HasteRating = 1.73, Mp5 = 0,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 1.11, HitRating = 2.7, 
-                         ExpertiseRating = 0, MasteryRating = 1.62, ExperienceGained = 100, 
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         SpellPower = 0.6, SpellPenetration = 0.1, HasteRating = 0.9, Mp5 = 0,
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.9, HitRating = 0, 
+                         ExpertiseRating = 0, MasteryRating = 1, ExperienceGained = 100, 
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (GetSpec() == "Enhancement") then
             weapons = "dual wield"
