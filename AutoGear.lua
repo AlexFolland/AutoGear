@@ -33,6 +33,7 @@ mainF:SetScript("OnUpdate", function()
     main()
 end)
 
+mainF:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 mainF:RegisterEvent("ADDON_LOADED")
 mainF:RegisterEvent("PARTY_INVITE_REQUEST")
 mainF:RegisterEvent("START_LOOT_ROLL")
@@ -55,7 +56,9 @@ mainF:RegisterEvent("QUEST_PROGRESS")           --Fires when interacting with a 
 mainF:RegisterEvent("QUEST_QUERY_COMPLETE")     --Fires when quest completion information is available from the server
 mainF:RegisterEvent("QUEST_WATCH_UPDATE")       --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
 mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
-    if (event == "ADDON_LOADED" and arg1 == "AutoGear") then
+    if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
+        ScanBags2()
+    elseif (event == "ADDON_LOADED" and arg1 == "AutoGear") then
         if (not AutoGearDB) then AutoGearDB = {} end
         -- create the stat weights
         -- supported stats are:
@@ -823,8 +826,8 @@ function ScanBags2(lootRollItemID)
                 local mainScore = DetermineItemScore(equippedMain, weighting)
                 local equippedOff = ReadItemInfo(17)
                 local offScore = DetermineItemScore(equippedOff, weighting)
-                print("AutoGear:  "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.")
-                PrintItem(best[16].info)
+                print("AutoGear:  "..(best[19].info.Name or "nothing").." ("..string.format("%.2f", best[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.")
+                PrintItem(best[19].info)
                 PrintItem(equippedMain)
                 PrintItem(equippedOff)
             end
