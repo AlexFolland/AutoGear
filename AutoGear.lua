@@ -2,8 +2,6 @@
 
 -- to do:
 -- fix trying to equip items that are too high level
--- for every slot, attempt to put only the best item on, rather than all of the better ones at once
-    --make sure no offhand is equipped unless there is a main hand (unless there are no main hands available)
 -- handle dual wielding 2h using titan's grip
 -- roll on off hands when they're better than 1/3rd of a 2-hander, but equip intelligently
 -- choose quest loot rewards
@@ -14,6 +12,8 @@
 -- identify bag rolls and roll need when appropriate
 -- other non-gear it should let you roll
 -- add a ui
+-- add rolling on offset
+-- remove armor penetration
 
 local reason
 local futureAction = {}
@@ -32,8 +32,6 @@ mainF:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
 mainF:SetScript("OnUpdate", function()
     main()
 end)
-
-function GetTicks() return GetTime() * 1000 end
 
 mainF:RegisterEvent("ADDON_LOADED")
 mainF:RegisterEvent("PARTY_INVITE_REQUEST")
@@ -123,9 +121,9 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                 local newAction = {}
                 newAction.action = "roll"
                 if (roll == 1) then
-                    newAction.t = GetTicks()-- + math.random(1500,2000)
+                    newAction.t = GetTime()-- + math.random(1.5, 2.0)
                 else
-                    newAction.t = GetTicks()-- + math.random(1000,1500)
+                    newAction.t = GetTime()-- + math.random(1.0, 1.5)
                 end
                 newAction.rollID = arg1
                 newAction.rollType = roll
@@ -142,7 +140,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         --print("AutoGear:  Received an item.  Checking for gear upgrades.")
         --make sure a fishing pole isn't replaced while fishing
         if (GetMainHandType() ~= "Fishing Poles") then
-            ScanBags()
+            ScanBags2()
         end
     elseif (event == "EQUIP_BIND_CONFIRM") then
         EquipPendingItem(arg1)
@@ -241,13 +239,13 @@ function SetStatWeights()
         end
     elseif (class == "DRUID") then
         if (GetSpec() == "Untalented") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 2.97, Spirit = 0.05,
-                         Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 2.3, SpellPenetration = 0.05, HasteRating = 2.15, Mp5 = 0.05,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.87, HitRating = 2.4, 
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
+                         Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                         SpellPower = 0.5, SpellPenetration = 0, HasteRating = 0.5, Mp5 = 0.05,
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.9, HitRating = 0.9, 
                          ExpertiseRating = 0, MasteryRating = 1.45, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 1}
         elseif (GetSpec() == "Balance") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
@@ -259,22 +257,22 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (GetSpec() == "Feral Combat") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
-                         Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.8, Mp5 = 0.01,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.4, HitRating = 0.05, 
-                         ExpertiseRating = 0, MasteryRating = 0.6, ExperienceGained = 100,
+            weighting = {Strength = 0, Agility = 1, Stamina = 1, Intellect = 0, Spirit = 0,
+                         Armor = 0.1, DodgeRating = 0.4, ParryRating = 0, BlockRating = 0,
+                         SpellPower = 0, SpellPenetration = 0, HasteRating = 0.3, Mp5 = 0,
+                         AttackPower = 0.4, ArmorPenetration = 0, CritRating = 0.1, HitRating = 0.3, 
+                         ExpertiseRating = 0.4, MasteryRating = 0.4, ExperienceGained = 100,
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
-                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
-                         DPS = 0.01}
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+                         DPS = 0.4}
         elseif (GetSpec() == "Restoration") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.75,
-                         Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+                         Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.85, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0.05,
                          AttackPower = 0, ArmorPenetration = 0, CritRating = 0.6, HitRating = 0, 
                          ExpertiseRating = 0, MasteryRating = 0.65, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         end
     elseif (class == "HUNTER") then
@@ -661,12 +659,12 @@ function ScanBags()
                     anythingBetter = 1
                     local newAction = {}
                     newAction.action = "equip"
-                    newAction.t = GetTicks() + 0.5 --do it after a short delay
+                    newAction.t = GetTime() + 0.5 --do it after a short delay
                     newAction.container = bag
                     newAction.slot = i
-                    newAction.replaceSlot = replaceSlot
+                    newAction.replaceSlot = GetInventorySlotInfo(replaceSlot)
                     newAction.info = info
-                    if (replaceSlot == "SecondaryHandSlot" and TwoHandEquipped()) then
+                    if (replaceSlot == "SecondaryHandSlot" and IsTwoHandEquipped()) then
                         newAction.removeMainHandFirst = 1
                     end
                     table.insert(futureAction, newAction)
@@ -675,6 +673,205 @@ function ScanBags()
         end
     end
     return anythingBetter
+end
+
+function ScanBags2(lootRollItemID)
+    SetStatWeights()
+    if (not weighting) then
+        return nil
+    end
+    local anythingBetter = nil
+    --create the table for best items
+    best = {}
+    local info, score, i, bag, slot
+    --look at all equipped items and set starting best scores
+    for i = 1, 18 do
+        info = ReadItemInfo(i)
+        score = DetermineItemScore(info, weighting)
+        best[i] = {}
+        best[i].info = info
+        best[i].score = score
+        best[i].equipped = 1
+    end
+    --pretend slot 19 is a separate slot for 2-handers
+    if (IsTwoHandEquipped()) then
+        best[19] = {}
+        best[19].info = best[16].info
+        best[19].score = best[16].score
+        best[19].equipped = 1
+        best[16].info = nil
+        best[16].score = 0
+        best[16].equipped = nil
+    else
+        best[19] = {}
+        best[19].info = nil
+        best[19].score = 0
+        best[19].equipped = nil
+    end
+    --look at all items in bags
+    for bag = 0, NUM_BAG_SLOTS do
+        local slotMax = GetContainerNumSlots(bag)
+        for slot = 0, slotMax do
+            local _,_,_,_,_,_, link = GetContainerItemInfo(bag, slot)
+            if (link) then
+                info = ReadItemInfo(nil,nil,bag,slot)
+                LookAtItem(best, info, bag, slot, nil)
+            end
+        end
+    end
+    --look at item being rolled on (if any)
+    if (lootRollItemID) then
+        info = ReadItemInfo(nil, lootRollItemID)
+        LookAtItem(best, info, nil, nil, 1)
+    end
+    --create all future equip actions required (only if not rolling currently)
+    if (not lootRollItemID) then
+        for i = 1, 18 do
+            if i == 16 or i == 17 then
+                --skip for now
+            else
+                if (not best[i].equipped) then
+                    equippedInfo = ReadItemInfo(i)
+                    equippedScore = DetermineItemScore(equippedInfo, weighting)
+                    print("AutoGear:  "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  Equipping.")
+                    PrintItem(best[i].info)
+                    PrintItem(equippedInfo)
+                    anythingBetter = 1
+                    local newAction = {}
+                    newAction.action = "equip"
+                    newAction.t = GetTime()
+                    newAction.container = best[i].bag
+                    newAction.slot = best[i].slot
+                    newAction.replaceSlot = i
+                    newAction.info = best[i].info
+                    table.insert(futureAction, newAction)
+                end
+            end
+        end
+        --handle main and off-hand
+        if (best[16].score + best[17].score > best[19].score) then
+            local extraDelay = 0
+            local mainSwap, offSwap
+            --main hand
+            if (not best[16].equipped) then
+                mainSwap = 1
+                local newAction = {}
+                newAction.action = "equip"
+                newAction.t = GetTime()
+                newAction.container = best[16].bag
+                newAction.slot = best[16].slot
+                newAction.replaceSlot = 16
+                newAction.info = best[16].info
+                table.insert(futureAction, newAction)
+                extraDelay = 0.5
+            end
+            --off-hand
+            if (not best[17].equipped) then
+                offSwap = 1
+                local newAction = {}
+                newAction.action = "equip"
+                newAction.t = GetTime() + extraDelay --do it after a longer delay
+                newAction.container = best[17].bag
+                newAction.slot = best[17].slot
+                newAction.replaceSlot = 17
+                newAction.info = best[17].info
+                table.insert(futureAction, newAction)
+            end
+            if (mainSwap or offSwap) then
+                anythingBetter = 1
+                if (mainSwap and offSwap) then
+                    if (IsTwoHandEquipped()) then
+                        local equippedMain = ReadItemInfo(16)
+                        local mainScore = DetermineItemScore(equippedMain, weighting)
+                        print("AutoGear:  "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..").  Equipping.")
+                        PrintItem(best[16].info)
+                        PrintItem(best[17].info)
+                        PrintItem(equippedMain)
+                    else
+                        local equippedMain = ReadItemInfo(16)
+                        local mainScore = DetermineItemScore(equippedMain, weighting)
+                        local equippedOff = ReadItemInfo(17)
+                        local offScore = DetermineItemScore(equippedOff, weighting)
+                        print("AutoGear:  "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.")
+                        PrintItem(best[16].info)
+                        PrintItem(best[17].info)
+                        PrintItem(equippedMain)
+                        PrintItem(equippedOff)
+                    end
+                else
+                    local i = 16
+                    if (offSwap) then i = 17 end
+                    local equippedInfo = ReadItemInfo(i)
+                    local equippedScore = DetermineItemScore(equippedInfo, weighting)
+                    print("AutoGear:  "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  Equipping.")
+                    PrintItem(best[i].info)
+                    PrintItem(equippedInfo)
+                end
+            end
+        else
+            if (not best[19].equipped) then
+                anythingBetter = 1
+                local newAction = {}
+                newAction.action = "equip"
+                newAction.t = GetTime() + 0.5 --do it after a short delay
+                newAction.container = best[19].bag
+                newAction.slot = best[19].slot
+                newAction.replaceSlot = 16
+                newAction.info = best[19].info
+                table.insert(futureAction, newAction)
+                local equippedMain = ReadItemInfo(16)
+                local mainScore = DetermineItemScore(equippedMain, weighting)
+                local equippedOff = ReadItemInfo(17)
+                local offScore = DetermineItemScore(equippedOff, weighting)
+                print("AutoGear:  "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.")
+                PrintItem(best[16].info)
+                PrintItem(equippedMain)
+                PrintItem(equippedOff)
+            end
+        end
+    else
+        --decide whether to roll on the item or not
+    end
+    if (not anythingBetter) then
+        print("AutoGear:  Nothing better was found")
+    end
+end
+
+--companion function to ScanBags2
+function LookAtItem(best, info, bag, slot, rollOn)
+    local score, i
+    if (info.Usable) then
+        score = DetermineItemScore(info, weighting)
+        i = GetInventorySlotInfo(info.Slot)
+        --ignore it if it's a tabard
+        if (i == 19) then return end
+        --compare to the lowest score ring or trinket
+        if (i == 11 and best[12].score < best[11].score) then i = 12 end
+        if (i == 13 and best[14].score < best[13].score) then i = 14 end
+        if (i == 16 and IsItemTwoHanded(GetContainerItemID(bag, slot))) then i = 19 end
+        if (score > best[i].score) then
+            best[i].info = info
+            best[i].score = score
+            best[i].equipped = nil
+            best[i].bag = bag
+            best[i].slot = slot
+            best[i].rollOn = rollOn
+        end
+    end
+end
+
+function IsItemTwoHanded(itemID)
+    if (not itemID) then return nil end
+    local mainHandType = select(7, GetItemInfo(itemID))
+    return mainHandType and 
+        (string.find(mainHandType, "Two") or
+        string.find(mainHandType, "Staves") or
+        string.find(mainHandType, "Fishing Poles") or
+        string.find(mainHandType, "Polearms"))
+end
+
+function IsTwoHandEquipped()
+    return IsItemTwoHanded(GetInventoryItemID("player", 16)) --16 = main hand
 end
 
 function GetMainHandType()
@@ -690,15 +887,8 @@ function GetMainHandType()
     end
 end
 
-function TwoHandEquipped()
-    return string.find(GetMainHandType(), "Two") or
-        string.find(GetMainHandType(), "Staves") or
-        string.find(GetMainHandType(), "Fishing Poles") or
-        string.find(GetMainHandType(), "Polearms") 
-end
-
 function PrintItem(info)
-    print("AutoGear:      "..info.Name..":")
+    if (info and info.Name) then print("AutoGear:      "..info.Name..":") end
     for k,v in pairs(info) do
         if (k ~= "Name" and weighting[k]) then
             print("AutoGear:          "..k..": "..string.format("%.2f", v).." * "..weighting[k].." = "..string.format("%.2f", v * weighting[k]))
@@ -723,7 +913,7 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
     info.BlueSockets = 0
     info.MetaSockets = 0
     spec = GetSpec()
-    for i=1, AutoGearTooltip:NumLines() do
+    for i = 1, AutoGearTooltip:NumLines() do
         local mytext = getglobal("AutoGearTooltipTextLeft"..i)
         if (mytext) then
             local r, g, b, a = mytext:GetTextColor()
@@ -868,15 +1058,11 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
             --check for red text
             local r, g, b, a = mytext:GetTextColor()
             if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and mytext:GetText()) then --this is red text
-                if (string.find(text, "requires level")) then
-                    if (value - UnitLevel("player") > 5) then
-                        cannotUse = 1
-                        reason = "(item is more than 5 levels above you)"
-                    end
-                else
-                    reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(mytext:GetText() or "nil").."'')"
-                    cannotUse = 1
+                if (string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
+                    info.Within5levels = 1
                 end
+                reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(mytext:GetText() or "nil").."'')"
+                cannotUse = 1
             end
         end
         
@@ -895,7 +1081,7 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
     if (info.BlueSockets == 0) then info.BlueSockets = nil end
     if (info.MetaSockets == 0) then info.MetaSockets = nil end
     if (not cannotUse and info.Slot) then
-        info.Usable=1
+        info.Usable = 1
     elseif (not info.Slot) then 
         reason = "(info.Slot was nil)"
     end
@@ -914,6 +1100,7 @@ function GetWeaponType()
     end
 end
 
+--used for unique
 function PlayerIsWearingItem(name)
     --search all worn items and the 4 top-level bag slots
     for i = 0, 23 do
@@ -949,25 +1136,24 @@ function DetermineIfBetter(newItemInfo, weighting)
                 replaceSlot = "Finger1Slot"
                 equippedItemScore = finger1Score
             end
-        --this is reportedly not happening
         elseif (newItemInfo.IncludeOffHand) then
             local mainHandScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting)
             local offHandScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("SecondaryHandSlot")), weighting)
             equippedItemScore = mainHandScore + offHandScore
             replaceSlot = "MainHandSlot"
         --check if the new item is a one-handed weapon and a 2-hander is equipped
-        elseif ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and TwoHandEquipped()) then
+        elseif ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and IsTwoHandEquipped()) then
             --take only half(?) of the 2-hander's score
             equippedItemScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
             replaceSlot = newItemInfo.Slot
         elseif (newItemInfo.Slot2) then
             local equipped1, equipped2
-            if ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and TwoHandEquipped()) then
+            if ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and IsTwoHandEquipped()) then
                 equipped1 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
             else
                 equipped1 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot)), weighting)
             end
-            if ((newItemInfo.Slot2=="MainHandSlot" or newItemInfo.Slot2=="SecondaryHandSlot") and TwoHandEquipped()) then
+            if ((newItemInfo.Slot2=="MainHandSlot" or newItemInfo.Slot2=="SecondaryHandSlot") and IsTwoHandEquipped()) then
                 equipped2 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
             else
                 equipped2 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot2)), weighting)
@@ -1074,8 +1260,7 @@ SlashCmdList["AutoGear"] = function(msg)
             return
         end
         print("AutoGear:  Scanning bags for upgrades.")
-        anythingBetter = ScanBags()
-        if not anythingBetter then print ("AutoGear:  Nothing better was found.") end
+        ScanBags2()
     elseif (param1 == "spec") then
         print("AutoGear:  Looks like you are "..GetSpec()..".")
     else
@@ -1084,13 +1269,13 @@ SlashCmdList["AutoGear"] = function(msg)
 end
 
 function main()
-    if (GetTicks() - tUpdate > 50) then
-        tUpdate = GetTicks()
+    if (GetTime() - tUpdate > 0.05) then
+        tUpdate = GetTime()
     
         --future actions
         for i, curAction in ipairs(futureAction) do
             if (curAction.action == "roll") then
-                if (GetTicks() > curAction.t) then
+                if (GetTime() > curAction.t) then
                     if (curAction.rollType == 1) then
                         if (curAction.info and curAction.info.Name) then
                             print ("AutoGear:  Rolling NEED on "..curAction.info.Name..".")
@@ -1108,34 +1293,34 @@ function main()
                     table.remove(futureAction, i)
                 end
             elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
-                if (GetTicks() > curAction.t) then
+                if (GetTime() > curAction.t) then
                     if (not curAction.messageAlready) then
-                        print("AutoGear:  Attempting to equip "..curAction.info.Name..".")
+                        print("AutoGear:  Equipping "..curAction.info.Name..".")
                         curAction.messageAlready = 1
                     end
                     if (curAction.removeMainHandFirst) then
                         if (GetAllBagsNumFreeSlots() > 0) then
-                            print("AutoGear:  Attempting to remove the 2-hander to equip the offhand")
+                            print("AutoGear:  Removing the two-hander to equip the off-hand")
                             PickupInventoryItem(GetInventorySlotInfo("MainHandSlot"))
                             PutItemInEmptyBagSlot()
                             curAction.removeMainHandFirst = nil
                             curAction.waitingOnEmptyMainHand = 1
                         else
-                            print("AutoGear:  Cannot equip the offhand because bags are too full to remove the 2-hander")
+                            print("AutoGear:  Cannot equip the off-hand because bags are too full to remove the two-hander")
                             table.remove(futureAction, i)
                         end
                     elseif (curAction.waitingOnEmptyMainHand and GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
                     elseif (curAction.waitingOnEmptyMainHand and not GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
-                        print("AutoGear:  Mainhand detected to be clear.  Equipping now.")
+                        print("AutoGear:  Main hand detected to be clear.  Equipping now.")
                         curAction.waitingOnEmptyMainHand = nil
                     elseif (curAction.ensuringEquipped) then
-                        if (GetInventoryItemID("player", GetInventorySlotInfo(curAction.replaceSlot)) == GetContainerItemID(curAction.container, curAction.slot)) then
+                        if (GetInventoryItemID("player", curAction.replaceSlot) == GetContainerItemID(curAction.container, curAction.slot)) then
                             curAction.ensuringEquipped = nil
                             table.remove(futureAction, i)
                         end
                     else
                         PickupContainerItem(curAction.container, curAction.slot)
-                        EquipCursorItem(GetInventorySlotInfo(curAction.replaceSlot))
+                        EquipCursorItem(curAction.replaceSlot)
                         curAction.ensuringEquipped = 1
                     end
                 end
