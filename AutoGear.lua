@@ -580,10 +580,10 @@ function SetStatWeights()
                          DPS = 2}
         elseif (GetSpec() == "Protection") then
             weapons = "weapon and shield"
-            weighting = {Strength = 0.29, Agility = 0, Stamina = 1.5, Intellect = 0, Spirit = 0,
+            weighting = {Strength = 1.2, Agility = 0, Stamina = 1.5, Intellect = 0, Spirit = 0,
                          Armor = 0.16, DodgeRating = 1, ParryRating = 1.03, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0, Mp5 = 0,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0, HitRating = 0.02, 
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.4, HitRating = 0.02, 
                          ExpertiseRating = 0.04, MasteryRating = 1, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
