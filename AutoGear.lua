@@ -1,6 +1,7 @@
 --AutoGear
 
 -- to do:
+-- fix guild repairs
 -- fix trying to equip items that are too high level
 -- handle dual wielding 2h using titan's grip
 -- roll on off hands when they're better than 1/3rd of a 2-hander, but equip intelligently
@@ -99,35 +100,26 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
         if (weighting) then
             local roll = nil
             reason = "(no reason set)"
+            local wouldNeed = ScanBags2(arg1)
             local rollItemInfo = ReadItemInfo(nil,arg1)
-            local better, replaceSlot, rollItemScore, equippedItemScore = DetermineIfBetter(rollItemInfo, weighting)
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
-            if (better and canNeed) then roll = 1 else roll = 2 end
-            if (better and not canNeed) then
+            if (wouldNeed and canNeed) then roll = 1 else roll = 2 end
+            if (wouldNeed and not canNeed) then
                 print("AutoGear:  I would roll NEED, but NEED is not an option for this item.")
+                roll = 2
             end
-            if (rollItemScore) then print("AutoGear:  Roll item's score: "..rollItemScore) end
-            if (equippedItemScore) then print("AutoGear:  Equipped item's score: "..equippedItemScore) end
-            print("AutoGear:  Slot: "..(rollItemInfo.Slot or "none"))
-            if (rollItemInfo.Usable) then print("AutoGear:  This item can be worn.") else print("AutoGear:  This item cannot be worn.  "..reason) end
+            if (not rollItemInfo.Usable) then print("AutoGear:  This item cannot be worn.  "..reason) end
             if (roll == 1) then
-                print("AutoGear:  Rolling NEED on this item to replace "..(replaceSlot or "nil")..".")
+                print("AutoGear:  Rolling NEED on "..(rollItemInfo.Name or "this item")..".")
             elseif (roll == 2) then
-                local extra, extra2
-                if (replaceItem) then extra = ", to not replace my "..replaceSlot else extra = "" end
-                if (GetAllBagsNumFreeSlots() == 0) then extra2 = ", even though my bags are full" else extra2 = "" end
-                print("AutoGear:  Rolling GREED on this item"..extra..extra2..".")
+                print("AutoGear:  Rolling GREED on "..(rollItemInfo.Name or "this item")..".")
             else
                 print("AutoGear:  I don't know what I would roll on this item.")
             end
             if (roll) then
                 local newAction = {}
                 newAction.action = "roll"
-                if (roll == 1) then
-                    newAction.t = GetTime()-- + math.random(1.5, 2.0)
-                else
-                    newAction.t = GetTime()-- + math.random(1.0, 1.5)
-                end
+                newAction.t = GetTime() --roll right away
                 newAction.rollID = arg1
                 newAction.rollType = roll
                 table.insert(futureAction, newAction)
@@ -267,7 +259,7 @@ function SetStatWeights()
                          ExpertiseRating = 0.4, MasteryRating = 0.4, ExperienceGained = 100,
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-                         DPS = 0.4}
+                         DPS = 0.8}
         elseif (GetSpec() == "Restoration") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -702,12 +694,12 @@ function ScanBags2(lootRollItemID)
         best[19].info = best[16].info
         best[19].score = best[16].score
         best[19].equipped = 1
-        best[16].info = nil
+        best[16].info = {Name = "nothing"}
         best[16].score = 0
         best[16].equipped = nil
     else
         best[19] = {}
-        best[19].info = nil
+        best[19].info = {Name = "nothing"}
         best[19].score = 0
         best[19].equipped = nil
     end
@@ -718,14 +710,14 @@ function ScanBags2(lootRollItemID)
             local _,_,_,_,_,_, link = GetContainerItemInfo(bag, slot)
             if (link) then
                 info = ReadItemInfo(nil,nil,bag,slot)
-                LookAtItem(best, info, bag, slot, nil)
+                LookAtItem(best, info, bag, slot, nil, GetContainerItemID(bag, slot))
             end
         end
     end
     --look at item being rolled on (if any)
     if (lootRollItemID) then
         info = ReadItemInfo(nil, lootRollItemID)
-        LookAtItem(best, info, nil, nil, 1)
+        LookAtItem(best, info, nil, nil, 1, lootRollItemID)
     end
     --create all future equip actions required (only if not rolling currently)
     if (not lootRollItemID) then
@@ -834,14 +826,18 @@ function ScanBags2(lootRollItemID)
         end
     else
         --decide whether to roll on the item or not
+        for i = 1, 19 do
+            if (best[i].rollOn) then
+                return 1
+            end
+        end
+        return nil
     end
-    if (not anythingBetter) then
-        print("AutoGear:  Nothing better was found")
-    end
+    return anythingBetter
 end
 
 --companion function to ScanBags2
-function LookAtItem(best, info, bag, slot, rollOn)
+function LookAtItem(best, info, bag, slot, rollOn, itemID)
     local score, i
     if (info.Usable) then
         score = DetermineItemScore(info, weighting)
@@ -851,7 +847,7 @@ function LookAtItem(best, info, bag, slot, rollOn)
         --compare to the lowest score ring or trinket
         if (i == 11 and best[12].score < best[11].score) then i = 12 end
         if (i == 13 and best[14].score < best[13].score) then i = 14 end
-        if (i == 16 and IsItemTwoHanded(GetContainerItemID(bag, slot))) then i = 19 end
+        if (i == 16 and IsItemTwoHanded(itemID)) then i = 19 end
         if (score > best[i].score) then
             best[i].info = info
             best[i].score = score
@@ -1263,7 +1259,9 @@ SlashCmdList["AutoGear"] = function(msg)
             return
         end
         print("AutoGear:  Scanning bags for upgrades.")
-        ScanBags2()
+        if (not ScanBags2()) then
+            print("AutoGear:  Nothing better was found")
+        end
     elseif (param1 == "spec") then
         print("AutoGear:  Looks like you are "..GetSpec()..".")
     else
