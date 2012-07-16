@@ -2,7 +2,6 @@
 
 -- to do:
 -- fix guild repairs
--- fix trying to equip items that are too high level
 -- handle dual wielding 2h using titan's grip
 -- roll on off hands when they're better than 1/3rd of a 2-hander, but equip intelligently
 -- choose quest loot rewards
@@ -839,7 +838,7 @@ end
 --companion function to ScanBags2
 function LookAtItem(best, info, bag, slot, rollOn, itemID)
     local score, i
-    if (info.Usable) then
+    if (info.Usable or (rollOn and info.Within5levels)) then
         score = DetermineItemScore(info, weighting)
         i = GetInventorySlotInfo(info.Slot)
         --ignore it if it's a tabard
