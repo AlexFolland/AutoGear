@@ -1,14 +1,12 @@
 --AutoGear
 
 -- to do:
+-- choose quest loot rewards
 -- fix guild repairs
 -- handle dual wielding 2h using titan's grip
--- roll on off hands when they're better than 1/3rd of a 2-hander, but equip intelligently
--- choose quest loot rewards
 -- roll need on mounts that the character doesn't have
 -- add a weight for weapon damage
 -- make gem weights have level tiers (70-79, 80-84, 85)
--- go through all quest text
 -- identify bag rolls and roll need when appropriate
 -- other non-gear it should let you roll
 -- add a ui
@@ -45,6 +43,7 @@ mainF:RegisterEvent("MERCHANT_SHOW")
 --mainF:RegisterEvent("LOOT_BIND_CONFIRM")      --only from looting, not rolling on loot
 mainF:RegisterEvent("QUEST_ACCEPTED")           --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
 mainF:RegisterEvent("QUEST_ACCEPT_CONFIRM")     --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
+mainF:RegisterEvent("QUEST_AUTOCOMPLETE")       --Fires when a quest is automatically completed (remote handin available)
 mainF:RegisterEvent("QUEST_COMPLETE")           --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
 mainF:RegisterEvent("QUEST_DETAIL")             --Fires when details of an available quest are presented by a questgiver
 mainF:RegisterEvent("QUEST_FINISHED")           --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
@@ -55,6 +54,12 @@ mainF:RegisterEvent("QUEST_POI_UPDATE")         --This event is not yet document
 mainF:RegisterEvent("QUEST_PROGRESS")           --Fires when interacting with a questgiver about an active quest
 mainF:RegisterEvent("QUEST_QUERY_COMPLETE")     --Fires when quest completion information is available from the server
 mainF:RegisterEvent("QUEST_WATCH_UPDATE")       --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
+mainF:RegisterEvent("GOSSIP_CLOSED")            --Fires when an NPC gossip interaction ends
+mainF:RegisterEvent("GOSSIP_CONFIRM")           --Fires when the player is requested to confirm a gossip choice
+mainF:RegisterEvent("GOSSIP_CONFIRM_CANCEL")    --Fires when an attempt to confirm a gossip choice is canceled
+mainF:RegisterEvent("GOSSIP_ENTER_CODE")        --Fires when the player attempts a gossip choice which requires entering a code
+mainF:RegisterEvent("GOSSIP_SHOW")              --Fires when an NPC gossip interaction begins
+mainF:RegisterEvent("UNIT_QUEST_LOG_CHANGED")  --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
         ScanBags2()
@@ -178,22 +183,44 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                 print("AutoGear:  Not enough money to repair all items ("..cashString..").")
             end
         end
+    elseif (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
+        ConfirmAcceptQuest()
     elseif (event == "QUEST_DETAIL") then
         AcceptQuest()
-    elseif (not event == "ADDON_LOADED") then
-        print("AutoGear:  "..event)
+    elseif (event == "GOSSIP_SHOW") then
+        --available quests
+        local quests = GetNumGossipAvailableQuests()
+        local info = {GetGossipAvailableQuests()}
+        for i = 0, quests - 1 do
+            local name, level, isTrivial, isDaily, isRepeatable = info[i*5+1], info[i*5+2], info[i*5+3], info[i*5+4], info[i*5+5]
+            if (not isTrivial) then
+                SelectGossipAvailableQuest(i+1)
+            end
+        end
+        --active quests
+        quests = GetNumGossipActiveQuests()
+        info = {GetGossipActiveQuests()}
+        for i = 0, quests - 1 do
+            local name, level, isTrivial, isComplete = info[i*4+1], info[i*4+2], info[i*4+3], info[i*4+4]
+            if (isComplete) then
+                SelectGossipActiveQuest(i+1)
+            end
+        end
+    elseif (event == "QUEST_PROGRESS") then
+        if (IsQuestCompletable()) then
+            CompleteQuest()
+        end
+    elseif (event == "QUEST_COMPLETE") then
+        local rewards = GetNumQuestRewards()
+        if (not rewards or rewards == 0) then
+            GetQuestReward()
+        else
+            --choose a quest reward
+        end
+    elseif (event ~= "ADDON_LOADED") then
+        --print("AutoGear:  "..event)
     end
 end)
-
-if (canRepair==1) then
-RepairAllItems(1);
-end
-if (GetRepairAllCost() > 0 and GetRepairAllCost() <= GetMoney()) then
-print("AutoGear: Repaired all items for "..CashToString(GetRepairAllCost())..".")
-RepairAllItems(0)
-elseif (GetRepairAllCost() > GetMoney()) then
-print("AutoGear: Not enough money to repair all items ("..CashToString(GetRepairAllCost())..").")
-end
 
 function SetStatWeights()
     -- wait for player information
