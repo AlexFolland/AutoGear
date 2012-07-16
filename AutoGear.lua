@@ -306,6 +306,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "HUNTER") then
+        if (GetSpellInfo("Dual Wield")) then weapons = "dual wield" end
         if (GetSpec() == "Untalented") then
             weighting = {Strength = 0.5, Agility = 1, Stamina = 0.1, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -907,15 +908,17 @@ end
 
 --companion function to ScanBags2
 function LookAtItem(best, info, bag, slot, rollOn, itemID, chooseReward)
-    local score, i
+    local score, i, i2
     if (info.Usable or (rollOn and info.Within5levels)) then
         score = DetermineItemScore(info, weighting)
         i = GetInventorySlotInfo(info.Slot)
+        if (info.Slot2) then i2 = GetInventorySlotInfo(info.Slot2) end
         --ignore it if it's a tabard
         if (i == 19) then return end
-        --compare to the lowest score ring or trinket
+        --compare to the lowest score ring, trinket, or dual wield weapon
         if (i == 11 and best[12].score < best[11].score) then i = 12 end
         if (i == 13 and best[14].score < best[13].score) then i = 14 end
+        if (i2 and i == 16 and i2 == 17 and best[17].score < best[16].score) then i = 17 end
         if (i == 16 and IsItemTwoHanded(itemID)) then i = 19 end
         if (score > best[i].score) then
             best[i].info = info
