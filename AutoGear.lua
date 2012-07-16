@@ -1,7 +1,7 @@
 --AutoGear
 
 -- to do:
--- choose quest loot rewards
+-- fix not equipping items just received
 -- fix guild repairs
 -- handle dual wielding 2h using titan's grip
 -- roll need on mounts that the character doesn't have
@@ -211,11 +211,20 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             CompleteQuest()
         end
     elseif (event == "QUEST_COMPLETE") then
-        local rewards = GetNumQuestRewards()
+        local rewards = GetNumQuestChoices()
         if (not rewards or rewards == 0) then
             GetQuestReward()
         else
             --choose a quest reward
+            questRewardID = {}
+            for i = 1, rewards do
+                local itemLink = GetQuestItemLink("choice", i)
+                local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+                questRewardID[i] = id
+            end
+            local choice = ScanBags2(nil, questRewardID)
+            print("AutoGear:  choosing "..choice)
+            GetQuestReward(choice)
         end
     elseif (event ~= "ADDON_LOADED") then
         --print("AutoGear:  "..event)
@@ -648,7 +657,6 @@ function ItemContainsText(container, slot, search)
     return nil
 end
 
-
 function ScanBags()
     SetStatWeights()
     if (not weighting) then
@@ -696,7 +704,7 @@ function ScanBags()
     return anythingBetter
 end
 
-function ScanBags2(lootRollItemID)
+function ScanBags2(lootRollItemID, questRewardID)
     SetStatWeights()
     if (not weighting) then
         return nil
@@ -712,21 +720,23 @@ function ScanBags2(lootRollItemID)
         best[i] = {}
         best[i].info = info
         best[i].score = score
+        best[i].equippedScore = score
         best[i].equipped = 1
     end
     --pretend slot 19 is a separate slot for 2-handers
+    best[19] = {}
     if (IsTwoHandEquipped()) then
-        best[19] = {}
         best[19].info = best[16].info
         best[19].score = best[16].score
+        best[19].equippedScore = best[16].equippedScore
         best[19].equipped = 1
         best[16].info = {Name = "nothing"}
         best[16].score = 0
         best[16].equipped = nil
     else
-        best[19] = {}
         best[19].info = {Name = "nothing"}
         best[19].score = 0
+        best[19].equippedScore = best[16].equippedScore + best[17].equippedScore
         best[19].equipped = nil
     end
     --look at all items in bags
@@ -745,8 +755,15 @@ function ScanBags2(lootRollItemID)
         info = ReadItemInfo(nil, lootRollItemID)
         LookAtItem(best, info, nil, nil, 1, lootRollItemID)
     end
+    --look at quest rewards (if any)
+    if (questRewardID) then
+        for i = 1, GetNumQuestChoices() do
+            info = ReadItemInfo(nil, nil, nil, nil, i)
+            LookAtItem(best, info, nil, nil, nil, questRewardID[i], i)
+        end
+    end
     --create all future equip actions required (only if not rolling currently)
-    if (not lootRollItemID) then
+    if (not lootRollItemID and not questRewardID) then
         for i = 1, 18 do
             if i == 16 or i == 17 then
                 --skip for now
@@ -850,7 +867,7 @@ function ScanBags2(lootRollItemID)
                 PrintItem(equippedOff)
             end
         end
-    else
+    elseif (lootRollItemID) then
         --decide whether to roll on the item or not
         for i = 1, 19 do
             if (best[i].rollOn) then
@@ -858,12 +875,38 @@ function ScanBags2(lootRollItemID)
             end
         end
         return nil
+    else
+        --choose a quest reward
+        --pick the reward with the biggest score improvement
+        local bestRewardIndex
+        local bestRewardScoreDelta
+        for i = 1, 19 do
+            if (best[i].chooseReward) then
+                local delta = best[i].score - best[i].equippedScore
+                if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
+                    bestRewardScoreDelta = delta
+                    bestRewardIndex = best[i].chooseReward
+                end
+            end
+        end
+        if (not bestRewardIndex) then
+            --no gear upgrades, so choose the one with the highest sell value
+            local bestRewardVendorPrice
+            for i = 1, GetNumQuestChoices() do
+                local name, link, quality, iLevel, reqLevel, class, subclass, maxStack, equipSlot, texture, vendorPrice = GetItemInfo(questRewardID[i])
+                if (not bestRewardVendorPrice or vendorPrice > bestRewardVendorPrice) then
+                    bestRewardIndex = i
+                    bestRewardVendorPrice = vendorPrice
+                end
+            end
+        end
+        return bestRewardIndex
     end
     return anythingBetter
 end
 
 --companion function to ScanBags2
-function LookAtItem(best, info, bag, slot, rollOn, itemID)
+function LookAtItem(best, info, bag, slot, rollOn, itemID, chooseReward)
     local score, i
     if (info.Usable or (rollOn and info.Within5levels)) then
         score = DetermineItemScore(info, weighting)
@@ -881,6 +924,7 @@ function LookAtItem(best, info, bag, slot, rollOn, itemID)
             best[i].bag = bag
             best[i].slot = slot
             best[i].rollOn = rollOn
+            best[i].chooseReward = chooseReward
         end
     end
 end
@@ -921,7 +965,7 @@ function PrintItem(info)
     end
 end
 
-function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
+function ReadItemInfo(inventoryID, lootRollItemID, container, slot, questRewardIndex)
     local info = {}
     local cannotUse = nil
     AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE");
@@ -932,6 +976,8 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
         AutoGearTooltip:SetLootRollItem(lootRollItemID)
     elseif (container and slot) then
         AutoGearTooltip:SetBagItem(container, slot)
+    elseif (questRewardIndex) then
+        AutoGearTooltip:SetQuestItem("choice", questRewardIndex)
     end
     info.RedSockets = 0
     info.YellowSockets = 0
