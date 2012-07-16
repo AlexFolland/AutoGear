@@ -357,10 +357,10 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (GetSpec() == "Holy") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.9,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.7, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.35, HitRating = 0, 
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 1, HitRating = 0, 
                          ExpertiseRating = 0, MasteryRating = 0.3, ExperienceGained = 100,
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -1025,10 +1025,10 @@ function ReadItemInfo(inventoryID, lootRollItemID, container, slot)
                 if (weapons == "2h") then
                     cannotUse = 1
                     reason = "(this spec should use a two-hand weapon)"
-                elseif (weapons == "weapon and shield" and GetWeaponType ~= "shield") then
+                elseif (weapons == "weapon and shield" and GetWeaponType() ~= "shield") then
                     cannotUse = 1
                     reason = "(this spec needs a shield in the off-hand)"
-                elseif (weapons == "dual wield" and GetWeaponType == "shield") then
+                elseif (weapons == "dual wield" and GetWeaponType() == "shield") then
                     cannotUse = 1
                     reason = "(this spec should dual wield and not use a shield)"
                 end
