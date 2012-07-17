@@ -24,43 +24,43 @@ local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "Ga
 local weaponTypes = {dagger=1, sword=1, mace=1, shield=1, thrown=1, axe=1, bow=1, gun=1, polearm=1, staff=1, ["fist weapon"]=1, ["fishing pole"]=1}
 
 --the main frame
-mainF = CreateFrame("Frame", nil, UIParent)
-mainF:SetWidth(1); mainF:SetHeight(1)
-mainF:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
-mainF:SetScript("OnUpdate", function()
-    main()
+AutoGearFrame = CreateFrame("Frame", nil, UIParent)
+AutoGearFrame:SetWidth(1); AutoGearFrame:SetHeight(1)
+AutoGearFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
+AutoGearFrame:SetScript("OnUpdate", function()
+    AutoGearMain()
 end)
 
-mainF:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-mainF:RegisterEvent("ADDON_LOADED")
-mainF:RegisterEvent("PARTY_INVITE_REQUEST")
-mainF:RegisterEvent("START_LOOT_ROLL")
-mainF:RegisterEvent("CONFIRM_LOOT_ROLL")
-mainF:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
-mainF:RegisterEvent("ITEM_PUSH")
-mainF:RegisterEvent("EQUIP_BIND_CONFIRM")
-mainF:RegisterEvent("MERCHANT_SHOW")
---mainF:RegisterEvent("LOOT_BIND_CONFIRM")      --only from looting, not rolling on loot
-mainF:RegisterEvent("QUEST_ACCEPTED")           --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
-mainF:RegisterEvent("QUEST_ACCEPT_CONFIRM")     --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
-mainF:RegisterEvent("QUEST_AUTOCOMPLETE")       --Fires when a quest is automatically completed (remote handin available)
-mainF:RegisterEvent("QUEST_COMPLETE")           --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
-mainF:RegisterEvent("QUEST_DETAIL")             --Fires when details of an available quest are presented by a questgiver
-mainF:RegisterEvent("QUEST_FINISHED")           --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
-mainF:RegisterEvent("QUEST_GREETING")           --Fires when a questgiver presents a greeting along with a list of active or available quests
-mainF:RegisterEvent("QUEST_ITEM_UPDATE")        --Fires when information about items in a questgiver dialog is updated
-mainF:RegisterEvent("QUEST_LOG_UPDATE")         --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
-mainF:RegisterEvent("QUEST_POI_UPDATE")         --This event is not yet documented
-mainF:RegisterEvent("QUEST_PROGRESS")           --Fires when interacting with a questgiver about an active quest
-mainF:RegisterEvent("QUEST_QUERY_COMPLETE")     --Fires when quest completion information is available from the server
-mainF:RegisterEvent("QUEST_WATCH_UPDATE")       --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
-mainF:RegisterEvent("GOSSIP_CLOSED")            --Fires when an NPC gossip interaction ends
-mainF:RegisterEvent("GOSSIP_CONFIRM")           --Fires when the player is requested to confirm a gossip choice
-mainF:RegisterEvent("GOSSIP_CONFIRM_CANCEL")    --Fires when an attempt to confirm a gossip choice is canceled
-mainF:RegisterEvent("GOSSIP_ENTER_CODE")        --Fires when the player attempts a gossip choice which requires entering a code
-mainF:RegisterEvent("GOSSIP_SHOW")              --Fires when an NPC gossip interaction begins
-mainF:RegisterEvent("UNIT_QUEST_LOG_CHANGED")  --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
-mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
+AutoGearFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+AutoGearFrame:RegisterEvent("ADDON_LOADED")
+AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
+AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
+AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
+AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
+AutoGearFrame:RegisterEvent("ITEM_PUSH")
+AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
+AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
+--AutoGearFrame:RegisterEvent("LOOT_BIND_CONFIRM")      --only from looting, not rolling on loot
+AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")           --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
+AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")     --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
+AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")       --Fires when a quest is automatically completed (remote handin available)
+AutoGearFrame:RegisterEvent("QUEST_COMPLETE")           --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
+AutoGearFrame:RegisterEvent("QUEST_DETAIL")             --Fires when details of an available quest are presented by a questgiver
+AutoGearFrame:RegisterEvent("QUEST_FINISHED")           --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
+AutoGearFrame:RegisterEvent("QUEST_GREETING")           --Fires when a questgiver presents a greeting along with a list of active or available quests
+AutoGearFrame:RegisterEvent("QUEST_ITEM_UPDATE")        --Fires when information about items in a questgiver dialog is updated
+AutoGearFrame:RegisterEvent("QUEST_LOG_UPDATE")         --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
+AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")         --This event is not yet documented
+AutoGearFrame:RegisterEvent("QUEST_PROGRESS")           --Fires when interacting with a questgiver about an active quest
+AutoGearFrame:RegisterEvent("QUEST_QUERY_COMPLETE")     --Fires when quest completion information is available from the server
+AutoGearFrame:RegisterEvent("QUEST_WATCH_UPDATE")       --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
+AutoGearFrame:RegisterEvent("GOSSIP_CLOSED")            --Fires when an NPC gossip interaction ends
+AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM")           --Fires when the player is requested to confirm a gossip choice
+AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")    --Fires when an attempt to confirm a gossip choice is canceled
+AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")        --Fires when the player attempts a gossip choice which requires entering a code
+AutoGearFrame:RegisterEvent("GOSSIP_SHOW")              --Fires when an NPC gossip interaction begins
+AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")  --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
+AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     --print("AutoGear:  "..event)
     if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
         ScanBags2()
@@ -70,10 +70,10 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     elseif (event == "PARTY_INVITE_REQUEST") then
         print("AutoGear:  Automatically accepting party invite.")
         AcceptGroup()
-        mainF:RegisterEvent("PARTY_MEMBERS_CHANGED")
+        AutoGearFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
     elseif (event == "PARTY_MEMBERS_CHANGED") then --for closing the invite window once I have joined the group
         StaticPopup_Hide("PARTY_INVITE")
-        mainF:UnregisterEvent("PARTY_MEMBERS_CHANGED")
+        AutoGearFrame:UnregisterEvent("PARTY_MEMBERS_CHANGED")
     elseif (event == "START_LOOT_ROLL") then
         SetStatWeights()
         if (weighting) then
@@ -208,6 +208,7 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
             questRewardID = {}
             for i = 1, rewards do
                 local itemLink = GetQuestItemLink("choice", i)
+                if (not itemLink) then print("AutoGear:  No item link received from the server.") end
                 local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
                 questRewardID[i] = id
             end
@@ -357,17 +358,17 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (GetSpec() == "Arcane") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
-                         Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 2.8, SpellPenetration = 0.005, HasteRating = 1.28, Mp5 = .005,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 1.34, HitRating = 3.21, 
-                         ExpertiseRating = 0, MasteryRating = 1.4, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+            weighting = {Strength = -0.1, Agility = -0.1, Stamina = 0.01, Intellect = 1, Spirit = 0,
+                         Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                         SpellPower = 0.6, SpellPenetration = 0.2, HasteRating = 0.5, Mp5 = 0,
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.9, HitRating = 0.7, 
+                         ExpertiseRating = 0, MasteryRating = 0.9, ExperienceGained = 100,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (GetSpec() == "Fire") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
-                         Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                         Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, CritRating = 1.2, HitRating = 0, 
                          ExpertiseRating = 0, MasteryRating = 0.9, ExperienceGained = 100,
@@ -1346,7 +1347,7 @@ SlashCmdList["AutoGear"] = function(msg)
     end
 end
 
-function main()
+function AutoGearMain()
     if (GetTime() - tUpdate > 0.05) then
         tUpdate = GetTime()
     
