@@ -61,36 +61,11 @@ mainF:RegisterEvent("GOSSIP_ENTER_CODE")        --Fires when the player attempts
 mainF:RegisterEvent("GOSSIP_SHOW")              --Fires when an NPC gossip interaction begins
 mainF:RegisterEvent("UNIT_QUEST_LOG_CHANGED")  --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
+    --print("AutoGear:  "..event)
     if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
         ScanBags2()
     elseif (event == "ADDON_LOADED" and arg1 == "AutoGear") then
         if (not AutoGearDB) then AutoGearDB = {} end
-        -- create the stat weights
-        -- supported stats are:
-        --[[
-            Strength, Agility, Stamina, Intellect, Spirit,
-            Armor, DodgeRating, ParryRating, BlockRating,
-            SpellPower, SpellPenetration, HasteRating, Mp5,
-
-            AttackPower, ArmorPenetration, CritRating, HitRating, 
-            ExpertiseRating, MasteryRating, ExperienceGained
-            RedSockets, YellowSockets, BlueSockets, MetaSockets,
-
-            HealingProc, DamageProc, DamageSpellProc, MeleeProc, RangedProc (multipliers)
-            
-            weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
-                         Armor = 0, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 0, SpellPenetration = 0, HasteRating = 0, Mp5 = 0,
-
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0, HitRating = 0, 
-                         ExpertiseRating = 0, MasteryRating = 0, ExperienceGained = 0,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-                         
-                         DPS = 0}
-        ]]
-        -- create the stat weights
         SetStatWeights()
     elseif (event == "PARTY_INVITE_REQUEST") then
         print("AutoGear:  Automatically accepting party invite.")
@@ -206,6 +181,20 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                 SelectGossipActiveQuest(i+1)
             end
         end
+    elseif (event == "QUEST_GREETING") then
+        --available quests
+        local quests = GetNumAvailableQuests()
+        for i = 1, quests do
+            local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
+            if (not isTrivial) then
+                SelectAvailableQuest(i)
+            end
+        end
+        --active quests
+        quests = GetNumActiveQuests()
+        for i = 1, quests do
+            SelectActiveQuest(i)
+        end
     elseif (event == "QUEST_PROGRESS") then
         if (IsQuestCompletable()) then
             CompleteQuest()
@@ -223,7 +212,6 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
                 questRewardID[i] = id
             end
             local choice = ScanBags2(nil, questRewardID)
-            print("AutoGear:  choosing "..choice)
             GetQuestReward(choice)
         end
     elseif (event ~= "ADDON_LOADED") then
@@ -231,6 +219,20 @@ mainF:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     end
 end)
 
+-- supported stats are:
+--[[
+    weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
+                 Armor = 0, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
+                 SpellPower = 0, SpellPenetration = 0, HasteRating = 0, Mp5 = 0,
+
+                 AttackPower = 0, ArmorPenetration = 0, CritRating = 0, HitRating = 0, 
+                 ExpertiseRating = 0, MasteryRating = 0, ExperienceGained = 0,
+                 RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+
+                 HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                 
+                 DPS = 0}
+]]
 function SetStatWeights()
     -- wait for player information
     while (not UnitClass("player")) do
