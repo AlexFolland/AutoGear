@@ -63,7 +63,7 @@ AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")  --Fires when a unit's que
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     --print("AutoGear:  "..event)
     if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
-        ScanBags2()
+        ScanBags()
     elseif (event == "ADDON_LOADED" and arg1 == "AutoGear") then
         if (not AutoGearDB) then AutoGearDB = {} end
         SetStatWeights()
@@ -79,7 +79,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         if (weighting) then
             local roll = nil
             reason = "(no reason set)"
-            local wouldNeed = ScanBags2(arg1)
+            local wouldNeed = ScanBags(arg1)
             local rollItemInfo = ReadItemInfo(nil,arg1)
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
             if (wouldNeed and canNeed) then roll = 1 else roll = 2 end
@@ -114,7 +114,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         --print("AutoGear:  Received an item.  Checking for gear upgrades.")
         --make sure a fishing pole isn't replaced while fishing
         if (GetMainHandType() ~= "Fishing Poles") then
-            ScanBags2()
+            --give the item some time to arrive
+            local newAction = {}
+            newAction.action = "scan"
+            newAction.t = GetTime() + 0.5
+            table.insert(futureAction, newAction)
         end
     elseif (event == "EQUIP_BIND_CONFIRM") then
         EquipPendingItem(arg1)
@@ -212,7 +216,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                 local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
                 questRewardID[i] = id
             end
-            local choice = ScanBags2(nil, questRewardID)
+            local choice = ScanBags(nil, questRewardID)
             GetQuestReward(choice)
         end
     elseif (event ~= "ADDON_LOADED") then
@@ -661,54 +665,7 @@ function ItemContainsText(container, slot, search)
     return nil
 end
 
-function ScanBags()
-    SetStatWeights()
-    if (not weighting) then
-        return nil
-    end
-    local info
-    local replaceInfo
-    local anythingBetter = nil
-    for bag = 0, NUM_BAG_SLOTS do
-        local slotMax = GetContainerNumSlots(bag)
-        for i = 0, slotMax do
-            _,_,_,_,_,_, link = GetContainerItemInfo(bag, i)
-            if (link) then
-                info = ReadItemInfo(nil,nil,bag,i)
-                local better, replaceSlot, newScore, oldScore = DetermineIfBetter(info, weighting)
-                if (replaceSlot) then
-                    replaceInfo = ReadItemInfo(GetInventorySlotInfo(replaceSlot))
-                end
-                if (replaceInfo and not replaceInfo.Name) then
-                    replaceInfo.Name = "nothing"
-                elseif (not replaceInfo) then
-                    replaceInfo = {}
-                    replaceInfo.Name = "nothing"
-                end
-                if (better) then
-                    print("AutoGear:  "..info.Name.." ("..string.format("%.2f", newScore)..") was determined to be better than "..replaceInfo.Name.." ("..string.format("%.2f", oldScore)..").  Will equip it soon.")
-                    PrintItem(replaceInfo)
-                    PrintItem(info)
-                    anythingBetter = 1
-                    local newAction = {}
-                    newAction.action = "equip"
-                    newAction.t = GetTime() + 0.5 --do it after a short delay
-                    newAction.container = bag
-                    newAction.slot = i
-                    newAction.replaceSlot = GetInventorySlotInfo(replaceSlot)
-                    newAction.info = info
-                    if (replaceSlot == "SecondaryHandSlot" and IsTwoHandEquipped()) then
-                        newAction.removeMainHandFirst = 1
-                    end
-                    table.insert(futureAction, newAction)
-                end
-            end
-        end
-    end
-    return anythingBetter
-end
-
-function ScanBags2(lootRollItemID, questRewardID)
+function ScanBags(lootRollItemID, questRewardID)
     SetStatWeights()
     if (not weighting) then
         return nil
@@ -909,7 +866,7 @@ function ScanBags2(lootRollItemID, questRewardID)
     return anythingBetter
 end
 
---companion function to ScanBags2
+--companion function to ScanBags
 function LookAtItem(best, info, bag, slot, rollOn, itemID, chooseReward)
     local score, i, i2
     if (info.Usable or (rollOn and info.Within5levels)) then
@@ -1189,73 +1146,6 @@ function PlayerIsWearingItem(name)
     return nil
 end
 
-function DetermineIfBetter(newItemInfo, weighting)
-    local newItemScore = DetermineItemScore(newItemInfo, weighting)
-    local equippedItemScore, replaceSlot
-    if (newItemInfo.Usable) then
-        if (string.find(newItemInfo.Slot:lower(), "trinket")) then
-            local trinket0Score = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("Trinket0Slot")), weighting)
-            local trinket1Score = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("Trinket1Slot")), weighting)
-            if (trinket0Score < trinket1Score) then
-                replaceSlot = "Trinket0Slot"
-                equippedItemScore = trinket0Score
-            else
-                replaceSlot = "Trinket1Slot"
-                equippedItemScore = trinket1Score
-            end
-        elseif (string.find(newItemInfo.Slot:lower(), "finger")) then
-            local finger0Score = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("Finger0Slot")), weighting)
-            local finger1Score = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("Finger1Slot")), weighting)
-            if (finger0Score < finger1Score) then
-                replaceSlot = "Finger0Slot"
-                equippedItemScore = finger0Score
-            else
-                replaceSlot = "Finger1Slot"
-                equippedItemScore = finger1Score
-            end
-        elseif (newItemInfo.IncludeOffHand) then
-            local mainHandScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting)
-            local offHandScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("SecondaryHandSlot")), weighting)
-            equippedItemScore = mainHandScore + offHandScore
-            replaceSlot = "MainHandSlot"
-        --check if the new item is a one-handed weapon and a 2-hander is equipped
-        elseif ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and IsTwoHandEquipped()) then
-            --take only half(?) of the 2-hander's score
-            equippedItemScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
-            replaceSlot = newItemInfo.Slot
-        elseif (newItemInfo.Slot2) then
-            local equipped1, equipped2
-            if ((newItemInfo.Slot=="MainHandSlot" or newItemInfo.Slot=="SecondaryHandSlot") and IsTwoHandEquipped()) then
-                equipped1 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
-            else
-                equipped1 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot)), weighting)
-            end
-            if ((newItemInfo.Slot2=="MainHandSlot" or newItemInfo.Slot2=="SecondaryHandSlot") and IsTwoHandEquipped()) then
-                equipped2 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo("MainHandSlot")), weighting) / 2
-            else
-                equipped2 = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot2)), weighting)
-            end
-            if (equipped1 < equipped2) then
-                equippedItemScore = equipped1
-                replaceSlot = newItemInfo.Slot
-            else
-                equippedItemScore = equipped2
-                replaceSlot = newItemInfo.Slot2
-            end
-        elseif (newItemInfo.Slot) then
-            equippedItemScore = DetermineItemScore(ReadItemInfo(GetInventorySlotInfo(newItemInfo.Slot)), weighting)
-            replaceSlot = newItemInfo.Slot
-        end
-        if (newItemScore > equippedItemScore) then
-            return 1, replaceSlot, newItemScore, equippedItemScore
-        else
-            return nil, nil, newItemScore, equippedItemScore
-        end
-    else
-        return nil, nil, newItemScore, nil
-    end
-end
-
 function DetermineItemScore(itemInfo, weighting)
     return (weighting.Strength or 0) * (itemInfo.Strength or 0) +
         (weighting.Agility or 0) * (itemInfo.Agility or 0) +
@@ -1337,7 +1227,7 @@ SlashCmdList["AutoGear"] = function(msg)
             return
         end
         print("AutoGear:  Scanning bags for upgrades.")
-        if (not ScanBags2()) then
+        if (not ScanBags()) then
             print("AutoGear:  Nothing better was found")
         end
     elseif (param1 == "spec") then
@@ -1402,6 +1292,11 @@ function AutoGearMain()
                         EquipCursorItem(curAction.replaceSlot)
                         curAction.ensuringEquipped = 1
                     end
+                end
+            elseif (curAction.action == "scan") then
+                if (GetTime() > curAction.t) then
+                    table.remove(futureAction, i)
+                    ScanBags()
                 end
             end
         end
