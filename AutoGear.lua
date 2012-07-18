@@ -242,11 +242,12 @@ function SetStatWeights()
     -- wait for player information
     while (not UnitClass("player")) do
     end
-    local class
+    local class, spec
     _,class = UnitClass("player")
+    spec = GetSpec()
     weapons = "any"
     if (class == "DEATH KNIGHT") then
-        if (GetSpec() == "Blood") then
+        if (spec == "Blood") then
             weighting = {Strength = 0.28, Agility = 0.005, Stamina = 0.4, Intellect = 0, Spirit = 0,
                          Armor = 0.15, DodgeRating = 1, ParryRating = 1, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.005, Mp5 = 0,
@@ -255,7 +256,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Frost") then
+        elseif (spec == "Frost") then
             weighting = {Strength = 2.83, Agility = 0.005, Stamina = 0.005, Intellect = 0, Spirit = 0,
                          Armor = 0.005, DodgeRating = 0.001, ParryRating = 0.001, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.4, Mp5 = 0,
@@ -264,7 +265,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Unholy") then
+        elseif (spec == "Unholy") then
             weighting = {Strength = 3.24, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
                          Armor = 0, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.64, Mp5 = 0,
@@ -275,7 +276,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "DRUID") then
-        if (GetSpec() == "Untalented") then
+        if (spec == "Untalented") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.5, SpellPenetration = 0, HasteRating = 0.5, Mp5 = 0.05,
@@ -284,7 +285,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 1}
-        elseif (GetSpec() == "Balance") then
+        elseif (spec == "Balance") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0.1, HasteRating = 0.8, Mp5 = 0.01,
@@ -293,7 +294,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Feral Combat") then
+        elseif (spec == "Feral Combat") then
             weighting = {Strength = 0, Agility = 1, Stamina = 1, Intellect = 0, Spirit = 0,
                          Armor = 0.1, DodgeRating = 0.4, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.3, Mp5 = 0,
@@ -302,7 +303,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 0.8}
-        elseif (GetSpec() == "Restoration") then
+        elseif (spec == "Restoration") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.85, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0.05,
@@ -314,7 +315,7 @@ function SetStatWeights()
         end
     elseif (class == "HUNTER") then
         if (GetSpellInfo("Dual Wield")) then weapons = "dual wield" end
-        if (GetSpec() == "Untalented") then
+        if (spec == "Untalented") then
             weighting = {Strength = 0.5, Agility = 1, Stamina = 0.1, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
@@ -323,7 +324,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
                          DPS = 2}
-        elseif (GetSpec() == "Beast Mastery") then
+        elseif (spec == "Beast Mastery") then
             weighting = {Strength = 0.5, Agility = 1, Stamina = 0.1, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
@@ -332,7 +333,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
                          DPS = 2}
-        elseif (GetSpec() == "Marksmanship") then
+        elseif (spec == "Marksmanship") then
             weighting = {Strength = 0, Agility = 3.72, Stamina = 0.05, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.61, Mp5 = 0,
@@ -341,7 +342,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Survival") then
+        elseif (spec == "Survival") then
             weighting = {Strength = 0, Agility = 3.74, Stamina = 0.05, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.005, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.33, Mp5 = 0,
@@ -352,7 +353,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "MAGE") then
-        if (GetSpec() == "Untalented") then
+        if (spec == "Untalented") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.8, SpellPenetration = 0.005, HasteRating = 1.28, Mp5 = .005,
@@ -361,7 +362,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Arcane") then
+        elseif (spec == "Arcane") then
             weighting = {Strength = -0.1, Agility = -0.1, Stamina = 0.01, Intellect = 1, Spirit = 0,
                          Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.6, SpellPenetration = 0.2, HasteRating = 0.5, Mp5 = 0,
@@ -370,7 +371,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Fire") then
+        elseif (spec == "Fire") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
                          Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
@@ -379,7 +380,7 @@ function SetStatWeights()
                          RedSockets = 20, YellowSockets = 20, BlueSockets = 15, MetaSockets = 20,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Frost") then
+        elseif (spec == "Frost") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
                          Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.9, SpellPenetration = 0.3, HasteRating = 0.8, Mp5 = 0,
@@ -390,7 +391,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "PALADIN") then
-        if (GetSpec() == "Untalented") then
+        if (spec == "Untalented") then
             weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.79, Mp5 = 0,
@@ -399,7 +400,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Holy") then
+        elseif (spec == "Holy") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.7, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
@@ -408,7 +409,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Protection") then
+        elseif (spec == "Protection") then
             weapons = "weapon and shield"
             weighting = {Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = -0.2,
                          Armor = 0.05, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
@@ -417,7 +418,7 @@ function SetStatWeights()
                          RedSockets = 40, YellowSockets = 35, BlueSockets = 40, MetaSockets = 50,
                          MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
                          DPS = 2}
-        elseif (GetSpec() == "Retribution") then
+        elseif (spec == "Retribution") then
             weapons = "2h"
             weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -429,7 +430,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "PRIEST") then
-        if (GetSpec() == "Untalented") then
+        if (spec == "Untalented") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.75, SpellPenetration = 0, HasteRating = 2, Mp5 = 0,
@@ -438,7 +439,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Discipline") then
+        elseif (spec == "Discipline") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
                          Armor = 0.0001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.8, SpellPenetration = 0, HasteRating = 1, Mp5 = 0,
@@ -447,7 +448,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40,
                          HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Holy") then
+        elseif (spec == "Holy") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.51, SpellPenetration = 0, HasteRating = 0.47, Mp5 = 0,
@@ -456,7 +457,7 @@ function SetStatWeights()
                          RedSockets = 40, YellowSockets = 40, BlueSockets = 40, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Shadow") then
+        elseif (spec == "Shadow") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.55, Spirit = 0.05,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.75, SpellPenetration = 0, HasteRating = 2, Mp5 = 0,
@@ -467,7 +468,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "ROGUE") then
-        if (GetSpec() == "Untalented") then
+        if (spec == "Untalented") then
             weapons = "dagger and any"
             weighting = {Strength = 0.05, Agility = 2.6, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -477,7 +478,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Assassination") then
+        elseif (spec == "Assassination") then
             weighting = {Strength = 0, Agility = 2.6, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.2, Mp5 = 0,
@@ -486,7 +487,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Combat") then
+        elseif (spec == "Combat") then
             weighting = {Strength = 0, Agility = 2.83, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.87, Mp5 = 0,
@@ -495,7 +496,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Subtlety") then
+        elseif (spec == "Subtlety") then
             weapons = "dagger and any"
             weighting = {Strength = 0.3, Agility = 1, Stamina = 0.2, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0.1, ParryRating = 0.1, BlockRating = 0,
@@ -507,7 +508,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "SHAMAN") then
-        if (GetSpec() == "Untalented") then
+        if (spec == "Untalented") then
             weighting = {Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 1, SpellPenetration = 1, HasteRating = 1, Mp5 = 0,
@@ -516,7 +517,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Elemental") then
+        elseif (spec == "Elemental") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.6, SpellPenetration = 0.1, HasteRating = 0.9, Mp5 = 0,
@@ -525,7 +526,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Enhancement") then
+        elseif (spec == "Enhancement") then
             weapons = "dual wield"
             weighting = {Strength = 0.7, Agility = 1, Stamina = 0.1, Intellect = 0.1, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -535,7 +536,7 @@ function SetStatWeights()
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Restoration") then
+        elseif (spec == "Restoration") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0.75, SpellPenetration = 0, HasteRating = 0.6, Mp5 = 0,
@@ -546,7 +547,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "WARLOCK") then
-        if (GetSpec() == "Untalented") then
+        if (spec == "Untalented") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.81, SpellPenetration = 0.05, HasteRating = 2.32, Mp5 = 0,
@@ -555,7 +556,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Affliction") then
+        elseif (spec == "Affliction") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.81, SpellPenetration = 0.05, HasteRating = 2.32, Mp5 = 0,
@@ -564,7 +565,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Demonology") then
+        elseif (spec == "Demonology") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.79, Spirit = 0.005,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.91, SpellPenetration = 0.05, HasteRating = 2.37, Mp5 = 0,
@@ -573,7 +574,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (GetSpec() == "Destruction") then
+        elseif (spec == "Destruction") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.3, Spirit = 0.005,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 2.62, SpellPenetration = 0.05, HasteRating = 2.08, Mp5 = 0,
@@ -584,7 +585,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "WARRIOR") then
-        if (GetSpec() == "Untalented") then
+        if (spec == "Untalented") then
             weighting = {Strength = 2.02, Agility = 0.01, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 0.8, Mp5 = 0,
@@ -593,7 +594,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Arms") then
+        elseif (spec == "Arms") then
             weapons = "2h"
             weighting = {Strength = 2.02, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -603,7 +604,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Fury") then
+        elseif (spec == "Fury") then
             weapons = "dual wield"
             weighting = {Strength = 2.98, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -613,7 +614,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (GetSpec() == "Protection") then
+        elseif (spec == "Protection") then
             weapons = "weapon and shield"
             weighting = {Strength = 1.2, Agility = 0, Stamina = 1.5, Intellect = 0, Spirit = 0,
                          Armor = 0.16, DodgeRating = 1, ParryRating = 1.03, BlockRating = 0,
