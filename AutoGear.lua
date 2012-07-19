@@ -1,22 +1,22 @@
 --AutoGear
 
 -- to do:
--- fix not equipping items just received
 -- fix guild repairs
 -- handle dual wielding 2h using titan's grip
 -- roll need on mounts that the character doesn't have
 -- add a weight for weapon damage
+-- remove the armor penetration weight
 -- make gem weights have level tiers (70-79, 80-84, 85)
 -- identify bag rolls and roll need when appropriate
 -- other non-gear it should let you roll
 -- add a ui
 -- add rolling on offset
--- remove armor penetration
 
 local reason
 local futureAction = {}
 local weighting --gear stat weighting
 local tUpdate = 0
+local dataAvailable = nil
 
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate");
@@ -40,7 +40,7 @@ AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 AutoGearFrame:RegisterEvent("ITEM_PUSH")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
 AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
---AutoGearFrame:RegisterEvent("LOOT_BIND_CONFIRM")      --only from looting, not rolling on loot
+AutoGearFrame:RegisterEvent("PLAYER_ALIVE")             --Fired when the player releases from death to a graveyard or accepts a resurrect before releasing their spirit.    
 AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")           --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
 AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")     --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
 AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")       --Fires when a quest is automatically completed (remote handin available)
@@ -59,14 +59,17 @@ AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM")           --Fires when the player 
 AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")    --Fires when an attempt to confirm a gossip choice is canceled
 AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")        --Fires when the player attempts a gossip choice which requires entering a code
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")              --Fires when an NPC gossip interaction begins
-AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")  --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
+AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")   --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     --print("AutoGear:  "..event)
     if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
-        ScanBags()
+        --make sure this doesn't happen as part of logon
+        if (dataAvailable) then
+            print("AutoGear:  Talent specialization changed.  Scanning bags for gear that's better suited for this spec.")
+            ScanBags()
+        end
     elseif (event == "ADDON_LOADED" and arg1 == "AutoGear") then
         if (not AutoGearDB) then AutoGearDB = {} end
-        SetStatWeights()
     elseif (event == "PARTY_INVITE_REQUEST") then
         print("AutoGear:  Automatically accepting party invite.")
         AcceptGroup()
@@ -85,22 +88,15 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             if (wouldNeed and canNeed) then roll = 1 else roll = 2 end
             if (wouldNeed and not canNeed) then
                 print("AutoGear:  I would roll NEED, but NEED is not an option for this item.")
-                roll = 2
             end
             if (not rollItemInfo.Usable) then print("AutoGear:  This item cannot be worn.  "..reason) end
-            if (roll == 1) then
-                print("AutoGear:  Rolling NEED on "..(rollItemInfo.Name or "this item")..".")
-            elseif (roll == 2) then
-                print("AutoGear:  Rolling GREED on "..(rollItemInfo.Name or "this item")..".")
-            else
-                print("AutoGear:  I don't know what I would roll on this item.")
-            end
             if (roll) then
                 local newAction = {}
                 newAction.action = "roll"
                 newAction.t = GetTime() --roll right away
                 newAction.rollID = arg1
                 newAction.rollType = roll
+                newAction.info = rollItemInfo
                 table.insert(futureAction, newAction)
             end
         else
@@ -162,6 +158,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                 print("AutoGear:  Not enough money to repair all items ("..cashString..").")
             end
         end
+    elseif (event == "PLAYER_ALIVE") then
+        dataAvailable = 1
     elseif (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
         ConfirmAcceptQuest()
     elseif (event == "QUEST_DETAIL") then
@@ -239,9 +237,6 @@ end)
                  DPS = 0}
 ]]
 function SetStatWeights()
-    -- wait for player information
-    while (not UnitClass("player")) do
-    end
     local class, spec
     _,class = UnitClass("player")
     spec = GetSpec()
@@ -1241,23 +1236,14 @@ end
 function AutoGearMain()
     if (GetTime() - tUpdate > 0.05) then
         tUpdate = GetTime()
-    
         --future actions
         for i, curAction in ipairs(futureAction) do
             if (curAction.action == "roll") then
                 if (GetTime() > curAction.t) then
                     if (curAction.rollType == 1) then
-                        if (curAction.info and curAction.info.Name) then
-                            print ("AutoGear:  Rolling NEED on "..curAction.info.Name..".")
-                        else
-                            print ("AutoGear:  Rolling NEED.")
-                        end
+                        print ("AutoGear:  Rolling NEED on "..curAction.info.Name..".")
                     elseif (curAction.rollType == 2) then
-                        if (curAction.info and curAction.info.Name) then
-                            print ("AutoGear:  Rolling GREED on "..curAction.info.Name..".")
-                        else
-                            print ("AutoGear:  Rolling GREED.")
-                        end
+                        print ("AutoGear:  Rolling GREED on "..curAction.info.Name..".")
                     end
                     RollOnLoot(curAction.rollID, curAction.rollType)
                     table.remove(futureAction, i)
@@ -1296,8 +1282,8 @@ function AutoGearMain()
                 end
             elseif (curAction.action == "scan") then
                 if (GetTime() > curAction.t) then
-                    table.remove(futureAction, i)
                     ScanBags()
+                    table.remove(futureAction, i)
                 end
             end
         end
