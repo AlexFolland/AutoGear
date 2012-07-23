@@ -409,7 +409,7 @@ function SetStatWeights()
             weighting = {Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = -0.2,
                          Armor = 0.05, DodgeRating = 0.8, ParryRating = 0.75, BlockRating = 0.8, SpellPower = 0.05,
                          AttackPower = 0.4, HasteRating = 0.5, ArmorPenetration = 0.1,
-                         CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05,
+                         CritRating = 0.25, HitRating = 0, ExpertiseRating = 0.2, MasteryRating = 0.05, ExperienceGained = 100,
                          RedSockets = 40, YellowSockets = 35, BlueSockets = 40, MetaSockets = 50,
                          MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
                          DPS = 2}
