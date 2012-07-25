@@ -257,7 +257,7 @@ function SetStatWeights()
     _,class = UnitClass("player")
     spec = GetSpec()
     weapons = "any"
-    if (class == "DEATH KNIGHT") then
+    if (class == "DEATHKNIGHT") then
         if (spec == "Blood") then
             weighting = {Strength = 0.28, Agility = 0.005, Stamina = 0.4, Intellect = 0, Spirit = 0,
                          Armor = 0.15, DodgeRating = 1, ParryRating = 1, BlockRating = 0,
