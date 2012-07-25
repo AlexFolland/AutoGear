@@ -1,13 +1,16 @@
 --AutoGear
 
 -- to do:
+-- accomodate for "no item link received"-- identify bag rolls and roll need when appropriate
+-- roll need on mounts that the character doesn't have
+-- identify bag rolls and roll need when appropriate
 -- fix guild repairs
 -- handle dual wielding 2h using titan's grip
--- roll need on mounts that the character doesn't have
+-- make seperate stat weights for main and off hand
 -- add a weight for weapon damage
+-- fix weapons for rogues properly.  (dagger and any can equip dagger and shield, put slow in main hand for combat, etc)
 -- remove the armor penetration weight
 -- make gem weights have level tiers (70-79, 80-84, 85)
--- identify bag rolls and roll need when appropriate
 -- other non-gear it should let you roll
 -- add a ui
 -- add rolling on offset
@@ -114,9 +117,9 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             --check if there's already a scan action in queue
             local scanFound = nil
             for i, curAction in ipairs(futureAction) do
-                if (curaction.action == "scan") then
+                if (curAction.action == "scan") then
                     --push the time ahead until all the items have arrived
-                    curaction.t = GetTime() + 1.0
+                    curAction.t = GetTime() + 1.0
                     scanFound = 1
                 end
             end
