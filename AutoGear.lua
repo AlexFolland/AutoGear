@@ -11,6 +11,7 @@
 -- other non-gear it should let you roll
 -- add a ui
 -- add rolling on offset
+-- factor in racial weapon bonuses
 
 local reason
 local futureAction = {}
@@ -110,11 +111,23 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         --print("AutoGear:  Received an item.  Checking for gear upgrades.")
         --make sure a fishing pole isn't replaced while fishing
         if (GetMainHandType() ~= "Fishing Poles") then
-            --give the item some time to arrive
-            local newAction = {}
-            newAction.action = "scan"
-            newAction.t = GetTime() + 0.5
-            table.insert(futureAction, newAction)
+            --check if there's already a scan action in queue
+            local scanFound = nil
+            for i, curAction in ipairs(futureAction) do
+                if (curaction.action == "scan") then
+                    --push the time ahead until all the items have arrived
+                    curaction.t = GetTime() + 1.0
+                    scanFound = 1
+                end
+            end
+            if (not scanFound) then
+                --no scan found, so create a new one
+                local newAction = {}
+                newAction.action = "scan"
+                --give the item some time to arrive
+                newAction.t = GetTime() + 0.5
+                table.insert(futureAction, newAction)
+            end
         end
     elseif (event == "EQUIP_BIND_CONFIRM") then
         EquipPendingItem(arg1)
@@ -334,8 +347,8 @@ function SetStatWeights()
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.61, Mp5 = 0,
                          AttackPower = 1.19, ArmorPenetration = 0, CritRating = 1.66, HitRating = 3.49, 
                          ExpertiseRating = 0, MasteryRating = 1.38, ExperienceGained = 100,
-                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Survival") then
             weighting = {Strength = 0, Agility = 3.74, Stamina = 0.05, Intellect = -0.1, Spirit = -0.1,
@@ -702,7 +715,7 @@ function ScanBags(lootRollItemID, questRewardID)
         for slot = 0, slotMax do
             local _,_,_,_,_,_, link = GetContainerItemInfo(bag, slot)
             if (link) then
-                info = ReadItemInfo(nil,nil,bag,slot)
+                info = ReadItemInfo(nil, nil, bag, slot)
                 LookAtItem(best, info, bag, slot, nil, GetContainerItemID(bag, slot))
             end
         end
