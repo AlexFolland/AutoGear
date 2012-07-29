@@ -15,6 +15,7 @@
 -- add a ui
 -- add rolling on offset
 -- factor in racial weapon bonuses
+-- eye of arachnida slot nil error
 
 local reason
 local futureAction = {}
@@ -86,7 +87,9 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         if (weighting) then
             local roll = nil
             reason = "(no reason set)"
-            local wouldNeed = ScanBags(arg1)
+            link = GetLootRollItemLink(arg1)
+            local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+            local wouldNeed = ScanBags(lootRollItemID)
             local rollItemInfo = ReadItemInfo(nil,arg1)
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
             if (wouldNeed and canNeed) then roll = 1 else roll = 2 end
