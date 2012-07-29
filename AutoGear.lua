@@ -1,7 +1,8 @@
 --AutoGear
 
 -- to do:
--- accomodate for "no item link received"-- identify bag rolls and roll need when appropriate
+-- accomodate for "no item link received"
+-- identify bag rolls and roll need when appropriate
 -- roll need on mounts that the character doesn't have
 -- identify bag rolls and roll need when appropriate
 -- fix guild repairs
@@ -88,7 +89,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             local roll = nil
             reason = "(no reason set)"
             link = GetLootRollItemLink(arg1)
-            local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+            local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
             local wouldNeed = ScanBags(lootRollItemID)
             local rollItemInfo = ReadItemInfo(nil,arg1)
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
@@ -482,16 +483,16 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "ROGUE") then
+        weapons = "dual wield"
         if (spec == "Untalented") then
-            weapons = "dagger and any"
-            weighting = {Strength = 0.05, Agility = 2.6, Stamina = 0.05, Intellect = 0, Spirit = 0,
+            weighting = {Strength = 0, Agility = 2.8, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
                          SpellPower = 0, SpellPenetration = 0, HasteRating = 1.2, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, CritRating = 0.9, HitRating = 1.75, 
-                         ExpertiseRating = 1.1, MasteryRating = 1.3, ExperienceGained = 100, 
+                         ExpertiseRating = 1.85, MasteryRating = 1.5, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-                         DPS = 2}
+                         DPS = 3.075}
         elseif (spec == "Assassination") then
             weighting = {Strength = 0, Agility = 2.6, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
@@ -502,14 +503,14 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Combat") then
-            weighting = {Strength = 0, Agility = 2.83, Stamina = 0.05, Intellect = 0, Spirit = 0,
+            weighting = {Strength = 0, Agility = 2.8, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 0, SpellPenetration = 0, HasteRating = 1.87, Mp5 = 0,
-                         AttackPower = 1, ArmorPenetration = 0, CritRating = 1.18, HitRating = 2.46, 
-                         ExpertiseRating = 2.13, MasteryRating = 1.51, ExperienceGained = 100, 
+                         SpellPower = 0, SpellPenetration = 0, HasteRating = 1.2, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0, CritRating = 0.9, HitRating = 1.75, 
+                         ExpertiseRating = 1.85, MasteryRating = 1.5, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-                         DPS = 2}
+                         DPS = 3.075}
         elseif (spec == "Subtlety") then
             weapons = "dagger and any"
             weighting = {Strength = 0.3, Agility = 1, Stamina = 0.2, Intellect = 0, Spirit = 0,
