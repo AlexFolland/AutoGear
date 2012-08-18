@@ -473,11 +473,11 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Shadow") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.55, Spirit = 0.05,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.45,
                          Armor = 0.001, DodgeRating = 0, ParryRating = 0, BlockRating = 0,
-                         SpellPower = 2.75, SpellPenetration = 0, HasteRating = 2, Mp5 = 0,
-                         AttackPower = 0, ArmorPenetration = 0, CritRating = 1.6, HitRating = 1.95, 
-                         ExpertiseRating = 0, MasteryRating = 1.7, ExperienceGained = 100, 
+                         SpellPower = 0.75, SpellPenetration = 0, HasteRating = 0.55, Mp5 = 0,
+                         AttackPower = 0, ArmorPenetration = 0, CritRating = 0.46, HitRating = 0.45,
+                         ExpertiseRating = 0, MasteryRating = 0.46, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
