@@ -90,8 +90,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             reason = "(no reason set)"
             link = GetLootRollItemLink(arg1)
             local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-            local wouldNeed = ScanBags(lootRollItemID)
-            local rollItemInfo = ReadItemInfo(nil,arg1)
+            local wouldNeed = ScanBags(lootRollItemID, arg1)
+            local rollItemInfo = ReadItemInfo(nil, arg1)
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
             if (wouldNeed and canNeed) then roll = 1 else roll = 2 end
             if (wouldNeed and not canNeed) then
@@ -234,7 +234,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                 local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
                 questRewardID[i] = id
             end
-            local choice = ScanBags(nil, questRewardID)
+            local choice = ScanBags(nil, nil, questRewardID)
             GetQuestReward(choice)
         end
     elseif (event ~= "ADDON_LOADED") then
@@ -681,7 +681,7 @@ function ItemContainsText(container, slot, search)
     return nil
 end
 
-function ScanBags(lootRollItemID, questRewardID)
+function ScanBags(lootRollItemID, lootRollID, questRewardID)
     SetStatWeights()
     if (not weighting) then
         return nil
@@ -729,7 +729,7 @@ function ScanBags(lootRollItemID, questRewardID)
     end
     --look at item being rolled on (if any)
     if (lootRollItemID) then
-        info = ReadItemInfo(nil, lootRollItemID)
+        info = ReadItemInfo(nil, lootRollID)
         LookAtItem(best, info, nil, nil, 1, lootRollItemID)
     end
     --look at quest rewards (if any)
@@ -944,15 +944,15 @@ function PrintItem(info)
     end
 end
 
-function ReadItemInfo(inventoryID, lootRollItemID, container, slot, questRewardIndex)
+function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex)
     local info = {}
     local cannotUse = nil
     AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE");
     AutoGearTooltip:ClearLines()
     if (inventoryID) then
         AutoGearTooltip:SetInventoryItem("player", inventoryID)
-    elseif (lootRollItemID) then
-        AutoGearTooltip:SetLootRollItem(lootRollItemID)
+    elseif (lootRollID) then
+        AutoGearTooltip:SetLootRollItem(lootRollID)
     elseif (container and slot) then
         AutoGearTooltip:SetBagItem(container, slot)
     elseif (questRewardIndex) then
