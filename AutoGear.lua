@@ -887,8 +887,7 @@ function LookAtItem(best, info, bag, slot, rollOn, itemID, chooseReward)
     local score, i, i2
     if (info.Usable or (rollOn and info.Within5levels)) then
         score = DetermineItemScore(info, weighting)
-        i = GetInventorySlotInfo(info.Slot)
-        if (info.Slot2) then i2 = GetInventorySlotInfo(info.Slot2) end
+        i = GetInventorySlotInfo(info.Slot) if (info.Slot2) then i2 = GetInventorySlotInfo(info.Slot2) end
         --ignore it if it's a tabard
         if (i == 19) then return end
         --compare to the lowest score ring, trinket, or dual wield weapon
@@ -1099,7 +1098,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                     info.Slot = "MainHandSlot"
                 end
             end
-            if (text=="ranged" or text=="relic") then info.Slot = "RangedSlot" end
+            if (text=="ranged" or text=="relic") then info.Slot = "MainHandSlot" end
             
             --check for being a pattern or the like
             if (string.find(text, "pattern:")) then cannotUse = 1 end
@@ -1202,17 +1201,9 @@ function GetAllBagsNumFreeSlots()
 end
 
 function GetSpec()
-    local highestTalents = 0
-    local spec = "Untalented"
-    specNumbers = ""
-    for i = 1, GetNumTalentTabs() do
-        _, tabName, _, _, numTalents = GetTalentTabInfo(i)
-        if (numTalents > highestTalents) then
-            highestTalents = numTalents
-            spec = tabName
-        end
-    end
-    return spec
+    local currentSpec = GetSpecialization()
+    local currentSpecName = currentSpec and select(2, GetSpecializationInfo(currentSpec)) or "None"
+    return currentSpecName
 end
 
 function PutItemInEmptyBagSlot()
