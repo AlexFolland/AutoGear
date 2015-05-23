@@ -914,7 +914,10 @@ function IsItemTwoHanded(itemID)
         (string.find(mainHandType, "Two") or
         string.find(mainHandType, "Staves") or
         string.find(mainHandType, "Fishing Poles") or
-        string.find(mainHandType, "Polearms"))
+        string.find(mainHandType, "Polearms") or
+        string.find(mainHandType, "Guns") or
+        string.find(mainHandType, "Bows") or
+        string.find(mainHandType, "Crossbows"))
 end
 
 function IsTwoHandEquipped()
@@ -1098,7 +1101,15 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                     info.Slot = "MainHandSlot"
                 end
             end
-            if (text=="ranged" or text=="relic") then info.Slot = "MainHandSlot" end
+            local _, class = UnitClass("player")
+            if (text=="ranged") then
+                info.Slot = "MainHandSlot"
+                --check if it's ranged for a melee character
+                if (class=="ROGUE" or class=="WARRIOR") then
+                    reason = "(can equip it but it wouldn't make sense to use a ranged weapon on a melee character)"
+                    cannotUse = 1
+                end
+            end
             
             --check for being a pattern or the like
             if (string.find(text, "pattern:")) then cannotUse = 1 end
