@@ -485,38 +485,38 @@ function SetStatWeights()
     elseif (class == "ROGUE") then
         weapons = "dual wield"
         if (spec == "Untalented") then
-            weighting = {Strength = 0, Agility = 2.8, Stamina = 0.05, Intellect = 0, Spirit = 0,
+            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 1.2, Mp5 = 0,
-                         AttackPower = 1, ArmorPenetration = 0, Crit = 0.9, Hit = 1.75, 
+                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
                          Expertise = 1.85, Mastery = 1.5, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 3.075}
         elseif (spec == "Assassination") then
-            weighting = {Strength = 0, Agility = 2.6, Stamina = 0.05, Intellect = 0, Spirit = 0,
+            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 1.2, Mp5 = 0,
-                         AttackPower = 1, ArmorPenetration = 0, Crit = 0.9, Hit = 1.75, 
+                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
                          Expertise = 1.1, Mastery = 1.3, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Combat") then
-            weighting = {Strength = 0, Agility = 2.8, Stamina = 0.05, Intellect = 0, Spirit = 0,
+            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 1.2, Mp5 = 0,
-                         AttackPower = 1, ArmorPenetration = 0, Crit = 0.9, Hit = 1.75, 
+                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
                          Expertise = 1.85, Mastery = 1.5, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 3.075}
         elseif (spec == "Subtlety") then
             weapons = "dagger and any"
-            weighting = {Strength = 0.3, Agility = 1, Stamina = 0.2, Intellect = 0, Spirit = 0,
+            weighting = {Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
-                         AttackPower = 0.4, ArmorPenetration = 0, Crit = 0.7, Hit = 0.6, 
+                         AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6, 
                          Expertise = 0, Mastery = 0.9, ExperienceGained = 100, 
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
