@@ -466,18 +466,18 @@ function SetStatWeights()
         elseif (spec == "Holy") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-                         SpellPower = 0.51, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
+                         SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
                          Expertise = 0, Mastery = 0.36, ExperienceGained = 100,
                          RedSockets = 40, YellowSockets = 40, BlueSockets = 40, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Shadow") then
-            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.45,
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-                         SpellPower = 0.75, SpellPenetration = 0, Haste = 0.55, Mp5 = 0,
-                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.46, Hit = 0.45,
-                         Expertise = 0, Mastery = 0.46, ExperienceGained = 100,
+                         SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 0,
+                         AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
+                         Expertise = 0, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
