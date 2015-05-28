@@ -1023,7 +1023,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
             if (string.find(text, "block")) then info.Block = (info.Block or 0) + value end
             if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
             if (string.find(text, "experience gained")) then
-                if (UnitLevel("player") < 85 and not IsXPUserDisabled()) then
+                if (UnitLevel("player") < 100 and not IsXPUserDisabled()) then
                     info.ExperienceGained = (info.ExperienceGained or 0) + value
                 end
             end
