@@ -331,37 +331,37 @@ function SetStatWeights()
     elseif (class == "HUNTER") then
         weapons = "ranged"
         if (spec == "Untalented") then
-            weighting = {Strength = 0.5, Agility = 1, Stamina = 0.1, Intellect = -0.1, Spirit = -0.1,
+            weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-                         AttackPower = 0.9, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
+                         AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
                          Expertise = 0.1, Mastery = 0, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
                          DPS = 2}
         elseif (spec == "Beast Mastery") then
-            weighting = {Strength = 0.5, Agility = 1, Stamina = 0.1, Intellect = -0.1, Spirit = -0.1,
+            weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-                         AttackPower = 0.9, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
-                         Expertise = 0.1, Mastery = 0.9, ExperienceGained = 100,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4, 
+                         Expertise = 0.1, Mastery = 1.5, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
                          DPS = 2}
         elseif (spec == "Marksmanship") then
-            weighting = {Strength = 0, Agility = 3.72, Stamina = 0.05, Intellect = -0.1, Spirit = -0.1,
+            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
-                         AttackPower = 1.19, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
                          Expertise = 0, Mastery = 1.38, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Survival") then
-            weighting = {Strength = 0, Agility = 3.74, Stamina = 0.05, Intellect = -0.1, Spirit = -0.1,
+            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
-                         AttackPower = 1.15, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
                          Expertise = 0, Mastery = 1.27, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
