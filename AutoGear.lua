@@ -262,30 +262,39 @@ function SetStatWeights()
     spec = GetSpec()
     weapons = "any"
     if (class == "DEATHKNIGHT") then
-        if (spec == "Blood") then
-            weighting = {Strength = 0.28, Agility = 0.005, Stamina = 0.4, Intellect = 0, Spirit = 0,
-                         Armor = 0.15, Dodge = 1, Parry = 1, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 0.005, Mp5 = 0,
-                         AttackPower = 0.005, ArmorPenetration = 0.005, Crit = 0.005, Hit = 0.15, 
-                         Expertise = 0.3, Mastery = 0.38, ExperienceGained = 100,
+        if (spec == "Untalented") then
+            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
+                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+                         Expertise = 0.3, Mastery = 1, ExperienceGained = 100,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         DPS = 2}
+        elseif (spec == "Blood") then
+            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
+                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+                         Expertise = 0.3, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Frost") then
-            weighting = {Strength = 2.83, Agility = 0.005, Stamina = 0.005, Intellect = 0, Spirit = 0,
-                         Armor = 0.005, Dodge = 0.001, Parry = 0.001, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 1.4, Mp5 = 0,
-                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1.34, Hit = 2.26, 
-                         Expertise = 1.75, Mastery = 1.37, ExperienceGained = 100,
+            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+                         Expertise = 0.3, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Unholy") then
-            weighting = {Strength = 3.24, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
-                         Armor = 0, Dodge = 0, Parry = 0, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 1.64, Mp5 = 0,
-                         AttackPower = 0.82, ArmorPenetration = 0, Crit = 1.5, Hit = 2.67, 
-                         Expertise = 0.98, Mastery = 1.33, ExperienceGained = 100,
+            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+                         Expertise = 0.3, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
