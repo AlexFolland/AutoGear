@@ -310,12 +310,21 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Feral Combat") then
-            weighting = {Strength = 0, Agility = 1, Stamina = 1, Intellect = 0, Spirit = 0,
-                         Armor = 0.1, Dodge = 0.4, Parry = 0, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 0.3, Mp5 = 0,
-                         AttackPower = 0.4, ArmorPenetration = 0, Crit = 0.1, Hit = 0.3, 
-                         Expertise = 0.4, Mastery = 0.4, ExperienceGained = 100,
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+                         Expertise = 0.4, Mastery = 1, ExperienceGained = 100,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+                         DPS = 0.8}
+        elseif (spec == "Guardian") then
+            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+                         Expertise = 0.4, Mastery = 1, ExperienceGained = 100,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 0.8}
         elseif (spec == "Restoration") then
