@@ -283,7 +283,7 @@ function SetStatWeights()
         elseif (spec == "Frost") then
             weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
                          Expertise = 0.3, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
