@@ -53,14 +53,14 @@ local function createOptionPanel()
     subtitle:SetJustifyH("LEFT")
     subtitle:SetJustifyV("TOP")
 
-    subtitle:SetText("Click the button below to scan all bags for gear upgrades.")
+    subtitle:SetText("AutoGear scans all bags for gear upgrades every time you loot gear.  Click the button below to force a scan.  Tip: By equipping your old item, you can use this to help determine how AutoGear decided an item was an upgrade.")
 
     local button = CreateFrame("Button", nil, optionPanel, "UIPanelButtonTemplate")
     button:SetWidth(100)
     button:SetHeight(30)
     button:SetScript("OnClick", function() Scan() end)
     button:SetText("Scan")
-    button:SetPoint("TOPLEFT", 20, -60)
+    button:SetPoint("TOPLEFT", 20, -80)
     
     optionPanel.name = "AutoGear"
     InterfaceOptions_AddCategory(optionPanel)
@@ -1288,6 +1288,8 @@ SlashCmdList["AutoGear"] = function(msg)
         Scan()
     elseif (param1 == "spec") then
         print("AutoGear:  Looks like you are "..GetSpec()..".")
+    elseif (param1 == "") then
+        InterfaceOptionsFrame_OpenToCategory(optionPanel)
     else
         print("AutoGear:  Unrecognized command.  Use '/ag scan' to scan all bags.")
     end
