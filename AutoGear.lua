@@ -37,6 +37,37 @@ AutoGearFrame:SetScript("OnUpdate", function()
     AutoGearMain()
 end)
 
+--options menu (template from BlizzMove)
+local function createOptionPanel()
+    optionPanel = CreateFrame("Frame", "AutoGearPanel", UIParent)
+    local title = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 16, -16)
+    local version = GetAddOnMetadata("AutoGear","Version") or ""
+    title:SetText("AutoGear "..version)
+
+    local subtitle = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    subtitle:SetHeight(35)
+    subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
+    subtitle:SetPoint("RIGHT", optionPanel, -32, 0)
+    subtitle:SetNonSpaceWrap(true)
+    subtitle:SetJustifyH("LEFT")
+    subtitle:SetJustifyV("TOP")
+
+    subtitle:SetText("Click the button below to scan all bags for gear upgrades.")
+
+    local button = CreateFrame("Button", nil, optionPanel, "UIPanelButtonTemplate")
+    button:SetWidth(100)
+    button:SetHeight(30)
+    button:SetScript("OnClick", function() Scan() end)
+    button:SetText("Scan")
+    button:SetPoint("TOPLEFT", 20, -60)
+    
+    optionPanel.name = "AutoGear"
+    InterfaceOptions_AddCategory(optionPanel)
+end
+
+createOptionPanel()
+
 AutoGearFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 AutoGearFrame:RegisterEvent("ADDON_LOADED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
@@ -1254,19 +1285,23 @@ SlashCmdList["AutoGear"] = function(msg)
     if (not param2) then param2 = "(nil)" end
     if (not param3) then param3 = "(nil)" end
     if (param1 == "scan") then
-        if (not weighting) then SetStatWeights() end
-        if (not weighting) then
-            print("AutoGear:  No weighting set for this class.")
-            return
-        end
-        print("AutoGear:  Scanning bags for upgrades.")
-        if (not ScanBags()) then
-            print("AutoGear:  Nothing better was found")
-        end
+        Scan()
     elseif (param1 == "spec") then
         print("AutoGear:  Looks like you are "..GetSpec()..".")
     else
         print("AutoGear:  Unrecognized command.  Use '/ag scan' to scan all bags.")
+    end
+end
+
+function Scan()
+    if (not weighting) then SetStatWeights() end
+    if (not weighting) then
+        print("AutoGear:  No weighting set for this class.")
+        return
+    end
+    print("AutoGear:  Scanning bags for upgrades.")
+    if (not ScanBags()) then
+        print("AutoGear:  Nothing better was found")
     end
 end
 
