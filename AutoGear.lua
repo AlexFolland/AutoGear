@@ -280,7 +280,7 @@ end)
                  SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
 
                  AttackPower = 0, ArmorPenetration = 0, Crit = 0, Hit = 0, 
-                 Expertise = 0, Mastery = 0, ExperienceGained = 0,
+                 Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 0,
                  RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 
                  HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -298,7 +298,7 @@ function SetStatWeights()
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-                         Expertise = 0.3, Mastery = 1, ExperienceGained = 100,
+                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -307,7 +307,7 @@ function SetStatWeights()
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-                         Expertise = 0.3, Mastery = 1, ExperienceGained = 100,
+                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -316,7 +316,7 @@ function SetStatWeights()
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-                         Expertise = 0.3, Mastery = 1, ExperienceGained = 100,
+                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -325,7 +325,7 @@ function SetStatWeights()
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-                         Expertise = 0.3, Mastery = 1, ExperienceGained = 100,
+                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -336,7 +336,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9, 
-                         Expertise = 0, Mastery = 1.45, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 1}
@@ -345,7 +345,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05, 
-                         Expertise = 0, Mastery = 0.6, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -354,7 +354,7 @@ function SetStatWeights()
                          Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-                         Expertise = 0.4, Mastery = 1, ExperienceGained = 100,
+                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 0.8}
@@ -363,7 +363,7 @@ function SetStatWeights()
                          Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-                         Expertise = 0.4, Mastery = 1, ExperienceGained = 100,
+                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 0.8}
@@ -372,7 +372,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
-                         Expertise = 0, Mastery = 0.65, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -384,7 +384,7 @@ function SetStatWeights()
                          Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
-                         Expertise = 0.1, Mastery = 0, ExperienceGained = 100,
+                         Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
                          DPS = 2}
@@ -393,7 +393,7 @@ function SetStatWeights()
                          Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4, 
-                         Expertise = 0.1, Mastery = 1.5, ExperienceGained = 100,
+                         Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
                          DPS = 2}
@@ -402,7 +402,7 @@ function SetStatWeights()
                          Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
-                         Expertise = 0, Mastery = 1.38, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -411,7 +411,7 @@ function SetStatWeights()
                          Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
-                         Expertise = 0, Mastery = 1.27, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -422,7 +422,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1.34, Hit = 3.21, 
-                         Expertise = 0, Mastery = 1.4, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -431,7 +431,7 @@ function SetStatWeights()
                          Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7, 
-                         Expertise = 0, Mastery = 0.9, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -440,7 +440,7 @@ function SetStatWeights()
                          Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0, 
-                         Expertise = 0, Mastery = 0.9, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
                          RedSockets = 20, YellowSockets = 20, BlueSockets = 15, MetaSockets = 20,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -449,7 +449,7 @@ function SetStatWeights()
                          Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7, 
-                         Expertise = 0, Mastery = 0.9, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -460,7 +460,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
-                         Expertise = 1.3, Mastery = 1.13, ExperienceGained = 100,
+                         Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -469,7 +469,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0, 
-                         Expertise = 0, Mastery = 0.3, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -478,7 +478,7 @@ function SetStatWeights()
             weighting = {Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = -0.2,
                          Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, SpellPower = 0.05,
                          AttackPower = 0.4, Haste = 0.5, ArmorPenetration = 0.1,
-                         Crit = 0.25, Hit = 0, Expertise = 0.2, Mastery = 0.05, ExperienceGained = 100,
+                         Crit = 0.25, Hit = 0, Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
                          RedSockets = 40, YellowSockets = 35, BlueSockets = 40, MetaSockets = 50,
                          MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
                          DPS = 2}
@@ -488,7 +488,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
-                         Expertise = 1.3, Mastery = 1.13, ExperienceGained = 100,
+                         Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -499,7 +499,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95, 
-                         Expertise = 0, Mastery = 1.7, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -508,7 +508,7 @@ function SetStatWeights()
                          Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
-                         Expertise = 0, Mastery = 0.5, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100, 
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40,
                          HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -517,7 +517,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
-                         Expertise = 0, Mastery = 0.36, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
                          RedSockets = 40, YellowSockets = 40, BlueSockets = 40, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -526,7 +526,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
-                         Expertise = 0, Mastery = 1, ExperienceGained = 100,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -538,7 +538,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-                         Expertise = 1.85, Mastery = 1.5, ExperienceGained = 100, 
+                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 3.075}
@@ -547,7 +547,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-                         Expertise = 1.1, Mastery = 1.3, ExperienceGained = 100, 
+                         Expertise = 1.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.3, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -556,7 +556,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-                         Expertise = 1.85, Mastery = 1.5, ExperienceGained = 100, 
+                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 3.075}
@@ -566,7 +566,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
                          AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6, 
-                         Expertise = 0, Mastery = 0.9, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
@@ -577,7 +577,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7, 
-                         Expertise = 0, Mastery = 1.62, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -586,7 +586,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0, 
-                         Expertise = 0, Mastery = 1, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -596,7 +596,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
                          AttackPower = 0.9, ArmorPenetration = 0.4, Crit = 0.9, Hit = 0.8, 
-                         Expertise = 0.3, Mastery = 1, ExperienceGained = 100, 
+                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
                          RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
@@ -605,7 +605,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0, 
-                         Expertise = 0, Mastery = 0.55, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -616,7 +616,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
-                         Expertise = 0, Mastery = 1.24, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -625,7 +625,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
-                         Expertise = 0, Mastery = 1.24, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -634,7 +634,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 2.91, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1.95, Hit = 3.74, 
-                         Expertise = 0, Mastery = 2.57, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -643,7 +643,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 2.62, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1.4, Hit = 2.83, 
-                         Expertise = 0, Mastery = 1.4, ExperienceGained = 100, 
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
@@ -654,7 +654,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
-                         Expertise = 1.46, Mastery = 0.9, ExperienceGained = 100, 
+                         Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -664,7 +664,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
-                         Expertise = 1.46, Mastery = 0.9, ExperienceGained = 100, 
+                         Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -674,7 +674,7 @@ function SetStatWeights()
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
                          AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, Hit = 2.47, 
-                         Expertise = 2.47, Mastery = 1.57, ExperienceGained = 100, 
+                         Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -684,7 +684,7 @@ function SetStatWeights()
                          Armor = 0.16, Dodge = 1, Parry = 1.03, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.02, 
-                         Expertise = 0.04, Mastery = 1, ExperienceGained = 100, 
+                         Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
@@ -1071,6 +1071,8 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
             if (string.find(text, "parry")) then info.Parry = (info.Parry or 0) + value end
             if (string.find(text, "block")) then info.Block = (info.Block or 0) + value end
             if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
+            if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
+            if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
             if (string.find(text, "experience gained")) then
                 if (UnitLevel("player") < 100 and not IsXPUserDisabled()) then
                     info.ExperienceGained = (info.ExperienceGained or 0) + value
@@ -1242,6 +1244,8 @@ function DetermineItemScore(itemInfo, weighting)
         (weighting.BlueSockets or 0) * (itemInfo.BlueSockets or 0) +
         (weighting.MetaSockets or 0) * (itemInfo.MetaSockets or 0) +
         (weighting.Mastery or 0) * (itemInfo.Mastery or 0) +
+        (weighting.Multistrike or 0) * (itemInfo.Multistrike or 0) +
+        (weighting.Versatility or 0) * (itemInfo.Versatility or 0) +
         (weighting.ExperienceGained or 0) * (itemInfo.ExperienceGained or 0) +
         (weighting.DPS or 0) * (itemInfo.DPS or 0)
 end
