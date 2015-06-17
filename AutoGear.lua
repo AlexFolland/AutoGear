@@ -235,18 +235,18 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             end
         end
     elseif (event == "QUEST_GREETING") then
+        --active quests
+        quests = GetNumActiveQuests()
+        for i = 1, quests do
+            SelectActiveQuest(i)
+        end
         --available quests
-        local quests = table.getn({GetGossipActiveQuests()}) / 5
+        local quests = GetNumAvailableQuests()
         for i = 1, quests do
             local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
             if (not isTrivial) then
-                SelectGossipAvailableQuest(i)
+                SelectAvailableQuest(i)
             end
-        end
-        --active quests
-        quests = table.getn({GetGossipActiveQuests()}) / 5
-        for i = 1, quests do
-            SelectGossipActiveQuest(i)
         end
     elseif (event == "QUEST_PROGRESS") then
         if (IsQuestCompletable()) then
