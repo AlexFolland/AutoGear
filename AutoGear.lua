@@ -98,7 +98,7 @@ AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")        --Fires when the player 
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")              --Fires when an NPC gossip interaction begins
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")   --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
-    -- print("AutoGear:  "..event)
+    print("AutoGear:  "..event)
     if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
         --make sure this doesn't happen as part of logon
         if (dataAvailable) then
@@ -216,22 +216,22 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
     elseif (event == "QUEST_DETAIL") then
         QuestDetailAcceptButton_OnClick()
     elseif (event == "GOSSIP_SHOW") then
+        --active quests
+        local quests = GetNumGossipActiveQuests()
+        local info = {GetGossipActiveQuests()}
+        for i = 0, quests - 1 do
+            local name, level, isTrivial, isComplete, isLegendary = info[i*5+1], info[i*5+2], info[i*5+3], info[i*5+4], info[i*5+5]
+            if (isComplete) then
+                SelectGossipActiveQuest(i+1)
+            end
+        end
         --available quests
-        local quests = GetNumGossipAvailableQuests()
-        local info = {GetGossipAvailableQuests()}
+        quests = GetNumGossipAvailableQuests()
+        info = {GetGossipAvailableQuests()}
         for i = 0, quests - 1 do
             local name, level, isTrivial, isDaily, isRepeatable = info[i*5+1], info[i*5+2], info[i*5+3], info[i*5+4], info[i*5+5]
             if (not isTrivial) then
                 SelectGossipAvailableQuest(i+1)
-            end
-        end
-        --active quests
-        quests = GetNumGossipActiveQuests()
-        info = {GetGossipActiveQuests()}
-        for i = 0, quests - 1 do
-            local name, level, isTrivial, isComplete = info[i*4+1], info[i*4+2], info[i*4+3], info[i*4+4]
-            if (isComplete) then
-                SelectGossipActiveQuest(i+1)
             end
         end
     elseif (event == "QUEST_GREETING") then
