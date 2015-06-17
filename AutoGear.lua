@@ -236,12 +236,15 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         end
     elseif (event == "QUEST_GREETING") then
         --active quests
-        quests = GetNumActiveQuests()
+        local quests = GetNumActiveQuests()
         for i = 1, quests do
-            SelectActiveQuest(i)
+        	local title, isComplete = GetActiveTitle(i)
+        	if (isComplete) then
+        		SelectActiveQuest(i)
+        	end
         end
         --available quests
-        local quests = GetNumAvailableQuests()
+        quests = GetNumAvailableQuests()
         for i = 1, quests do
             local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
             if (not isTrivial) then
