@@ -293,7 +293,7 @@ function SetStatWeights()
     spec = GetSpec()
     weapons = "any"
     if (class == "DEATHKNIGHT") then
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
@@ -331,7 +331,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "DRUID") then
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
@@ -379,7 +379,7 @@ function SetStatWeights()
         end
     elseif (class == "HUNTER") then
         weapons = "ranged"
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = -0.1, Spirit = -0.1,
                          Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
@@ -417,7 +417,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "MAGE") then
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
@@ -455,7 +455,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "PALADIN") then
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
@@ -494,7 +494,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "PRIEST") then
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 0,
@@ -533,7 +533,7 @@ function SetStatWeights()
         end
     elseif (class == "ROGUE") then
         weapons = "dual wield"
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
@@ -572,7 +572,7 @@ function SetStatWeights()
                          DPS = 2}
         end
     elseif (class == "SHAMAN") then
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 1,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
@@ -611,7 +611,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "WARLOCK") then
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
@@ -649,7 +649,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "WARRIOR") then
-        if (spec == "Untalented") then
+        if (spec == "None") then
             weighting = {Strength = 2.02, Agility = 0.01, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
