@@ -1,4 +1,4 @@
-## Interface: 60100
+## Interface: 60200
 ## Title: AutoGear
 ## Notes: Auto roll and auto equip loot.
 ## Version: alpha
