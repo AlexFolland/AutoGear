@@ -595,12 +595,12 @@ function SetStatWeights()
                          DPS = 2}
         elseif (spec == "Enhancement") then
             weapons = "dual wield"
-            weighting = {Strength = 0.7, Agility = 1, Stamina = 0.1, Intellect = 0.1, Spirit = 0,
+            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-                         SpellPower = 0, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
-                         AttackPower = 0.9, ArmorPenetration = 0.4, Crit = 0.9, Hit = 0.8, 
-                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, Hit = 0.8, 
+                         Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100, 
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Restoration") then
