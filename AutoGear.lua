@@ -576,7 +576,7 @@ function SetStatWeights()
         end
     elseif (class == "SHAMAN") then
         if (spec == "None") then
-            weighting = {Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 1,
+            weighting = {Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
                          AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7, 
