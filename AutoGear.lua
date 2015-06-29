@@ -1056,7 +1056,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
             if (string.find(text, "intellect")) then info.Intellect = (info.Intellect or 0) + value end
             if (string.find(text, "stamina")) then info.Stamina = (info.Stamina or 0) + value end
             if (string.find(text, "spirit")) then info.Spirit = (info.Spirit or 0) + value end
-            if (string.find(text, "armor")) then info.Armor = (info.Armor or 0) + value end
+            if (string.find(text, "armor") and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
             if (string.find(text, "attack power")) then info.AttackPower = (info.AttackPower or 0) + value end
             if (string.find(text, "spell power") or 
                 string.find(text, "frost spell damage") and spec=="Frost" or
