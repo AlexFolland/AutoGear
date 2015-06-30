@@ -340,7 +340,7 @@ function SetStatWeights()
                          SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 1}
         elseif (spec == "Balance") then
@@ -349,7 +349,7 @@ function SetStatWeights()
                          SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Feral Combat") then
@@ -376,7 +376,7 @@ function SetStatWeights()
                          SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         end
@@ -435,7 +435,7 @@ function SetStatWeights()
                          SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Fire") then
@@ -444,7 +444,7 @@ function SetStatWeights()
                          SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-                         RedSockets = 20, YellowSockets = 20, BlueSockets = 15, MetaSockets = 20,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Frost") then
@@ -453,7 +453,7 @@ function SetStatWeights()
                          SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         end
@@ -473,7 +473,7 @@ function SetStatWeights()
                          SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Protection") then
@@ -482,7 +482,7 @@ function SetStatWeights()
                          Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, SpellPower = 0.05,
                          AttackPower = 0.4, Haste = 0.5, ArmorPenetration = 0.1,
                          Crit = 0.25, Hit = 0, Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
-                         RedSockets = 40, YellowSockets = 35, BlueSockets = 40, MetaSockets = 50,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
                          DPS = 2}
         elseif (spec == "Retribution") then
@@ -512,7 +512,7 @@ function SetStatWeights()
                          SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100, 
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 30, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Holy") then
@@ -521,7 +521,7 @@ function SetStatWeights()
                          SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
-                         RedSockets = 40, YellowSockets = 40, BlueSockets = 40, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Shadow") then
@@ -570,7 +570,7 @@ function SetStatWeights()
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
                          AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
         end
@@ -590,7 +590,7 @@ function SetStatWeights()
                          SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
-                         RedSockets = 30, YellowSockets = 30, BlueSockets = 25, MetaSockets = 40,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Enhancement") then
