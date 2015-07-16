@@ -4,4 +4,4 @@
 ## Version: alpha
 
 AutoGear.lua
-## SavedVariables: AutoGearDB
+## SavedVariables: AutoGearDB, AutoAcceptQuests
