@@ -44,7 +44,7 @@ local function createOptionPanel()
     local title = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
     local version = GetAddOnMetadata("AutoGear","Version") or ""
-    title:SetText("AutoGear "..version)
+    title:SetText("AutoGear")
 
     local questHelpText = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     questHelpText:SetHeight(35)

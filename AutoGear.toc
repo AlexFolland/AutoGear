@@ -1,7 +1,6 @@
 ## Interface: 60200
 ## Title: AutoGear
 ## Notes: Auto roll and auto equip loot.
-## Version: alpha
 
 AutoGear.lua
 ## SavedVariables: AutoGearDB, AutoAcceptQuests
