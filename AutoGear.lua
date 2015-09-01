@@ -916,12 +916,12 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
         end
     elseif (lootRollItemID) then
         --decide whether to roll on the item or not
+        if info.isMount then return 1 end
         for i = 1, 19 do
             if (best[i].rollOn) then
                 return 1
             end
         end
-        if info.isMount then return 1 end
         return nil
     else
         --choose a quest reward
@@ -958,22 +958,25 @@ function LookAtItem(best, info, bag, slot, rollOn, itemID, chooseReward)
     local score, i, i2
     if (info.Usable or (rollOn and info.Within5levels)) then
         score = DetermineItemScore(info, weighting)
-        i = GetInventorySlotInfo(info.Slot) if (info.Slot2) then i2 = GetInventorySlotInfo(info.Slot2) end
-        --ignore it if it's a tabard
-        if (i == 19) then return end
-        --compare to the lowest score ring, trinket, or dual wield weapon
-        if (i == 11 and best[12].score < best[11].score) then i = 12 end
-        if (i == 13 and best[14].score < best[13].score) then i = 14 end
-        if (i2 and i == 16 and i2 == 17 and best[17].score < best[16].score) then i = 17 end
-        if (i == 16 and IsItemTwoHanded(itemID)) then i = 19 end
-        if (score > best[i].score) then
-            best[i].info = info
-            best[i].score = score
-            best[i].equipped = nil
-            best[i].bag = bag
-            best[i].slot = slot
-            best[i].rollOn = rollOn
-            best[i].chooseReward = chooseReward
+        if info.Slot then
+            i = GetInventorySlotInfo(info.Slot)
+            if (info.Slot2) then i2 = GetInventorySlotInfo(info.Slot2) end
+            --ignore it if it's a tabard
+            if (i == 19) then return end
+            --compare to the lowest score ring, trinket, or dual wield weapon
+            if (i == 11 and best[12].score < best[11].score) then i = 12 end
+            if (i == 13 and best[14].score < best[13].score) then i = 14 end
+            if (i2 and i == 16 and i2 == 17 and best[17].score < best[16].score) then i = 17 end
+            if (i == 16 and IsItemTwoHanded(itemID)) then i = 19 end
+            if (score > best[i].score) then
+                best[i].info = info
+                best[i].score = score
+                best[i].equipped = nil
+                best[i].bag = bag
+                best[i].slot = slot
+                best[i].rollOn = rollOn
+                best[i].chooseReward = chooseReward
+            end
         end
     end
 end
@@ -1252,6 +1255,7 @@ function PlayerIsWearingItem(name)
 end
 
 function DetermineItemScore(itemInfo, weighting)
+    if itemInfo.isMount then return 999999 end
     return (weighting.Strength or 0) * (itemInfo.Strength or 0) +
         (weighting.Agility or 0) * (itemInfo.Agility or 0) +
         (weighting.Stamina or 0) * (itemInfo.Stamina or 0) +
