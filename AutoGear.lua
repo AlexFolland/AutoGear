@@ -921,6 +921,7 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
                 return 1
             end
         end
+        if info.isMount then return 1 end
         return nil
     else
         --choose a quest reward
@@ -1069,6 +1070,12 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                     reason = "(this item is unique and you already have one)"
                 end
             end
+            if (string.find(text, "already known")) then
+                if (PlayerIsWearingItem(info.Name)) then
+                    cannotUse = 1
+                    reason = "(this item has been learned already)"
+                end
+            end
             if (string.find(text, "strength")) then info.Strength = (info.Strength or 0) + value end
             if (string.find(text, "agility")) then info.Agility = (info.Agility or 0) + value end
             if (string.find(text, "intellect")) then info.Intellect = (info.Intellect or 0) + value end
@@ -1101,6 +1108,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
             end
             if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
             
+            if (text=="mount") then info.isMount = 1 end
             if (text=="head") then info.Slot = "HeadSlot" end
             if (text=="neck") then info.Slot = "NeckSlot" end
             if (text=="shoulder") then info.Slot = "ShoulderSlot" end
@@ -1211,7 +1219,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
     if (info.YellowSockets == 0) then info.YellowSockets = nil end
     if (info.BlueSockets == 0) then info.BlueSockets = nil end
     if (info.MetaSockets == 0) then info.MetaSockets = nil end
-    if (not cannotUse and info.Slot) then
+    if (not cannotUse and (info.Slot or info.isMount)) then
         info.Usable = 1
     elseif (not info.Slot) then 
         reason = "(info.Slot was nil)"
