@@ -370,7 +370,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
-        elseif (spec == "Feral Combat") then
+        elseif (spec == "Feral") then
             weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
                          Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
