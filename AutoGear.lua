@@ -1043,7 +1043,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
         local mytext = getglobal("AutoGearTooltipTextLeft"..i)
         if (mytext) then
             local r, g, b, a = mytext:GetTextColor()
-            local text = mytext:GetText():lower()
+            local text = select(1,string.gsub(mytext:GetText():lower(),",",""))
             if (i==1) then info.Name = mytext:GetText() end
             local multiplier = 1.0
             if (string.find(text, "chance to")) then multiplier = multiplier/3.0 end
