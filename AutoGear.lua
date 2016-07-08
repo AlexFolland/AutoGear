@@ -475,6 +475,44 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         end
+    elseif (class == "MONK") then
+        if (spec == "None") then
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
+                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+                         SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
+                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9,
+                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+                         DPS = 1}
+        elseif (spec == "Brewmaster") then
+            weighting = {Strength = 0, Agility = 4.31, Stamina = 2.88, Intellect = 1, Spirit = 0.5,
+                         Armor = 5.95, Dodge = 0, Parry = 0, Block = 0,
+                         SpellPower = 0.5, SpellPenetration = 0, Haste = 1.85, Mp5 = 0.05,
+                         AttackPower = 0, ArmorPenetration = 0, Crit = 3.19, Hit = 0.9,
+                         Expertise = 0, Versatility = 3.45, Multistrike = 0.44, Mastery = 3.33, ExperienceGained = 100,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0, BonusArmor = 5.39,
+                         DPS = 1}
+        elseif (spec == "Windwalker") then
+            weighting = {Strength = 0, Agility = 12.93, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
+                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+                         SpellPower = 0.5, SpellPenetration = 0, Haste = 5.53, Mp5 = 0.05,
+                         AttackPower = 0, ArmorPenetration = 0, Crit = 7.5, Hit = 0.9,
+                         Expertise = 0, Versatility = 8.41, Multistrike = 8.37, Mastery = 4.67, ExperienceGained = 100,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+                         DPS = 1}
+        elseif (spec == "Mistweaver") then
+            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 2.17, Spirit = 0.68,
+                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+                         SpellPower = 1.82, SpellPenetration = 0, Haste = 0.61, Mp5 = 0.05,
+                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.99, Hit = 0.9,
+                         Expertise = 0, Versatility = 0.90, Multistrike = 1.14, Mastery = 0.39, ExperienceGained = 100,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+                         DPS = 5.77}
+        end
     elseif (class == "PALADIN") then
         if (spec == "None") then
             weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
