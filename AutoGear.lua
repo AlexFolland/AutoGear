@@ -23,7 +23,11 @@ local futureAction = {}
 local weighting --gear stat weighting
 local tUpdate = 0
 local dataAvailable = nil
-AutoAcceptQuests = AutoAcceptQuests or true
+
+--values saved between sessions
+if (not AutoGearDB) then AutoGearDB = {} end
+AutoGearDB.AutoAcceptQuests = AutoGearDB.AutoAcceptQuests or true
+AutoGearDB.AutoAcceptPartyInvitations = AutoGearDB.AutoAcceptPartyInvitations or true
 
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate");
@@ -57,15 +61,32 @@ local function createOptionPanel()
     questHelpText:SetText("AutoGear can automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  The following checkbox sets whether AutoGear handles quests and quest-giving NPC dialog.")
 
     local questCheckButton = CreateFrame("CheckButton", "AutoGearQuestCheckButton", optionPanel, "OptionsCheckButtonTemplate")
-    questCheckButton:SetScript("OnShow", function() AutoGearQuestCheckButton:SetChecked(AutoAcceptQuests) end)
+    --questCheckButton:SetScript("OnShow", function() AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests) end)
     questCheckButton:SetScript("OnClick", function() ToggleAutoAcceptQuests() end)
     _G[questCheckButton:GetName() .. "Text"]:SetText("Automatically handle quests")
     questCheckButton:SetHitRectInsets(0, -200, 0, 0)
     questCheckButton:SetPoint("TOPLEFT", questHelpText, "BOTTOMLEFT", 0, -8)
 
+    local partyHelpText = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    partyHelpText:SetHeight(16)
+    partyHelpText:SetPoint("TOPLEFT", questCheckButton, "BOTTOMLEFT", 0, -16)
+    partyHelpText:SetPoint("RIGHT", optionPanel, -32, 0)
+    partyHelpText:SetNonSpaceWrap(true)
+    partyHelpText:SetJustifyH("LEFT")
+    partyHelpText:SetJustifyV("TOP")
+
+    partyHelpText:SetText("AutoGear can automatically accept party invitations.  The following checkbox sets whether AutoGear does so.")
+
+    local partyCheckButton = CreateFrame("CheckButton", "AutoGearPartyInvitationsCheckButton", optionPanel, "OptionsCheckButtonTemplate")
+    --partyCheckButton:SetScript("OnShow", function() AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations) end)
+    partyCheckButton:SetScript("OnClick", function() ToggleAutoAcceptPartyInvitations() end)
+    _G[partyCheckButton:GetName() .. "Text"]:SetText("Automatically accept party invitations")
+    partyCheckButton:SetHitRectInsets(0, -200, 0, 0)
+    partyCheckButton:SetPoint("TOPLEFT", partyHelpText, "BOTTOMLEFT", 0, -8)
+
     local scanHelpText = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     scanHelpText:SetHeight(35)
-    scanHelpText:SetPoint("TOPLEFT", questCheckButton, "BOTTOMLEFT", 0, -16)
+    scanHelpText:SetPoint("TOPLEFT", partyCheckButton, "BOTTOMLEFT", 0, -16)
     scanHelpText:SetPoint("RIGHT", optionPanel, -32, 0)
     scanHelpText:SetNonSpaceWrap(true)
     scanHelpText:SetJustifyH("LEFT")
@@ -124,12 +145,14 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             ScanBags()
         end
     elseif (event == "ADDON_LOADED" and arg1 == "AutoGear") then
-        if (not AutoGearDB) then AutoGearDB = {} end
-    elseif (event == "PARTY_INVITE_REQUEST") then
+        --set check box states here as setting them immediately after creation doesn't work
+        AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
+        AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
+    elseif (event == "PARTY_INVITE_REQUEST" and AutoGearDB.AutoAcceptPartyInvitations) then
         print("AutoGear: Automatically accepting party invite.")
         AcceptGroup()
         AutoGearFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
-    elseif (event == "PARTY_MEMBERS_CHANGED") then --for closing the invite window once I have joined the group
+    elseif (event == "PARTY_MEMBERS_CHANGED" and AutoGearDB.AutoAcceptPartyInvitations) then --for closing the invite window once I have joined the group
         StaticPopup_Hide("PARTY_INVITE")
         AutoGearFrame:UnregisterEvent("PARTY_MEMBERS_CHANGED")
     elseif (event == "START_LOOT_ROLL") then
@@ -229,11 +252,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         end
     elseif (event == "PLAYER_ALIVE") then
         dataAvailable = 1
-    elseif (event == "QUEST_ACCEPT_CONFIRM" and AutoAcceptQuests) then --another group member starts a quest (like an escort)
+    elseif (event == "QUEST_ACCEPT_CONFIRM" and AutoGearDB.AutoAcceptQuests) then --another group member starts a quest (like an escort)
         ConfirmAcceptQuest()
-    elseif (event == "QUEST_DETAIL" and AutoAcceptQuests) then
+    elseif (event == "QUEST_DETAIL" and AutoGearDB.AutoAcceptQuests) then
         QuestDetailAcceptButton_OnClick()
-    elseif (event == "GOSSIP_SHOW" and AutoAcceptQuests) then
+    elseif (event == "GOSSIP_SHOW" and AutoGearDB.AutoAcceptQuests) then
         --active quests
         local quests = GetNumGossipActiveQuests()
         local info = {GetGossipActiveQuests()}
@@ -252,7 +275,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                 SelectGossipAvailableQuest(i+1)
             end
         end
-    elseif (event == "QUEST_GREETING" and AutoAcceptQuests) then
+    elseif (event == "QUEST_GREETING" and AutoGearDB.AutoAcceptQuests) then
         --active quests
         local quests = GetNumActiveQuests()
         for i = 1, quests do
@@ -269,11 +292,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                 SelectAvailableQuest(i)
             end
         end
-    elseif (event == "QUEST_PROGRESS" and AutoAcceptQuests) then
+    elseif (event == "QUEST_PROGRESS" and AutoGearDB.AutoAcceptQuests) then
         if (IsQuestCompletable()) then
             CompleteQuest()
         end
-    elseif (event == "QUEST_COMPLETE" and AutoAcceptQuests) then
+    elseif (event == "QUEST_COMPLETE" and AutoGearDB.AutoAcceptQuests) then
         local rewards = GetNumQuestChoices()
         if (not rewards or rewards == 0) then
             GetQuestReward()
@@ -1361,6 +1384,8 @@ SlashCmdList["AutoGear"] = function(msg)
     if (not param3) then param3 = "(nil)" end
     if (param1 == "quest") then
         ToggleAutoAcceptQuests()
+    elseif (param1 == "party") then
+        ToggleAutoAcceptPartyInvitations()
     elseif (param1 == "scan") then
         Scan()
     elseif (param1 == "spec") then
@@ -1372,18 +1397,24 @@ SlashCmdList["AutoGear"] = function(msg)
         print("AutoGear:    '/ag': options menu")
         print("AutoGear:    '/ag scan':  scan all bags")
         print("AutoGear:    '/ag quest': toggle automatic quest handling")
+        print("AutoGear:    '/ag party': toggle automatic acceptance of party invitations")
     end
 end
 
 function ToggleAutoAcceptQuests()
-    if (AutoAcceptQuests == true) then
-        AutoAcceptQuests = false
-        print("AutoGear: Automatic quest handling is now disabled.")
-    else
-        AutoAcceptQuests = true
-        print("AutoGear: Automatic quest handling is now enabled.")
-    end
-    AutoGearQuestCheckButton:SetChecked(AutoAcceptQuests)
+    if AutoGearDB.AutoAcceptQuests == nil then return end
+    AutoGearDB.AutoAcceptQuests = not AutoGearDB.AutoAcceptQuests
+    print("AutoGear: Automatic quest handling is now "..(AutoGearDB.AutoAcceptQuests and "enabled" or "disabled")..".")
+    if AutoGearQuestCheckButton == nil then return end
+    AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
+end
+
+function ToggleAutoAcceptPartyInvitations()
+    if AutoGearDB.AutoAcceptPartyInvitations == nil then return end
+    AutoGearDB.AutoAcceptPartyInvitations = not AutoGearDB.AutoAcceptPartyInvitations
+    print("AutoGear: Automatic acceptance of party invitations is now "..(AutoGearDB.AutoAcceptPartyInvitations and "enabled" or "disabled")..".")
+    if AutoGearPartyInvitationsCheckButton == nil then return end
+    AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
 end
 
 function Scan()

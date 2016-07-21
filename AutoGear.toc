@@ -1,6 +1,6 @@
-## Interface: 60200
+## Interface: 70000
 ## Title: AutoGear
 ## Notes: Auto roll and auto equip loot.
 
 AutoGear.lua
-## SavedVariables: AutoGearDB, AutoAcceptQuests
+## SavedVariables: AutoGearDB
