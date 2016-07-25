@@ -633,7 +633,7 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (spec == "Combat") then
+        elseif (spec == "Outlaw") then
             weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
