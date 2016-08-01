@@ -26,6 +26,7 @@ local dataAvailable = nil
 
 --values saved between sessions
 if (not AutoGearDB) then AutoGearDB = {} end
+AutoGearDB.Enabled = AutoGearDB.Enabled or true
 AutoGearDB.AutoAcceptQuests = AutoGearDB.AutoAcceptQuests or true
 AutoGearDB.AutoAcceptPartyInvitations = AutoGearDB.AutoAcceptPartyInvitations or true
 
@@ -45,14 +46,17 @@ end)
 --options menu (original template from BlizzMove; custom checkbox)
 local function createOptionPanel()
     optionPanel = CreateFrame("Frame", "AutoGearPanel", UIParent)
-    local title = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", 16, -16)
-    local version = GetAddOnMetadata("AutoGear","Version") or ""
-    title:SetText("AutoGear")
+    local titleCheckButton = CreateFrame("CheckButton", "AutoGearTitleCheckButton", optionPanel, "OptionsCheckButtonTemplate")
+    titleCheckButton:SetScript("OnClick", function() ToggleAutoGear() end)
+    --local title = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    titleCheckButton:SetPoint("TOPLEFT", 16, -16)
+    titleCheckButton:SetHitRectInsets(0, -300, 0, 0)
+    local version = GetAddOnMetadata("AutoGear","Version")
+    _G[titleCheckButton:GetName() .. "Text"]:SetText("AutoGear "..(version and version.." " or "").."(click to toggle automatic gearing)")
 
     local questHelpText = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     questHelpText:SetHeight(35)
-    questHelpText:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
+    questHelpText:SetPoint("TOPLEFT", titleCheckButton, "BOTTOMLEFT", 0, -16)
     questHelpText:SetPoint("RIGHT", optionPanel, -32, 0)
     questHelpText:SetNonSpaceWrap(true)
     questHelpText:SetJustifyH("LEFT")
@@ -81,7 +85,7 @@ local function createOptionPanel()
     --partyCheckButton:SetScript("OnShow", function() AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations) end)
     partyCheckButton:SetScript("OnClick", function() ToggleAutoAcceptPartyInvitations() end)
     _G[partyCheckButton:GetName() .. "Text"]:SetText("Automatically accept party invitations")
-    partyCheckButton:SetHitRectInsets(0, -200, 0, 0)
+    partyCheckButton:SetHitRectInsets(0, -280, 0, 0)
     partyCheckButton:SetPoint("TOPLEFT", partyHelpText, "BOTTOMLEFT", 0, -8)
 
     local scanHelpText = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -138,16 +142,20 @@ AutoGearFrame:RegisterEvent("GOSSIP_SHOW")              --Fires when an NPC goss
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")   --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     -- print("AutoGear: "..event)
+    
+    if (event == "ADDON_LOADED" and arg1 == "AutoGear") then
+        --set check box states here as setting them immediately after creation doesn't work
+        AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
+        AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
+        AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
+    end
+    if not AutoGearDB.Enabled then return end
     if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
         --make sure this doesn't happen as part of logon
         if (dataAvailable) then
             print("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.")
             ScanBags()
         end
-    elseif (event == "ADDON_LOADED" and arg1 == "AutoGear") then
-        --set check box states here as setting them immediately after creation doesn't work
-        AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
-        AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
     elseif (event == "PARTY_INVITE_REQUEST" and AutoGearDB.AutoAcceptPartyInvitations) then
         print("AutoGear: Automatically accepting party invite.")
         AcceptGroup()
@@ -1382,10 +1390,28 @@ SlashCmdList["AutoGear"] = function(msg)
     if (not param1) then param1 = "(nil)" end
     if (not param2) then param2 = "(nil)" end
     if (not param3) then param3 = "(nil)" end
-    if (param1 == "quest") then
-        ToggleAutoAcceptQuests()
+    if (param1 == "toggle") then
+    	ToggleAutoGear()
+    elseif (param1 == "enable" or param1 == "on" or param1 == "start") then
+    	ToggleAutoGear(true)
+    elseif (param1 == "disable" or param1 == "off" or param1 == "stop") then
+    	ToggleAutoGear(false)
+    elseif (param1 == "quest" or param1 == "quests") then
+        if (param2 == "enable" or param2 == "on" or param2 == "start") then
+            ToggleAutoAcceptQuests(true)
+        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
+            ToggleAutoAcceptQuests(false)
+        else
+            ToggleAutoAcceptQuests()
+        end
     elseif (param1 == "party") then
-        ToggleAutoAcceptPartyInvitations()
+    	if (param2 == "enable" or param2 == "on" or param2 == "start") then
+            ToggleAutoAcceptPartyInvitations(true)
+        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
+            ToggleAutoAcceptPartyInvitations(false)
+        else
+            ToggleAutoAcceptPartyInvitations()
+        end
     elseif (param1 == "scan") then
         Scan()
     elseif (param1 == "spec") then
@@ -1396,22 +1422,31 @@ SlashCmdList["AutoGear"] = function(msg)
         print("AutoGear: Unrecognized command.  Recognized commands:")
         print("AutoGear:    '/ag': options menu")
         print("AutoGear:    '/ag scan':  scan all bags")
-        print("AutoGear:    '/ag quest': toggle automatic quest handling")
-        print("AutoGear:    '/ag party': toggle automatic acceptance of party invitations")
+        print("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing")
+        print("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling")
+        print("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations")
     end
 end
 
-function ToggleAutoAcceptQuests()
+function ToggleAutoGear(force)
+	if AutoGearDB.Enabled == nil then return end
+	if force ~= nil then AutoGearDB.Enabled = force else AutoGearDB.Enabled = not AutoGearDB.Enabled end
+	print("AutoGear: Automatic gearing is now "..(AutoGearDB.Enabled and "enabled" or "disabled")..".  You can still manually scan with the button or \"/ag scan\".")
+	if AutoGearTitleCheckButton == nil then return end
+	AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
+end
+
+function ToggleAutoAcceptQuests(force)
     if AutoGearDB.AutoAcceptQuests == nil then return end
-    AutoGearDB.AutoAcceptQuests = not AutoGearDB.AutoAcceptQuests
+    if force ~= nil then AutoGearDB.AutoAcceptQuests = force else AutoGearDB.AutoAcceptQuests = not AutoGearDB.AutoAcceptQuests end
     print("AutoGear: Automatic quest handling is now "..(AutoGearDB.AutoAcceptQuests and "enabled" or "disabled")..".")
     if AutoGearQuestCheckButton == nil then return end
     AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
 end
 
-function ToggleAutoAcceptPartyInvitations()
+function ToggleAutoAcceptPartyInvitations(force)
     if AutoGearDB.AutoAcceptPartyInvitations == nil then return end
-    AutoGearDB.AutoAcceptPartyInvitations = not AutoGearDB.AutoAcceptPartyInvitations
+    if force ~= nil then AutoGearDB.AutoAcceptPartyInvitations = force else AutoGearDB.AutoAcceptPartyInvitations = not AutoGearDB.AutoAcceptPartyInvitations end
     print("AutoGear: Automatic acceptance of party invitations is now "..(AutoGearDB.AutoAcceptPartyInvitations and "enabled" or "disabled")..".")
     if AutoGearPartyInvitationsCheckButton == nil then return end
     AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
