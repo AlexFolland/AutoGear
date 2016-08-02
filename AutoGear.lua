@@ -24,11 +24,22 @@ local weighting --gear stat weighting
 local tUpdate = 0
 local dataAvailable = nil
 
---values saved between sessions
+--default values for variables saved between sessions
+AutoGearDBDefaults = {
+    Enabled = true,
+    AutoAcceptQuests = true,
+    AutoAcceptPartyInvitations = true
+}
+
+--initialize table for storing saved variables
 if (not AutoGearDB) then AutoGearDB = {} end
-AutoGearDB.Enabled = AutoGearDB.Enabled or true
-AutoGearDB.AutoAcceptQuests = AutoGearDB.AutoAcceptQuests or true
-AutoGearDB.AutoAcceptPartyInvitations = AutoGearDB.AutoAcceptPartyInvitations or true
+
+--initialize missing saved variables with default values
+for k,v in pairs(AutoGearDBDefaults) do
+    if AutoGearDB[k] == nil then
+        AutoGearDB[k] = AutoGearDBDefaults[k]
+    end
+end
 
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate");
@@ -225,7 +236,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         end
     end
 
-    if not AutoGearDB.Enabled then return end
+    if AutoGearDB.Enabled ~= nil and AutoGearDB.Enabled == false then return end
 
     if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
         --make sure this doesn't happen as part of logon
