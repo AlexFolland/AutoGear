@@ -50,9 +50,9 @@ local function createOptionPanel()
     titleCheckButton:SetScript("OnClick", function() ToggleAutoGear() end)
     --local title = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     titleCheckButton:SetPoint("TOPLEFT", 16, -16)
-    titleCheckButton:SetHitRectInsets(0, -300, 0, 0)
+    titleCheckButton:SetHitRectInsets(0, -450, 0, 0)
     local version = GetAddOnMetadata("AutoGear","Version")
-    _G[titleCheckButton:GetName() .. "Text"]:SetText("AutoGear "..(version and version.." " or "").."(click to toggle automatic gearing)")
+    _G[titleCheckButton:GetName() .. "Text"]:SetText("AutoGear "..(version and version.." " or "").."(Toggle automatic gearing and loot rolling)")
 
     local questHelpText = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     questHelpText:SetHeight(35)
@@ -149,20 +149,90 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
         AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
     end
+
+    if (AutoGearDB.AutoAcceptQuests) then
+        if (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
+            ConfirmAcceptQuest()
+        elseif (event == "QUEST_DETAIL") then
+            QuestDetailAcceptButton_OnClick()
+        elseif (event == "GOSSIP_SHOW") then
+            --active quests
+            local quests = GetNumGossipActiveQuests()
+            local info = {GetGossipActiveQuests()}
+            for i = 0, quests - 1 do
+                local name, level, isTrivial, isComplete, isLegendary = info[i*5+1], info[i*5+2], info[i*5+3], info[i*5+4], info[i*5+5]
+                if (isComplete) then
+                    SelectGossipActiveQuest(i+1)
+                end
+            end
+            --available quests
+            quests = GetNumGossipAvailableQuests()
+            info = {GetGossipAvailableQuests()}
+            for i = 0, quests - 1 do
+                local name, level, isTrivial, isDaily, isRepeatable = info[i*5+1], info[i*5+2], info[i*5+3], info[i*5+4], info[i*5+5]
+                if (not isTrivial) then
+                    SelectGossipAvailableQuest(i+1)
+                end
+            end
+        elseif (event == "QUEST_GREETING") then
+            --active quests
+            local quests = GetNumActiveQuests()
+            for i = 1, quests do
+                local title, isComplete = GetActiveTitle(i)
+                if (isComplete) then
+                    SelectActiveQuest(i)
+                end
+            end
+            --available quests
+            quests = GetNumAvailableQuests()
+            for i = 1, quests do
+                local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
+                if (not isTrivial) then
+                    SelectAvailableQuest(i)
+                end
+            end
+        elseif (event == "QUEST_PROGRESS") then
+            if (IsQuestCompletable()) then
+                CompleteQuest()
+            end
+        elseif (event == "QUEST_COMPLETE") then
+            local rewards = GetNumQuestChoices()
+            if (not rewards or rewards == 0) then
+                GetQuestReward()
+            else
+                --choose a quest reward
+                questRewardID = {}
+                for i = 1, rewards do
+                    local itemLink = GetQuestItemLink("choice", i)
+                    if (not itemLink) then print("AutoGear: No item link received from the server.") end
+                    local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+                    questRewardID[i] = id
+                end
+                local choice = ScanBags(nil, nil, questRewardID)
+                GetQuestReward(choice)
+            end
+        end
+    end
+
+    if (AutoGearDB.AutoAcceptPartyInvitations) then
+        if (event == "PARTY_INVITE_REQUEST") then
+            print("AutoGear: Automatically accepting party invite.")
+            AcceptGroup()
+            AutoGearFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
+        elseif (event == "PARTY_MEMBERS_CHANGED") then --for closing the invite window once I have joined the group
+            StaticPopup_Hide("PARTY_INVITE")
+            AutoGearFrame:UnregisterEvent("PARTY_MEMBERS_CHANGED")
+        end
+    end
+
     if not AutoGearDB.Enabled then return end
+
     if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
         --make sure this doesn't happen as part of logon
         if (dataAvailable) then
             print("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.")
             ScanBags()
         end
-    elseif (event == "PARTY_INVITE_REQUEST" and AutoGearDB.AutoAcceptPartyInvitations) then
-        print("AutoGear: Automatically accepting party invite.")
-        AcceptGroup()
-        AutoGearFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
-    elseif (event == "PARTY_MEMBERS_CHANGED" and AutoGearDB.AutoAcceptPartyInvitations) then --for closing the invite window once I have joined the group
-        StaticPopup_Hide("PARTY_INVITE")
-        AutoGearFrame:UnregisterEvent("PARTY_MEMBERS_CHANGED")
     elseif (event == "START_LOOT_ROLL") then
         SetStatWeights()
         if (weighting) then
@@ -260,66 +330,6 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         end
     elseif (event == "PLAYER_ALIVE") then
         dataAvailable = 1
-    elseif (event == "QUEST_ACCEPT_CONFIRM" and AutoGearDB.AutoAcceptQuests) then --another group member starts a quest (like an escort)
-        ConfirmAcceptQuest()
-    elseif (event == "QUEST_DETAIL" and AutoGearDB.AutoAcceptQuests) then
-        QuestDetailAcceptButton_OnClick()
-    elseif (event == "GOSSIP_SHOW" and AutoGearDB.AutoAcceptQuests) then
-        --active quests
-        local quests = GetNumGossipActiveQuests()
-        local info = {GetGossipActiveQuests()}
-        for i = 0, quests - 1 do
-            local name, level, isTrivial, isComplete, isLegendary = info[i*5+1], info[i*5+2], info[i*5+3], info[i*5+4], info[i*5+5]
-            if (isComplete) then
-                SelectGossipActiveQuest(i+1)
-            end
-        end
-        --available quests
-        quests = GetNumGossipAvailableQuests()
-        info = {GetGossipAvailableQuests()}
-        for i = 0, quests - 1 do
-            local name, level, isTrivial, isDaily, isRepeatable = info[i*5+1], info[i*5+2], info[i*5+3], info[i*5+4], info[i*5+5]
-            if (not isTrivial) then
-                SelectGossipAvailableQuest(i+1)
-            end
-        end
-    elseif (event == "QUEST_GREETING" and AutoGearDB.AutoAcceptQuests) then
-        --active quests
-        local quests = GetNumActiveQuests()
-        for i = 1, quests do
-        	local title, isComplete = GetActiveTitle(i)
-        	if (isComplete) then
-        		SelectActiveQuest(i)
-        	end
-        end
-        --available quests
-        quests = GetNumAvailableQuests()
-        for i = 1, quests do
-            local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
-            if (not isTrivial) then
-                SelectAvailableQuest(i)
-            end
-        end
-    elseif (event == "QUEST_PROGRESS" and AutoGearDB.AutoAcceptQuests) then
-        if (IsQuestCompletable()) then
-            CompleteQuest()
-        end
-    elseif (event == "QUEST_COMPLETE" and AutoGearDB.AutoAcceptQuests) then
-        local rewards = GetNumQuestChoices()
-        if (not rewards or rewards == 0) then
-            GetQuestReward()
-        else
-            --choose a quest reward
-            questRewardID = {}
-            for i = 1, rewards do
-                local itemLink = GetQuestItemLink("choice", i)
-                if (not itemLink) then print("AutoGear: No item link received from the server.") end
-                local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-                questRewardID[i] = id
-            end
-            local choice = ScanBags(nil, nil, questRewardID)
-            GetQuestReward(choice)
-        end
     elseif (event ~= "ADDON_LOADED") then
         --print("AutoGear: "..event)
     end
@@ -380,6 +390,35 @@ function SetStatWeights()
                          Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         DPS = 2}
+        end
+    elseif (class == "DEMONHUNTER") then
+        if (spec == "None") then
+            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+                         DPS = 3.075}
+        elseif (spec == "Havoc") then
+            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+                         DPS = 3.075}
+        elseif (spec == "Vengeance") then
+            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
+                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
         end
     elseif (class == "DRUID") then
@@ -1422,7 +1461,7 @@ SlashCmdList["AutoGear"] = function(msg)
         print("AutoGear: Unrecognized command.  Recognized commands:")
         print("AutoGear:    '/ag': options menu")
         print("AutoGear:    '/ag scan':  scan all bags")
-        print("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing")
+        print("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing and loot rolling")
         print("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling")
         print("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations")
     end
@@ -1431,7 +1470,7 @@ end
 function ToggleAutoGear(force)
 	if AutoGearDB.Enabled == nil then return end
 	if force ~= nil then AutoGearDB.Enabled = force else AutoGearDB.Enabled = not AutoGearDB.Enabled end
-	print("AutoGear: Automatic gearing is now "..(AutoGearDB.Enabled and "enabled" or "disabled")..".  You can still manually scan with the button or \"/ag scan\".")
+	print("AutoGear: Automatic gearing and loot rolling is now "..(AutoGearDB.Enabled and "enabled" or "disabled")..".  You can still manually scan with the button or \"/ag scan\".")
 	if AutoGearTitleCheckButton == nil then return end
 	AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
 end
