@@ -9,7 +9,7 @@
 -- handle dual wielding 2h using titan's grip
 -- make seperate stat weights for main and off hand
 -- add a weight for weapon damage
--- fix weapons for rogues properly.  (dagger and any can equip dagger and shield, put slow in main hand for combat, etc)
+-- fix weapons for rogues properly.  (dagger and any can equip dagger and shield, put slow in main hand for outlaw, etc)
 -- remove the armor penetration weight
 -- make gem weights have level tiers (70-79, 80-84, 85)
 -- other non-gear it should let you roll
@@ -54,7 +54,7 @@ AutoGearFrame:SetScript("OnUpdate", function()
     AutoGearMain()
 end)
 
---options menu (original template from BlizzMove; custom checkbox)
+--options menu (original template from BlizzMove; custom checkboxes)
 local function createOptionPanel()
     optionPanel = CreateFrame("Frame", "AutoGearPanel", UIParent)
     local titleCheckButton = CreateFrame("CheckButton", "AutoGearTitleCheckButton", optionPanel, "OptionsCheckButtonTemplate")
@@ -122,8 +122,9 @@ end
 
 createOptionPanel()
 
-AutoGearFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 AutoGearFrame:RegisterEvent("ADDON_LOADED")
+--AutoGearFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
 AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
 AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
@@ -152,7 +153,7 @@ AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")        --Fires when the player 
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")              --Fires when an NPC gossip interaction begins
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")   --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
-    -- print("AutoGear: "..event)
+    print("AutoGear: "..event)
     
     if (event == "ADDON_LOADED" and arg1 == "AutoGear") then
         --set check box states here as setting them immediately after creation doesn't work
@@ -238,7 +239,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 
     if AutoGearDB.Enabled ~= nil and AutoGearDB.Enabled == false then return end
 
-    if (event == "ACTIVE_TALENT_GROUP_CHANGED") then
+    if (event == "PLAYER_SPECIALIZATION_CHANGED" --[[or event == "ACTIVE_TALENT_GROUP_CHANGED"]]) then
         --make sure this doesn't happen as part of logon
         if (dataAvailable) then
             print("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.")
