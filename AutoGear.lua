@@ -1238,7 +1238,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                 end
             end
             if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
-            
+
             if (text=="mount") then info.isMount = 1 end
             if (text=="head") then info.Slot = "HeadSlot" end
             if (text=="neck") then info.Slot = "NeckSlot" end
@@ -1490,7 +1490,7 @@ end
 function ToggleAutoGear(force)
 	if AutoGearDB.Enabled == nil then return end
 	if force ~= nil then AutoGearDB.Enabled = force else AutoGearDB.Enabled = not AutoGearDB.Enabled end
-	print("AutoGear: Automatic gearing and loot rolling is now "..(AutoGearDB.Enabled and "enabled" or "disabled")..".  You can still manually scan with the button or \"/ag scan\".")
+	print("AutoGear: Automatic gearing and loot rolling is now "..(AutoGearDB.Enabled and "enabled." or "disabled.  You can still manually scan with the button or \"/ag scan\"."))
 	if AutoGearTitleCheckButton == nil then return end
 	AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
 end
