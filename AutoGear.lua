@@ -123,8 +123,8 @@ end
 createOptionPanel()
 
 AutoGearFrame:RegisterEvent("ADDON_LOADED")
---AutoGearFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
 AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
 AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
@@ -132,7 +132,6 @@ AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 AutoGearFrame:RegisterEvent("ITEM_PUSH")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
 AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
-AutoGearFrame:RegisterEvent("PLAYER_ALIVE")             --Fired when the player releases from death to a graveyard or accepts a resurrect before releasing their spirit.    
 AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")           --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
 AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")     --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
 AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")       --Fires when a quest is automatically completed (remote handin available)
@@ -160,6 +159,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
         AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
         AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
+        AutoGearFrame:UnregisterEvent(event)
     end
 
     if (AutoGearDB.AutoAcceptQuests) then
@@ -239,9 +239,9 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 
     if AutoGearDB.Enabled ~= nil and AutoGearDB.Enabled == false then return end
 
-    if (event == "PLAYER_SPECIALIZATION_CHANGED" --[[or event == "ACTIVE_TALENT_GROUP_CHANGED"]]) then
+    if (event == "PLAYER_SPECIALIZATION_CHANGED") then
         --make sure this doesn't happen as part of logon
-        if (dataAvailable) then
+        if (dataAvailable ~= nil) then
             print("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.")
             ScanBags()
         end
@@ -340,8 +340,9 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                 print("AutoGear: Not enough money to repair all items ("..cashString..").")
             end
         end
-    elseif (event == "PLAYER_ALIVE") then
+    elseif (event == "GET_ITEM_INFO_RECEIVED") then
         dataAvailable = 1
+        AutoGearFrame:UnregisterEvent(event)
     elseif (event ~= "ADDON_LOADED") then
         --print("AutoGear: "..event)
     end
@@ -935,9 +936,9 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
             if i == 16 or i == 17 then
                 --skip for now
             else
-                if (not best[i].equipped) then
-                    equippedInfo = ReadItemInfo(i)
-                    equippedScore = DetermineItemScore(equippedInfo, weighting)
+                equippedInfo = ReadItemInfo(i)
+                equippedScore = DetermineItemScore(equippedInfo, weighting)
+                if ((not best[i].equipped) and best[i].score > equippedScore) then
                     print("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  Equipping.")
                     PrintItem(best[i].info)
                     PrintItem(equippedInfo)
@@ -1013,8 +1014,16 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
                     PrintItem(equippedInfo)
                 end
             end
-        else
+        elseif (best[19].score > best[16].score + best[17].score) then
             if (not best[19].equipped) then
+                local equippedMain = ReadItemInfo(16)
+                local mainScore = DetermineItemScore(equippedMain, weighting)
+                local equippedOff = ReadItemInfo(17)
+                local offScore = DetermineItemScore(equippedOff, weighting)
+                print("AutoGear: "..(best[19].info.Name or "nothing").." ("..string.format("%.2f", best[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.")
+                PrintItem(best[19].info)
+                PrintItem(equippedMain)
+                PrintItem(equippedOff)
                 anythingBetter = 1
                 local newAction = {}
                 newAction.action = "equip"
@@ -1024,14 +1033,6 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
                 newAction.replaceSlot = 16
                 newAction.info = best[19].info
                 table.insert(futureAction, newAction)
-                local equippedMain = ReadItemInfo(16)
-                local mainScore = DetermineItemScore(equippedMain, weighting)
-                local equippedOff = ReadItemInfo(17)
-                local offScore = DetermineItemScore(equippedOff, weighting)
-                print("AutoGear: "..(best[19].info.Name or "nothing").." ("..string.format("%.2f", best[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.")
-                PrintItem(best[19].info)
-                PrintItem(equippedMain)
-                PrintItem(equippedOff)
             end
         end
     elseif (lootRollItemID) then
@@ -1164,7 +1165,14 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
         if (mytext) then
             local r, g, b, a = mytext:GetTextColor()
             local text = select(1,string.gsub(mytext:GetText():lower(),",",""))
-            if (i==1) then info.Name = mytext:GetText() end
+            if (i==1) then
+                info.Name = mytext:GetText()
+                if (info.Name == "Retrieving item information") then
+                    cannotUse = 1
+                    reason = "(this item's tooltip is not yet available)"
+                    --print("AutoGear: Item's name says \"Retrieving item information\"; cannotUse: "..tostring(cannotUse))
+                end
+            end
             local multiplier = 1.0
             if (string.find(text, "chance to")) then multiplier = multiplier/3.0 end
             if (string.find(text, "use:")) then multiplier = multiplier/6.0 end
