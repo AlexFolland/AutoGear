@@ -122,6 +122,12 @@ end
 
 createOptionPanel()
 
+hooksecurefunc(StaticPopupDialogs["END_BOUND_TRADEABLE"],"OnShow",function(self)
+    if AutoGear.Enabled == true then
+        self.button1:Click()
+    end
+end)
+
 AutoGearFrame:RegisterEvent("ADDON_LOADED")
 AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
