@@ -153,7 +153,7 @@ AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the pla
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
-    print("AutoGear: "..event..(arg1 and " "..tostring(arg1) or ""))
+    --print("AutoGear: "..event..(arg1 and " "..tostring(arg1) or ""))
     
     if (event == "ADDON_LOADED" and arg1 == "AutoGear") then
         --set check box states here as setting them immediately after creation doesn't work
