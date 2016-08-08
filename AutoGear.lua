@@ -122,15 +122,6 @@ end
 
 createOptionPanel()
 
---hooksecurefunc(StaticPopup_OnShow(StaticPopupDialogs["END_BOUND_TRADEABLE"])
-StaticPopupDialogs["END_BOUND_TRADEABLE"].OnShow = function(self) self.button1:Click() end
---[[
-hooksecurefunc(StaticPopupDialogs["END_BOUND_TRADEABLE"],"Show",function(self)
-    if AutoGear.Enabled == true then
-        self.button1:Click()
-    end
-end)
-]]
 AutoGearFrame:RegisterEvent("ADDON_LOADED")
 AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
@@ -140,28 +131,29 @@ AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
 AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 AutoGearFrame:RegisterEvent("ITEM_PUSH")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
+AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when you try to equip a soulbound item that can still be traded to eligible players
 AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
-AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")           --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
-AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")     --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
-AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")       --Fires when a quest is automatically completed (remote handin available)
-AutoGearFrame:RegisterEvent("QUEST_COMPLETE")           --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
-AutoGearFrame:RegisterEvent("QUEST_DETAIL")             --Fires when details of an available quest are presented by a questgiver
-AutoGearFrame:RegisterEvent("QUEST_FINISHED")           --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
-AutoGearFrame:RegisterEvent("QUEST_GREETING")           --Fires when a questgiver presents a greeting along with a list of active or available quests
-AutoGearFrame:RegisterEvent("QUEST_ITEM_UPDATE")        --Fires when information about items in a questgiver dialog is updated
-AutoGearFrame:RegisterEvent("QUEST_LOG_UPDATE")         --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
-AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")         --This event is not yet documented
-AutoGearFrame:RegisterEvent("QUEST_PROGRESS")           --Fires when interacting with a questgiver about an active quest
-AutoGearFrame:RegisterEvent("QUEST_QUERY_COMPLETE")     --Fires when quest completion information is available from the server
-AutoGearFrame:RegisterEvent("QUEST_WATCH_UPDATE")       --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
-AutoGearFrame:RegisterEvent("GOSSIP_CLOSED")            --Fires when an NPC gossip interaction ends
-AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM")           --Fires when the player is requested to confirm a gossip choice
-AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")    --Fires when an attempt to confirm a gossip choice is canceled
-AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")        --Fires when the player attempts a gossip choice which requires entering a code
-AutoGearFrame:RegisterEvent("GOSSIP_SHOW")              --Fires when an NPC gossip interaction begins
-AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")   --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
+AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")               --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
+AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")         --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
+AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")           --Fires when a quest is automatically completed (remote handin available)
+AutoGearFrame:RegisterEvent("QUEST_COMPLETE")               --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
+AutoGearFrame:RegisterEvent("QUEST_DETAIL")                 --Fires when details of an available quest are presented by a questgiver
+AutoGearFrame:RegisterEvent("QUEST_FINISHED")               --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
+AutoGearFrame:RegisterEvent("QUEST_GREETING")               --Fires when a questgiver presents a greeting along with a list of active or available quests
+AutoGearFrame:RegisterEvent("QUEST_ITEM_UPDATE")            --Fires when information about items in a questgiver dialog is updated
+AutoGearFrame:RegisterEvent("QUEST_LOG_UPDATE")             --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
+AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")             --This event is not yet documented
+AutoGearFrame:RegisterEvent("QUEST_PROGRESS")               --Fires when interacting with a questgiver about an active quest
+AutoGearFrame:RegisterEvent("QUEST_QUERY_COMPLETE")         --Fires when quest completion information is available from the server
+AutoGearFrame:RegisterEvent("QUEST_WATCH_UPDATE")           --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
+AutoGearFrame:RegisterEvent("GOSSIP_CLOSED")                --Fires when an NPC gossip interaction ends
+AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM")               --Fires when the player is requested to confirm a gossip choice
+AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")        --Fires when an attempt to confirm a gossip choice is canceled
+AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the player attempts a gossip choice which requires entering a code
+AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
+AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
-    --print("AutoGear: "..event)
+    print("AutoGear: "..event..(arg1 and " "..tostring(arg1) or ""))
     
     if (event == "ADDON_LOADED" and arg1 == "AutoGear") then
         --set check box states here as setting them immediately after creation doesn't work
@@ -308,6 +300,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             end
         end
     elseif (event == "EQUIP_BIND_CONFIRM") then
+        EquipPendingItem(arg1)
+    elseif (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
         EquipPendingItem(arg1)
     elseif (event == "MERCHANT_SHOW") then
         -- sell all grey items
