@@ -381,6 +381,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Blood") then
+            weapons = "2h"
             weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
@@ -390,6 +391,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Frost") then
+            weapons = "dual wield"
             weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
@@ -399,6 +401,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Unholy") then
+            weapons = "2h"
             weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
