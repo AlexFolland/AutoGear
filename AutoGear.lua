@@ -182,8 +182,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             quests = GetNumGossipAvailableQuests()
             info = {GetGossipAvailableQuests()}
             for i = 0, quests - 1 do
-                local name, level, isTrivial, isDaily, isRepeatable = info[i*5+1], info[i*5+2], info[i*5+3], info[i*5+4], info[i*5+5]
-                if (not isTrivial) then
+                local name, level, isTrivial, frequency, isDaily, isRepeatable = info[i*6+1], info[i*6+2], info[i*6+3], info[i*6+4], info[i*6+5], info[i*6+6]
+                if (isTrivial ~= nil and isTrivial == false) then
                     SelectGossipAvailableQuest(i+1)
                 end
             end
