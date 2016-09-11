@@ -168,19 +168,19 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             --active quests
             local quests = GetNumGossipActiveQuests()
             local info = {GetGossipActiveQuests()}
-            for i = 1, quests - 1 do
-                local name, level, isTrivial, isComplete, isLegendary = info[i*6+1], info[i*6+2], info[i*6+3], info[i*6+4], info[i*6+5]
+            for i = 1, quests do
+                local name, level, isTrivial, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5]
                 if (isComplete) then
-                    SelectGossipActiveQuest(i+1)
+                    SelectGossipActiveQuest(i)
                 end
             end
             --available quests
             quests = GetNumGossipAvailableQuests()
             info = {GetGossipAvailableQuests()}
-            for i = 1, quests - 1 do
-                local name, level, isTrivial, frequency, isRepeatable = info[i*7+1], info[i*7+2], info[i*7+3], info[i*7+4], info[i*7+5]
+            for i = 1, quests do
+                local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
                 if (not isTrivial) then
-                    SelectGossipAvailableQuest(i+1)
+                    SelectGossipAvailableQuest(i)
                 end
             end
         elseif (event == "QUEST_GREETING") then
