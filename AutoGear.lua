@@ -35,9 +35,12 @@ AutoGearDBDefaults = {
 if (not AutoGearDB) then AutoGearDB = {} end
 
 --initialize missing saved variables with default values
-for k,v in pairs(AutoGearDBDefaults) do
-    if AutoGearDB[k] == nil then
-        AutoGearDB[k] = AutoGearDBDefaults[k]
+local function InitializeAutoGearDB(defaults)
+    if AutoGearDB == nil then AutoGearDB = {} end
+    for k,v in pairs(defaults) do
+        if AutoGearDB[k] == nil then
+            AutoGearDB[k] = defaults[k]
+        end
     end
 end
 
@@ -118,7 +121,19 @@ scanButton:SetPoint("TOPLEFT", scanHelpText, "BOTTOMLEFT", 0, -8)
 optionsMenu.name = "AutoGear"
 InterfaceOptions_AddCategory(optionsMenu)
 
-AutoGearFrame:RegisterEvent("ADDON_LOADED")
+--handle PLAYER_ENTERING_WORLD events for initializing GUI options menu widget states at the right time
+--previously used ADDON_LOADED, but UI reload doesn't seem to fire ADDON_LOADED
+optionsMenu:RegisterEvent("PLAYER_ENTERING_WORLD")
+optionsMenu:SetScript("OnEvent", function (self, event, ...)
+    InitializeAutoGearDB(AutoGearDBDefaults)
+    AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
+    AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
+    AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
+
+    optionsMenu:UnregisterEvent(event)
+    optionsMenu:SetScript("OnEvent", nil)
+end)
+
 AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
@@ -150,14 +165,6 @@ AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC 
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
     --print("AutoGear: "..event..(arg1 and " "..tostring(arg1) or "")..(arg2 and " "..tostring(arg2) or "")..(arg3 and " "..tostring(arg3) or "")..(arg4 and " "..tostring(arg4) or ""))
-    
-    if (event == "ADDON_LOADED" and arg1 == "AutoGear") then
-        --set check box states here as setting them immediately after creation doesn't work
-        AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
-        AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
-        AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
-        AutoGearFrame:UnregisterEvent(event)
-    end
 
     if (AutoGearDB.AutoAcceptQuests) then
         if (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
