@@ -35,8 +35,8 @@ AutoGearDBDefaults = {
 if (not AutoGearDB) then AutoGearDB = {} end
 
 --initialize missing saved variables with default values
-local function InitializeAutoGearDB(defaults)
-    if AutoGearDB == nil then AutoGearDB = {} end
+local function InitializeAutoGearDB(defaults, reset)
+    if AutoGearDB == nil or reset ~= nil then AutoGearDB = {} end
     for k,v in pairs(defaults) do
         if AutoGearDB[k] == nil then
             AutoGearDB[k] = defaults[k]
@@ -61,7 +61,6 @@ end)
 local optionsMenu = CreateFrame("Frame", "AutoGearPanel", InterfaceOptionsFramePanelContainer)
 local titleCheckButton = CreateFrame("CheckButton", "AutoGearTitleCheckButton", optionsMenu, "OptionsCheckButtonTemplate")
 titleCheckButton:SetScript("OnClick", function() ToggleAutoGear() end)
---local title = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 titleCheckButton:SetPoint("TOPLEFT", 16, -16)
 titleCheckButton:SetHitRectInsets(0, -450, 0, 0)
 local version = GetAddOnMetadata("AutoGear","Version")
@@ -78,7 +77,6 @@ questHelpText:SetJustifyV("TOP")
 questHelpText:SetText("AutoGear can automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  The following checkbox sets whether AutoGear handles quests and quest-giving NPC dialog.")
 
 local questCheckButton = CreateFrame("CheckButton", "AutoGearQuestCheckButton", optionsMenu, "OptionsCheckButtonTemplate")
---questCheckButton:SetScript("OnShow", function() AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests) end)
 questCheckButton:SetScript("OnClick", function() ToggleAutoAcceptQuests() end)
 _G[questCheckButton:GetName() .. "Text"]:SetText("Automatically handle quests")
 questCheckButton:SetHitRectInsets(0, -200, 0, 0)
@@ -95,7 +93,6 @@ partyHelpText:SetJustifyV("TOP")
 partyHelpText:SetText("AutoGear can automatically accept party invitations.  The following checkbox sets whether AutoGear does so.")
 
 local partyCheckButton = CreateFrame("CheckButton", "AutoGearPartyInvitationsCheckButton", optionsMenu, "OptionsCheckButtonTemplate")
---partyCheckButton:SetScript("OnShow", function() AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations) end)
 partyCheckButton:SetScript("OnClick", function() ToggleAutoAcceptPartyInvitations() end)
 _G[partyCheckButton:GetName() .. "Text"]:SetText("Automatically accept party invitations")
 partyCheckButton:SetHitRectInsets(0, -280, 0, 0)
@@ -125,14 +122,16 @@ InterfaceOptions_AddCategory(optionsMenu)
 --UI reload doesn't seem to fire ADDON_LOADED
 optionsMenu:RegisterEvent("PLAYER_ENTERING_WORLD")
 optionsMenu:RegisterEvent("ADDON_LOADED")
-optionsMenu:SetScript("OnEvent", function (self, event, ...)
-    InitializeAutoGearDB(AutoGearDBDefaults)
-    AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
-    AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
-    AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
+optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
+    if event == "PLAYER_ENTERING_WORLD" or arg1 == "AutoGear" then
+        InitializeAutoGearDB(AutoGearDBDefaults)
+        AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
+        AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
+        AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
 
-    optionsMenu:UnregisterAllEvents()
-    optionsMenu:SetScript("OnEvent", nil)
+        optionsMenu:UnregisterAllEvents()
+        optionsMenu:SetScript("OnEvent", nil)
+    end
 end)
 
 AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
