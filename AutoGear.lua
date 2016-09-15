@@ -122,15 +122,16 @@ optionsMenu.name = "AutoGear"
 InterfaceOptions_AddCategory(optionsMenu)
 
 --handle PLAYER_ENTERING_WORLD events for initializing GUI options menu widget states at the right time
---previously used ADDON_LOADED, but UI reload doesn't seem to fire ADDON_LOADED
+--UI reload doesn't seem to fire ADDON_LOADED
 optionsMenu:RegisterEvent("PLAYER_ENTERING_WORLD")
+optionsMenu:RegisterEvent("ADDON_LOADED")
 optionsMenu:SetScript("OnEvent", function (self, event, ...)
     InitializeAutoGearDB(AutoGearDBDefaults)
     AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
     AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
     AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
 
-    optionsMenu:UnregisterEvent(event)
+    optionsMenu:UnregisterAllEvents()
     optionsMenu:SetScript("OnEvent", nil)
 end)
 
