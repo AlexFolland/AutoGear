@@ -243,9 +243,10 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 
     if AutoGearDB.Enabled ~= nil and AutoGearDB.Enabled == false then return end
 
-    if (event == "PLAYER_SPECIALIZATION_CHANGED") then
+    if (event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player") then
         --make sure this doesn't happen as part of logon
         if (dataAvailable ~= nil) then
+            --print("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"")
             print("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.")
             ScanBags()
         end
