@@ -1,4 +1,4 @@
-## Interface: 70000
+## Interface: 70100
 ## Title: AutoGear
 ## Notes: Auto roll and auto equip loot.
 
