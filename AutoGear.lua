@@ -28,7 +28,8 @@ local dataAvailable = nil
 AutoGearDBDefaults = {
     Enabled = true,
     AutoAcceptQuests = true,
-    AutoAcceptPartyInvitations = true
+    AutoAcceptPartyInvitations = true,
+    AllowedVerbosity = 2
 }
 
 --initialize table for storing saved variables
@@ -44,8 +45,29 @@ local function InitializeAutoGearDB(defaults, reset)
     end
 end
 
+--printing function to check allowed verbosity level
+local function AutoGearPrint(text, verbosity)
+    if verbosity == nil then verbosity = 0 end
+    if verbosity <= AutoGearDB.AllowedVerbosity then
+        print(text)
+    end
+end
+
+--names of verbosity levels
+local function GetAllowedVerbosityName(allowedverbosity)
+    if allowedverbosity == 0 then
+        return "errors"
+    elseif allowedverbosity == 1 then
+        return "info"
+    elseif allowedverbosity == 2 then
+        return "details"
+    else
+        return "funky"
+    end
+end
+
 --an invisible tooltip that AutoGear can scan for various information
-local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate");
+local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate")
 
 local weaponTypes = {dagger=1, sword=1, mace=1, shield=1, thrown=1, axe=1, bow=1, gun=1, polearm=1, staff=1, ["fist weapon"]=1, ["fishing pole"]=1, wand=1}
 
@@ -164,7 +186,7 @@ AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the pla
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
-    --print("AutoGear: "..event..(arg1 and " "..tostring(arg1) or "")..(arg2 and " "..tostring(arg2) or "")..(arg3 and " "..tostring(arg3) or "")..(arg4 and " "..tostring(arg4) or ""))
+    --AutoGearPrint("AutoGear: "..event..(arg1 and " "..tostring(arg1) or "")..(arg2 and " "..tostring(arg2) or "")..(arg3 and " "..tostring(arg3) or "")..(arg4 and " "..tostring(arg4) or ""), 0)
 
     if (AutoGearDB.AutoAcceptQuests) then
         if (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
@@ -220,7 +242,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                 questRewardID = {}
                 for i = 1, rewards do
                     local itemLink = GetQuestItemLink("choice", i)
-                    if (not itemLink) then print("AutoGear: No item link received from the server.") end
+                    if (not itemLink) then AutoGearPrint("AutoGear: No item link received from the server.", 0) end
                     local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
                     questRewardID[i] = id
                 end
@@ -232,7 +254,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 
     if (AutoGearDB.AutoAcceptPartyInvitations) then
         if (event == "PARTY_INVITE_REQUEST") then
-            print("AutoGear: Automatically accepting party invite.")
+            AutoGearPrint("AutoGear: Automatically accepting party invite.", 1)
             AcceptGroup()
             AutoGearFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
         elseif (event == "PARTY_MEMBERS_CHANGED") then --for closing the invite window once I have joined the group
@@ -246,8 +268,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
     if (event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player") then
         --make sure this doesn't happen as part of logon
         if (dataAvailable ~= nil) then
-            --print("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"")
-            print("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.")
+            --AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
+            AutoGearPrint("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.", 1)
             ScanBags()
         end
     elseif (event == "START_LOOT_ROLL") then
@@ -262,9 +284,9 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
             if (wouldNeed and canNeed) then roll = 1 else roll = 2 end
             if (wouldNeed and not canNeed) then
-                print("AutoGear: I would roll NEED, but NEED is not an option for this item.")
+                AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for this item.", 1)
             end
-            if (not rollItemInfo.Usable) then print("AutoGear: This item cannot be worn.  "..reason) end
+            if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: This item cannot be worn.  "..reason, 1) end
             if (roll) then
                 local newAction = {}
                 newAction.action = "roll"
@@ -275,14 +297,14 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                 table.insert(futureAction, newAction)
             end
         else
-            print("AutoGear: No weighting set for this class.")
+            AutoGearPrint("AutoGear: No weighting set for this class.", 0)
         end
     elseif (event == "CONFIRM_LOOT_ROLL") then
         ConfirmLootRoll(arg1, arg2)
     elseif (event == "CONFIRM_DISENCHANT_ROLL") then
         ConfirmLootRoll(arg1, arg2)
     elseif (event == "ITEM_PUSH") then
-        --print("AutoGear: Received an item.  Checking for gear upgrades.")
+        --AutoGearPrint("AutoGear: Received an item.  Checking for gear upgrades.")
         --make sure a fishing pole isn't replaced while fishing
         if (GetMainHandType() ~= "Fishing Poles") then
             --check if there's already a scan action in queue
@@ -327,7 +349,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             end
         end
         if (soldSomething) then
-            print("AutoGear: Sold all grey items for "..CashToString(totalSellValue)..".")
+            AutoGearPrint("AutoGear: Sold all grey items for "..CashToString(totalSellValue)..".", 1)
         end
         local cashString = CashToString(GetRepairAllCost())
         if (GetRepairAllCost() > 0) then
@@ -335,23 +357,23 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                 RepairAllItems(1) --guild repair
                 --fix this.  it doesn't see 0 yet, even if it repaired
                 if (GetRepairAllCost() == 0) then
-                    print("AutoGear: Repaired all items for "..cashString.." using guild funds.")
+                    AutoGearPrint("AutoGear: Repaired all items for "..cashString.." using guild funds.", 1)
                 end
             end
         end
         if (GetRepairAllCost() > 0) then
             if (GetRepairAllCost() <= GetMoney()) then
-                print("AutoGear: Repaired all items for "..cashString..".")
+                AutoGearPrint("AutoGear: Repaired all items for "..cashString..".", 1)
                 RepairAllItems()
             elseif (GetRepairAllCost() > GetMoney()) then
-                print("AutoGear: Not enough money to repair all items ("..cashString..").")
+                AutoGearPrint("AutoGear: Not enough money to repair all items ("..cashString..").", 0)
             end
         end
     elseif (event == "GET_ITEM_INFO_RECEIVED") then
         dataAvailable = 1
         AutoGearFrame:UnregisterEvent(event)
     elseif (event ~= "ADDON_LOADED") then
-        --print("AutoGear: "..event)
+        --AutoGearPrint("AutoGear: "..event, 0)
     end
 end)
 
@@ -954,7 +976,7 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
                 equippedInfo = ReadItemInfo(i)
                 equippedScore = DetermineItemScore(equippedInfo, weighting)
                 if ((not best[i].equipped) and best[i].score > equippedScore) then
-                    print("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  Equipping.")
+                    AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  Equipping.", 1)
                     PrintItem(best[i].info)
                     PrintItem(equippedInfo)
                     anythingBetter = 1
@@ -1004,7 +1026,7 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
                     if (IsTwoHandEquipped()) then
                         local equippedMain = ReadItemInfo(16)
                         local mainScore = DetermineItemScore(equippedMain, weighting)
-                        print("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..").  Equipping.")
+                        AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..").  Equipping.", 1)
                         PrintItem(best[16].info)
                         PrintItem(best[17].info)
                         PrintItem(equippedMain)
@@ -1013,7 +1035,7 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
                         local mainScore = DetermineItemScore(equippedMain, weighting)
                         local equippedOff = ReadItemInfo(17)
                         local offScore = DetermineItemScore(equippedOff, weighting)
-                        print("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.")
+                        AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.", 1)
                         PrintItem(best[16].info)
                         PrintItem(best[17].info)
                         PrintItem(equippedMain)
@@ -1024,7 +1046,7 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
                     if (offSwap) then i = 17 end
                     local equippedInfo = ReadItemInfo(i)
                     local equippedScore = DetermineItemScore(equippedInfo, weighting)
-                    print("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  Equipping.")
+                    AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  Equipping.", 1)
                     PrintItem(best[i].info)
                     PrintItem(equippedInfo)
                 end
@@ -1035,7 +1057,7 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
                 local mainScore = DetermineItemScore(equippedMain, weighting)
                 local equippedOff = ReadItemInfo(17)
                 local offScore = DetermineItemScore(equippedOff, weighting)
-                print("AutoGear: "..(best[19].info.Name or "nothing").." ("..string.format("%.2f", best[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.")
+                AutoGearPrint("AutoGear: "..(best[19].info.Name or "nothing").." ("..string.format("%.2f", best[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.", 1)
                 PrintItem(best[19].info)
                 PrintItem(equippedMain)
                 PrintItem(equippedOff)
@@ -1148,10 +1170,10 @@ function GetMainHandType()
 end
 
 function PrintItem(info)
-    if (info and info.Name) then print("AutoGear:     "..info.Name..":") end
+    if (info and info.Name) then AutoGearPrint("AutoGear:     "..info.Name..":", 2) end
     for k,v in pairs(info) do
         if (k ~= "Name" and weighting[k]) then
-            print("AutoGear:         "..k..": "..string.format("%.2f", v).." * "..weighting[k].." = "..string.format("%.2f", v * weighting[k]))
+            AutoGearPrint("AutoGear:         "..k..": "..string.format("%.2f", v).." * "..weighting[k].." = "..string.format("%.2f", v * weighting[k]), 2)
         end
     end
 end
@@ -1185,7 +1207,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                 if (info.Name == "Retrieving item information") then
                     cannotUse = 1
                     reason = "(this item's tooltip is not yet available)"
-                    --print("AutoGear: Item's name says \"Retrieving item information\"; cannotUse: "..tostring(cannotUse))
+                    --AutoGearPrint("AutoGear: Item's name says \"Retrieving item information\"; cannotUse: "..tostring(cannotUse), 0)
                 end
             end
             local multiplier = 1.0
@@ -1489,23 +1511,28 @@ SlashCmdList["AutoGear"] = function(msg)
     elseif (param1 == "scan") then
         Scan()
     elseif (param1 == "spec") then
-        print("AutoGear: Looks like you are "..GetSpec()..".")
+        AutoGearPrint("AutoGear: Looks like you are "..GetSpec()..".", 0)
+    elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
+            SetAllowedVerbosity(param2)
     elseif (param1 == "") then
         InterfaceOptionsFrame_OpenToCategory(optionsMenu)
     else
-        print("AutoGear: Unrecognized command.  Recognized commands:")
-        print("AutoGear:    '/ag': options menu")
-        print("AutoGear:    '/ag scan':  scan all bags")
-        print("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing and loot rolling")
-        print("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling")
-        print("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations")
+        AutoGearPrint("AutoGear: "..((param1 == "help") and "" or "Unrecognized command.  ").."Recognized commands:", 0)
+        AutoGearPrint("AutoGear:    '/ag': options menu", 0)
+        AutoGearPrint("AutoGear:    '/ag help': command line help", 0)
+        AutoGearPrint("AutoGear:    '/ag scan': scan all bags", 0)
+        AutoGearPrint("AutoGear:    '/ag spec': query name of current specialization", 0)
+        AutoGearPrint("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing and loot rolling", 0)
+        AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
+        AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
+        AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2)..")", 0)
     end
 end
 
 function ToggleAutoGear(force)
 	if AutoGearDB.Enabled == nil then return end
 	if force ~= nil then AutoGearDB.Enabled = force else AutoGearDB.Enabled = not AutoGearDB.Enabled end
-	print("AutoGear: Automatic gearing and loot rolling is now "..(AutoGearDB.Enabled and "enabled." or "disabled.  You can still manually scan with the button or \"/ag scan\"."))
+	AutoGearPrint("AutoGear: Automatic gearing and loot rolling is now "..(AutoGearDB.Enabled and "enabled." or "disabled.  You can still manually scan with the button or \"/ag scan\"."), 0)
 	if AutoGearTitleCheckButton == nil then return end
 	AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
 end
@@ -1513,7 +1540,7 @@ end
 function ToggleAutoAcceptQuests(force)
     if AutoGearDB.AutoAcceptQuests == nil then return end
     if force ~= nil then AutoGearDB.AutoAcceptQuests = force else AutoGearDB.AutoAcceptQuests = not AutoGearDB.AutoAcceptQuests end
-    print("AutoGear: Automatic quest handling is now "..(AutoGearDB.AutoAcceptQuests and "enabled" or "disabled")..".")
+    AutoGearPrint("AutoGear: Automatic quest handling is now "..(AutoGearDB.AutoAcceptQuests and "enabled" or "disabled")..".", 0)
     if AutoGearQuestCheckButton == nil then return end
     AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
 end
@@ -1521,20 +1548,36 @@ end
 function ToggleAutoAcceptPartyInvitations(force)
     if AutoGearDB.AutoAcceptPartyInvitations == nil then return end
     if force ~= nil then AutoGearDB.AutoAcceptPartyInvitations = force else AutoGearDB.AutoAcceptPartyInvitations = not AutoGearDB.AutoAcceptPartyInvitations end
-    print("AutoGear: Automatic acceptance of party invitations is now "..(AutoGearDB.AutoAcceptPartyInvitations and "enabled" or "disabled")..".")
+    AutoGearPrint("AutoGear: Automatic acceptance of party invitations is now "..(AutoGearDB.AutoAcceptPartyInvitations and "enabled" or "disabled")..".", 0)
     if AutoGearPartyInvitationsCheckButton == nil then return end
     AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
+end
+
+function SetAllowedVerbosity(allowedverbosity)
+    allowedverbosity = tonumber(allowedverbosity)
+    if type(allowedverbosity) ~= "number" then
+        AutoGearPrint("AutoGear: The current allowed verbosity level is "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity).."). Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2)..").", 0)
+        return
+    end
+
+    if allowedverbosity < 0 or allowedverbosity > 2 then
+        AutoGearPrint("AutoGear: That is an invalid allowed verbosity level. Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2)..").", 0)
+        return
+    else
+        AutoGearDB.AllowedVerbosity = allowedverbosity
+        AutoGearPrint("AutoGear: Allowed verbosity level is now: "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity)..").", 0)
+    end
 end
 
 function Scan()
     if (not weighting) then SetStatWeights() end
     if (not weighting) then
-        print("AutoGear: No weighting set for this class.")
+        AutoGearPrint("AutoGear: No weighting set for this class.", 0)
         return
     end
-    print("AutoGear: Scanning bags for upgrades.")
+    AutoGearPrint("AutoGear: Scanning bags for upgrades.", 1)
     if (not ScanBags()) then
-        print("AutoGear: Nothing better was found")
+        AutoGearPrint("AutoGear: Nothing better was found", 1)
     end
 end
 
@@ -1546,9 +1589,9 @@ function AutoGearMain()
             if (curAction.action == "roll") then
                 if (GetTime() > curAction.t) then
                     if (curAction.rollType == 1) then
-                        print ("AutoGear: Rolling NEED on "..curAction.info.Name..".")
+                        AutoGearPrint("AutoGear: Rolling NEED on "..curAction.info.Name..".", 1)
                     elseif (curAction.rollType == 2) then
-                        print ("AutoGear: Rolling GREED on "..curAction.info.Name..".")
+                        AutoGearPrint("AutoGear: Rolling GREED on "..curAction.info.Name..".", 1)
                     end
                     RollOnLoot(curAction.rollID, curAction.rollType)
                     table.remove(futureAction, i)
@@ -1556,23 +1599,23 @@ function AutoGearMain()
             elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
                 if (GetTime() > curAction.t) then
                     if (not curAction.messageAlready) then
-                        print("AutoGear: Equipping "..curAction.info.Name..".")
+                        AutoGearPrint("AutoGear: Equipping "..curAction.info.Name..".", 2)
                         curAction.messageAlready = 1
                     end
                     if (curAction.removeMainHandFirst) then
                         if (GetAllBagsNumFreeSlots() > 0) then
-                            print("AutoGear: Removing the two-hander to equip the off-hand")
+                            AutoGearPrint("AutoGear: Removing the two-hander to equip the off-hand", 1)
                             PickupInventoryItem(GetInventorySlotInfo("MainHandSlot"))
                             PutItemInEmptyBagSlot()
                             curAction.removeMainHandFirst = nil
                             curAction.waitingOnEmptyMainHand = 1
                         else
-                            print("AutoGear: Cannot equip the off-hand because bags are too full to remove the two-hander")
+                            AutoGearPrint("AutoGear: Cannot equip the off-hand because bags are too full to remove the two-hander", 0)
                             table.remove(futureAction, i)
                         end
                     elseif (curAction.waitingOnEmptyMainHand and GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
                     elseif (curAction.waitingOnEmptyMainHand and not GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
-                        print("AutoGear: Main hand detected to be clear.  Equipping now.")
+                        AutoGearPrint("AutoGear: Main hand detected to be clear.  Equipping now.", 1)
                         curAction.waitingOnEmptyMainHand = nil
                     elseif (curAction.ensuringEquipped) then
                         if (GetInventoryItemID("player", curAction.replaceSlot) == GetContainerItemID(curAction.container, curAction.slot)) then
