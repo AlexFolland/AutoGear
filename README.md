@@ -15,10 +15,13 @@ If you receive an upgrade mid-combat, AutoGear queues the upgrade to be equipped
 Chat commands:
 ```
 /ag - options menu
+/ag help - chat commands
 /ag scan - manually run automatic gearing once (scan all bags for better gear)
+/ag spec - query name of current specialization
 /ag toggle/[enable/on/start]/[disable/off/stop] - toggle automatic gearing
 /ag quest [enable/on/start]/[disable/off/stop] - toggle quest handling
 /ag party [enable/on/start]/[disable/off/stop] - toggle automatic acceptance of party invitations
+/ag verbosity [0/1/2]: set allowed verbosity level; valid levels are: 0 (errors), 1 (info), 2 (details)
 ```
 
 Warning: AutoGear currently automatically rolls "greed" on everything that isn't a gear upgrade for the current spec, including mounts and crafting reagents. It works quite well for leveling quickly and conveniently, but you should disable it before loot rolls you want control over. To do so, simply run "/ag toggle" or toggle it from the options menu.
