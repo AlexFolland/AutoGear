@@ -269,7 +269,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         --make sure this doesn't happen as part of logon
         if (dataAvailable ~= nil) then
             --AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
-            AutoGearPrint("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.", 1)
+            AutoGearPrint("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.", 2)
             ScanBags()
         end
     elseif (event == "START_LOOT_ROLL") then
@@ -1575,7 +1575,7 @@ function Scan()
         AutoGearPrint("AutoGear: No weighting set for this class.", 0)
         return
     end
-    AutoGearPrint("AutoGear: Scanning bags for upgrades.", 1)
+    AutoGearPrint("AutoGear: Scanning bags for upgrades.", 2)
     if (not ScanBags()) then
         AutoGearPrint("AutoGear: Nothing better was found", 1)
     end
