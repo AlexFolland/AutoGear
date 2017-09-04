@@ -1,6 +1,6 @@
-## Interface: 70200
+## Interface: 70300
 ## Title: AutoGear
-## Notes: Auto roll and auto equip loot.
+## Notes: Automatically chooses loot and equips gear
 
 AutoGear.lua
 ## SavedVariables: AutoGearDB
