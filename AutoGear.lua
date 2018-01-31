@@ -731,6 +731,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Outlaw") then
+                    
             weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
@@ -848,7 +849,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Fury") then
-            weapons = "dual wield"
+            weapons = "2hDW" --Alitiwn: creating new weapons class for unique Fury handling
             weighting = {Strength = 2.98, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
@@ -930,7 +931,7 @@ function ScanBags(lootRollItemID, lootRollID, questRewardID)
     end
     --pretend slot 19 is a separate slot for 2-handers
     best[19] = {}
-    if (IsTwoHandEquipped()) then
+    if (IsTwoHandEquipped() and spec ~= "Fury") then
         best[19].info = best[16].info
         best[19].score = best[16].score
         best[19].equippedScore = best[16].equippedScore
@@ -1296,7 +1297,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                 if (weapons == "dagger and any" and weaponType ~= "dagger") then
                     cannotUse = 1
                     reason = "(this spec needs a dagger main hand)"
-                elseif (weapons == "2h" or weapon == "ranged") then
+                elseif (weapons == "2h" or weapon == "ranged" or weapon == "2hDW") then --Alitwin: adding 2hdw
                     cannotUse = 1
                     reason = "(this spec needs a two-hand weapon)"
                 end
@@ -1313,6 +1314,12 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                     cannotUse = 1
                     reason = "(this spec should use a ranged weapon)"
                 end
+                if (weapons == "2hDW") then	--Alitwin: adding 2hdw
+					info.Slot = "MainHandSlot"
+					info.Slot2 = "SecondaryHandSlot"
+				else
+					info.Slot = "MainHandSlot"; info.IncludeOffHand=1
+				end
                 info.Slot = "MainHandSlot"; info.IncludeOffHand=1
             end
             if (text=="held in off-hand") then
@@ -1336,9 +1343,9 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                 info.Slot = "SecondaryHandSlot"
             end
             if (text=="one-hand") then
-                if (weapons == "2h" or weapons == "ranged") then
+                if (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then --Alitwin: adding 2hdw
                     cannotUse = 1
-                    reason = "(this spec should use a two-hand weapon)"
+                    reason = "(this spec should use a two-hand weapon or dual wield two-handers)"
                 end
                 if (weapons == "dagger and any" and weaponType ~= "dagger") then
                     info.Slot = "SecondaryHandSlot"
