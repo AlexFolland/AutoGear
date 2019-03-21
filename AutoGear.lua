@@ -1271,7 +1271,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
             if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
             if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
             if (string.find(text, "experience gained")) then
-                if (UnitLevel("player") < 110 and not IsXPUserDisabled()) then
+                if (UnitLevel("player") < 120 and not IsXPUserDisabled()) then
                     info.ExperienceGained = (info.ExperienceGained or 0) + value
                 end
             end
