@@ -231,7 +231,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             end
             --available quests
             quests = GetNumAvailableQuests()
-			if (not isClassic()) then 
+			if (not IsClassic()) then 
 				for i = 1, quests do
 					local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
 					if (not isTrivial) then
