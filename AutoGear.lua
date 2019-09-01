@@ -24,6 +24,11 @@ local weighting --gear stat weighting
 local tUpdate = 0
 local dataAvailable = nil
 
+--check whether it's WoW classic, for automatic compatibility
+local function IsClassic()
+    return WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
+end
+
 --default values for variables saved between sessions
 AutoGearDBDefaults = {
     Enabled = true,
@@ -156,12 +161,16 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
     end
 end)
 
-AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+if (not IsClassic()) then 
+	--These are events that don't exist in WoW classic
+	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
+	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")             --This event is not yet documented
+end
 AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
 AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
 AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
-AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 AutoGearFrame:RegisterEvent("ITEM_PUSH")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when the player tries to equip a soulbound item that can still be traded to eligible players
@@ -175,7 +184,6 @@ AutoGearFrame:RegisterEvent("QUEST_FINISHED")               --Fires when the pla
 AutoGearFrame:RegisterEvent("QUEST_GREETING")               --Fires when a questgiver presents a greeting along with a list of active or available quests
 AutoGearFrame:RegisterEvent("QUEST_ITEM_UPDATE")            --Fires when information about items in a questgiver dialog is updated
 AutoGearFrame:RegisterEvent("QUEST_LOG_UPDATE")             --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
-AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")             --This event is not yet documented
 AutoGearFrame:RegisterEvent("QUEST_PROGRESS")               --Fires when interacting with a questgiver about an active quest
 --AutoGearFrame:RegisterEvent("QUEST_QUERY_COMPLETE")       --Fires when quest completion information is available from the server; deprecated and registering returns an error as of 8.x
 AutoGearFrame:RegisterEvent("QUEST_WATCH_UPDATE")           --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
@@ -223,12 +231,18 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             end
             --available quests
             quests = GetNumAvailableQuests()
-            for i = 1, quests do
-                local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
-                if (not isTrivial) then
-                    SelectAvailableQuest(i)
-                end
-            end
+			if (not isClassic()) then 
+				for i = 1, quests do
+					local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
+					if (not isTrivial) then
+						SelectAvailableQuest(i)
+					end
+				end
+			else
+				for i = 1, quests do
+					SelectAvailableQuest(i)
+				end
+			end
         elseif (event == "QUEST_PROGRESS") then
             if (IsQuestCompletable()) then
                 CompleteQuest()
@@ -352,15 +366,17 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             AutoGearPrint("AutoGear: Sold all grey items for "..CashToString(totalSellValue)..".", 1)
         end
         local cashString = CashToString(GetRepairAllCost())
-        if (GetRepairAllCost() > 0) then
-            if (CanGuildBankRepair()) then
-                RepairAllItems(1) --guild repair
-                --fix this.  it doesn't see 0 yet, even if it repaired
-                if (GetRepairAllCost() == 0) then
-                    AutoGearPrint("AutoGear: Repaired all items for "..cashString.." using guild funds.", 1)
-                end
-            end
-        end
+		if (not IsClassic()) then
+			if (GetRepairAllCost() > 0) then
+				if (CanGuildBankRepair()) then
+					RepairAllItems(1) --guild repair
+					--fix this.  it doesn't see 0 yet, even if it repaired
+					if (GetRepairAllCost() == 0) then
+						AutoGearPrint("AutoGear: Repaired all items for "..cashString.." using guild funds.", 1)
+					end
+				end
+			end
+		end
         if (GetRepairAllCost() > 0) then
             if (GetRepairAllCost() <= GetMoney()) then
                 AutoGearPrint("AutoGear: Repaired all items for "..cashString..".", 1)
@@ -417,7 +433,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Frost") then
-            weapons = "dual wield"
+            if (CanDualWield()) then weapons = "dual wield" end
             weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
@@ -448,7 +464,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 3.075}
         elseif (spec == "Havoc") then
-            weapons = "dual wield"
+            if (CanDualWield()) then weapons = "dual wield" end
             weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
@@ -458,7 +474,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 3.075}
         elseif (spec == "Vengeance") then
-            weapons = "dual wield"
+            if (CanDualWield()) then weapons = "dual wield" end
             weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
                          Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
@@ -613,7 +629,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Windwalker") then
-            weapons = "dual wield"
+            if (CanDualWield()) then weapons = "dual wield" end
             weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
@@ -710,7 +726,7 @@ function SetStatWeights()
                          DPS = 0.01}
         end
     elseif (class == "ROGUE") then
-        weapons = "dual wield"
+        if (CanDualWield()) then weapons = "dual wield" end
         if (spec == "None") then
             weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
@@ -730,8 +746,8 @@ function SetStatWeights()
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
-        elseif (spec == "Outlaw") then
-                    
+        elseif ((spec == "Outlaw") or (spec == "Combat")) then
+            
             weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
@@ -771,7 +787,7 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Enhancement") then
-            weapons = "dual wield"
+            if (CanDualWield()) then weapons = "dual wield" end
             weighting = {Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
@@ -849,7 +865,11 @@ function SetStatWeights()
                          HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 2}
         elseif (spec == "Fury") then
-            weapons = "2hDW" --Alitiwn: creating new weapons class for unique Fury handling
+			if (IsClassic()) then
+				if (CanDualWield()) then weapons = "dual wield" end
+			else
+				weapons = "2hDW" --Alitiwn: creating new weapons class for unique Fury handling
+			end
             weighting = {Strength = 2.98, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
                          Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
                          SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
@@ -1345,7 +1365,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
             if (text=="one-hand") then
                 if (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then --Alitwin: adding 2hdw
                     cannotUse = 1
-                    reason = "(this spec should use a two-hand weapon or dual wield two-handers)"
+                    reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
                 end
                 if (weapons == "dagger and any" and weaponType ~= "dagger") then
                     info.Slot = "SecondaryHandSlot"
@@ -1466,10 +1486,32 @@ function GetAllBagsNumFreeSlots()
     return slotCount
 end
 
-function GetSpec()
-    local currentSpec = GetSpecialization()
-    local currentSpecName = currentSpec and select(2, GetSpecializationInfo(currentSpec)) or "None"
-    return currentSpecName
+-- We run the IsClassic check before function definition to prevent poorer performance
+if (IsClassic()) then
+	function GetSpec()
+		-- GetSpecialization() doesn't exist on Classic.
+		-- Instead, this finds the talent tree where the most points are allocated.
+		local highestSpec = nil
+		local highestPointsSpent = nil
+		for i = 1, GetNumTalentTabs() do
+			local spec, _, pointsSpent = GetTalentTabInfo(i)
+			if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
+				highestPointsSpent = pointsSpent
+				highestSpec = spec
+			end
+		end
+		if (highestPointsSpent == 0) then
+			return "None"
+		end
+
+		return highestSpec
+	end
+else
+	function GetSpec()
+		local currentSpec = GetSpecialization()
+		local currentSpecName = currentSpec and select(2, GetSpecializationInfo(currentSpec)) or "None"
+		return currentSpecName
+	end
 end
 
 function PutItemInEmptyBagSlot()
