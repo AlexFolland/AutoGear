@@ -713,7 +713,7 @@ function SetStatWeights()
                          AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
                          Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
                          RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
                          DPS = 0.01}
         elseif (spec == "Shadow") then
             weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
@@ -1276,7 +1276,8 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                 string.find(text, "frost spell damage") and spec=="Frost" or
                 string.find(text, "fire spell damage") and spec=="Fire" or
                 string.find(text, "arcane spell damage") and spec=="Arcane" or
-                string.find(text, "nature spell damage") and spec=="Balance") then info.SpellPower = (info.SpellPower or 0) + value end
+                string.find(text, "nature spell damage") and spec=="Balance" or
+            	string.find(text, "healing spells") and weighting.HealingProc > 0) then info.SpellPower = (info.SpellPower or 0) + value end
             if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
             if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
             if (string.find(text, "mana per 5")) then info.Mp5 = (info.Mp5 or 0) + value end
