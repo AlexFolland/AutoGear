@@ -1856,14 +1856,19 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                     info.Slot = "MainHandSlot"
                 end
             end
-            local _, class = UnitClass("player")
-            if (text=="ranged") then
-                info.Slot = "MainHandSlot"
-                if (weapons ~= "ranged" and weaponType ~= "wand") then
-                    cannotUse = 1
-                    reason = "(this class or spec should not use a ranged 2h weapon)"
-                end
-            end
+            if (IsClassic()) then
+            	if (text=="wand" or text=="totem" or text=="gun" or text=="ranged" or text=="crossbow") then
+            		info.Slot = "RangedSlot"
+            	end
+            else
+	            if (text=="ranged") then
+	                info.Slot = "MainHandSlot"
+	                if (weapons ~= "ranged" and weaponType ~= "wand") then
+	                    cannotUse = 1
+	                    reason = "(this class or spec should not use a ranged 2h weapon)"
+	                end
+	            end
+	        end
             
             --check for being a pattern or the like
             if (string.find(text, "pattern:")) then cannotUse = 1 end
