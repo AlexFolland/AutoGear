@@ -1857,7 +1857,15 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                 end
             end
             if (IsClassic()) then
-            	if (text=="wand" or text=="totem" or text=="gun" or text=="ranged" or text=="crossbow") then
+            	if (text=="wand" or
+            		text=="gun" or
+            		text=="ranged" or
+            		text=="crossbow" or
+            		text=="idol" or
+            		text=="libram" or
+            		text=="totem" or
+            		text=="sigil" or
+            		text=="relic") then
             		info.Slot = "RangedSlot"
             	end
             else
