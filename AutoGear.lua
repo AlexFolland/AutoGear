@@ -1,6 +1,13 @@
 --AutoGear
 
 -- to do:
+-- Classic 2019
+-- Balance Druid needing on shield when they can't use it
+-- Protection paladin greeding on shield when it's better, no question
+-- Needing on meteor shard as a mage
+--	In general, needing on one-handers that are near-worthless.  The plan is to only roll if it passes a minimum threshold.  That threshold should be 3x the highest weight among the 5 main stats.
+-- Paladin needed on a wand which it can't use
+
 -- accomodate for "no item link received"
 -- identify bag rolls and roll need when appropriate
 -- roll need on mounts that the character doesn't have
@@ -1756,7 +1763,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                 string.find(text, "fire spell damage") and (spec=="Fire" or class=="MAGE" and spec=="None") or
                 string.find(text, "arcane spell damage") and (spec=="Arcane" or class=="MAGE" and spec=="None") or
                 string.find(text, "nature spell damage") and spec=="Balance" or
-            	string.find(text, "healing spells") and weighting.HealingProc > 0) then info.SpellPower = (info.SpellPower or 0) + value end
+            	string.find(text, "healing spells")) then info.SpellPower = (info.SpellPower or 0) + value end
             if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
             if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
             if (string.find(text, "mana per 5")) then info.Mp5 = (info.Mp5 or 0) + value end
