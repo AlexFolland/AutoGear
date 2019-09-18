@@ -2,8 +2,6 @@
 
 -- to do:
 -- Classic 2019
--- Balance Druid needing on shield when they can't use it
--- Protection paladin greeding on shield when it's better, no question
 -- Needing on meteor shard as a mage
 --	In general, needing on one-handers that are near-worthless.  The plan is to only roll if it passes a minimum threshold.  That threshold should be 3x the highest weight among the 5 main stats.
 -- Paladin needed on a wand which it can't use
@@ -1891,7 +1889,10 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
             --check for red text
             local r, g, b, a = mytext:GetTextColor()
             if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and mytext:GetText()) then --this is red text
-                if (string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
+            	--if Within5levels was already set but we found another red text, clear it, because we really can't use this
+            	if (info.Within5levels) then info.Within5levels = nil end
+            	--if there's not already a reason we cannot use and this is just a required level, check if it's within 5 levels
+                if (not cannotUse and string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
                     info.Within5levels = 1
                 end
                 reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(mytext:GetText() or "nil").."'')"
@@ -1915,9 +1916,11 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
     if (info.MetaSockets == 0) then info.MetaSockets = nil end
     if (not cannotUse and (info.Slot or info.isMount)) then
         info.Usable = 1
-    elseif (not info.Slot) then 
+    elseif (not info.Slot) then
+    	cannotUse = 1
         reason = "(info.Slot was nil)"
     end
+    if (cannotUse) then AutoGearPrint("Cannot use "..info.Name.." "..reason, 3) end
     return info
 end
 
@@ -2108,8 +2111,8 @@ function SetAllowedVerbosity(allowedverbosity)
         return
     end
 
-    if allowedverbosity < 0 or allowedverbosity > 2 then
-        AutoGearPrint("AutoGear: That is an invalid allowed verbosity level. Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2)..").", 0)
+    if allowedverbosity < 0 or allowedverbosity > 3 then
+        AutoGearPrint("AutoGear: That is an invalid allowed verbosity level. Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
         return
     else
         AutoGearDB.AllowedVerbosity = allowedverbosity
