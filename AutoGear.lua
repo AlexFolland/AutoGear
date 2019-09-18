@@ -542,7 +542,6 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        end
 	    elseif (class == "HUNTER") then
-	        weapons = "ranged"
 	        if (spec == "None") then
 	            weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
 	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
@@ -1799,8 +1798,8 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
             if (text=="feet") then info.Slot = "FeetSlot" end
             if (text=="finger") then info.Slot = "Finger0Slot" end
             if (text=="trinket") then info.Slot = "Trinket0Slot" end
+            local weaponType = GetWeaponType()
             if (text=="main hand") then
-                local weaponType = GetWeaponType()
                 if (weapons == "dagger and any" and weaponType ~= "dagger") then
                     cannotUse = 1
                     reason = "(this spec needs a dagger main hand)"
