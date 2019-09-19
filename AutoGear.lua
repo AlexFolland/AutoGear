@@ -1920,6 +1920,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
     	cannotUse = 1
         reason = "(info.Slot was nil)"
     end
+    if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or "(nil)").." "..reason, 3) end
     return info
 end
 
