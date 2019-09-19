@@ -1944,6 +1944,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
     if (info.YellowSockets == 0) then info.YellowSockets = nil end
     if (info.BlueSockets == 0) then info.BlueSockets = nil end
     if (info.MetaSockets == 0) then info.MetaSockets = nil end
+	if (info.Slot or info.isMount) then info.shouldShowScoreInTooltip = 1 end
     if (not cannotUse and (info.Slot or info.isMount)) then
         info.Usable = 1
     elseif (not info.Slot) then
@@ -2209,7 +2210,7 @@ function AutoGearTooltipHook(tooltip)
 	local score = DetermineItemScore(tooltipItemInfo, weighting)
 	--GameTooltip_AddBlankLinesToTooltip(tooltip, 1)
 	--GameTooltip_AddColoredLine(tooltip, "AutoGear total score: "..tostring(score), NORMAL_FONT_COLOR)
-	if (tooltipItemInfo.Usable == 1) then
+	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
 		local equippedItemInfo = ReadItemInfo(GetInventorySlotInfo(tooltipItemInfo.Slot))
 		local equippedScore = DetermineItemScore(equippedItemInfo, weighting)
 		local sameScore = (score == equippedScore)
