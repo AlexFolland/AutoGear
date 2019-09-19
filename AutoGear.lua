@@ -39,6 +39,7 @@ AutoGearDBDefaults = {
     Enabled = true,
     AutoAcceptQuests = true,
     AutoAcceptPartyInvitations = true,
+	ScoreInTooltips = true,
     AllowedVerbosity = 2
 }
 
@@ -93,20 +94,30 @@ end)
 
 --options menu (original template from BlizzMove; custom checkboxes)
 local optionsMenu = CreateFrame("Frame", "AutoGearPanel", InterfaceOptionsFramePanelContainer)
+
+local titleHelpText = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+titleHelpText:SetHeight(48)
+titleHelpText:SetPoint("TOPLEFT", 16, -16)
+titleHelpText:SetPoint("RIGHT", optionsMenu, -16, 0)
+titleHelpText:SetNonSpaceWrap(true)
+titleHelpText:SetJustifyH("LEFT")
+titleHelpText:SetJustifyV("BOTTOM")
+
+titleHelpText:SetText("AutoGear can automatically equip gear and roll on group loot, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the SetStatWeights function in AutoGear.lua.  The following checkbox sets whether AutoGear automatically rolls on loot and equips gear upgrades based on these internal stat weights.")
+
 local titleCheckButton = CreateFrame("CheckButton", "AutoGearTitleCheckButton", optionsMenu, "OptionsCheckButtonTemplate")
 titleCheckButton:SetScript("OnClick", function() ToggleAutoGear() end)
-titleCheckButton:SetPoint("TOPLEFT", 16, -16)
-titleCheckButton:SetHitRectInsets(0, -450, 0, 0)
-local version = GetAddOnMetadata("AutoGear","Version")
-_G[titleCheckButton:GetName() .. "Text"]:SetText("AutoGear "..(version and version.." " or "").."(Toggle automatic gearing and loot rolling)")
+titleCheckButton:SetPoint("TOPLEFT", titleHelpText, "BOTTOMLEFT", 0, -8)
+titleCheckButton:SetHitRectInsets(0, -280, 0, 0)
+_G[titleCheckButton:GetName() .. "Text"]:SetText("Automatically equip gear and roll on loot")
 
 local questHelpText = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-questHelpText:SetHeight(35)
+questHelpText:SetHeight(48)
 questHelpText:SetPoint("TOPLEFT", titleCheckButton, "BOTTOMLEFT", 0, -16)
-questHelpText:SetPoint("RIGHT", optionsMenu, -32, 0)
+questHelpText:SetPoint("RIGHT", optionsMenu, -16, 0)
 questHelpText:SetNonSpaceWrap(true)
 questHelpText:SetJustifyH("LEFT")
-questHelpText:SetJustifyV("TOP")
+questHelpText:SetJustifyV("BOTTOM")
 
 questHelpText:SetText("AutoGear can automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  The following checkbox sets whether AutoGear handles quests and quest-giving NPC dialog.")
 
@@ -117,12 +128,12 @@ questCheckButton:SetHitRectInsets(0, -200, 0, 0)
 questCheckButton:SetPoint("TOPLEFT", questHelpText, "BOTTOMLEFT", 0, -8)
 
 local partyHelpText = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-partyHelpText:SetHeight(16)
+partyHelpText:SetHeight(48)
 partyHelpText:SetPoint("TOPLEFT", questCheckButton, "BOTTOMLEFT", 0, -16)
-partyHelpText:SetPoint("RIGHT", optionsMenu, -32, 0)
+partyHelpText:SetPoint("RIGHT", optionsMenu, -16, 0)
 partyHelpText:SetNonSpaceWrap(true)
 partyHelpText:SetJustifyH("LEFT")
-partyHelpText:SetJustifyV("TOP")
+partyHelpText:SetJustifyV("BOTTOM")
 
 partyHelpText:SetText("AutoGear can automatically accept party invitations.  The following checkbox sets whether AutoGear does so.")
 
@@ -132,20 +143,36 @@ _G[partyCheckButton:GetName() .. "Text"]:SetText("Automatically accept party inv
 partyCheckButton:SetHitRectInsets(0, -280, 0, 0)
 partyCheckButton:SetPoint("TOPLEFT", partyHelpText, "BOTTOMLEFT", 0, -8)
 
+local tooltipHelpText = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+tooltipHelpText:SetHeight(48)
+tooltipHelpText:SetPoint("TOPLEFT", partyCheckButton, "BOTTOMLEFT", 0, -16)
+tooltipHelpText:SetPoint("RIGHT", optionsMenu, -16, 0)
+tooltipHelpText:SetNonSpaceWrap(true)
+tooltipHelpText:SetJustifyH("LEFT")
+tooltipHelpText:SetJustifyV("BOTTOM")
+
+tooltipHelpText:SetText("AutoGear can show its total item score from its internal stat weights in item tooltips.  The following checkbox sets whether AutoGear does so.")
+
+local tooltipCheckButton = CreateFrame("CheckButton", "AutoGearTooltipCheckButton", optionsMenu, "OptionsCheckButtonTemplate")
+tooltipCheckButton:SetScript("OnClick", function() ToggleScoreInTooltips() end)
+_G[tooltipCheckButton:GetName() .. "Text"]:SetText("Show AutoGear score in item tooltips")
+tooltipCheckButton:SetHitRectInsets(0, -280, 0, 0)
+tooltipCheckButton:SetPoint("TOPLEFT", tooltipHelpText, "BOTTOMLEFT", 0, -8)
+
 local scanHelpText = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-scanHelpText:SetHeight(35)
-scanHelpText:SetPoint("TOPLEFT", partyCheckButton, "BOTTOMLEFT", 0, -16)
-scanHelpText:SetPoint("RIGHT", optionsMenu, -32, 0)
+scanHelpText:SetHeight(64)
+scanHelpText:SetPoint("TOPLEFT", tooltipCheckButton, "BOTTOMLEFT", 0, -16)
+scanHelpText:SetPoint("RIGHT", optionsMenu, -16, 0)
 scanHelpText:SetNonSpaceWrap(true)
 scanHelpText:SetJustifyH("LEFT")
-scanHelpText:SetJustifyV("TOP")
+scanHelpText:SetJustifyV("BOTTOM")
 
-scanHelpText:SetText("AutoGear scans all bags for gear upgrades every time you loot gear.  Click the button below to force a scan.  Tip: By equipping your old item, you can use this to help determine how AutoGear decided an item was an upgrade.")
+scanHelpText:SetText("Click the button below to force a scan, the same way that AutoGear automatically scans whenever new gear is looted.\n\nTip: By equipping your old item, you can use this to help determine how AutoGear decided an item was an upgrade.")
 
 local scanButton = CreateFrame("Button", nil, optionsMenu, "UIPanelButtonTemplate")
 scanButton:SetWidth(100)
 scanButton:SetHeight(30)
-scanButton:SetScript("OnClick", function() Scan() end)
+scanButton:SetScript("OnClick", function() AutoGearScan() end)
 scanButton:SetText("Scan")
 scanButton:SetPoint("TOPLEFT", scanHelpText, "BOTTOMLEFT", 0, -8)
 
@@ -162,6 +189,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
         AutoGearTitleCheckButton:SetChecked(AutoGearDB.Enabled)
         AutoGearQuestCheckButton:SetChecked(AutoGearDB.AutoAcceptQuests)
         AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
+		AutoGearTooltipCheckButton:SetChecked(AutoGearDB.ScoreInTooltips)
 
         optionsMenu:UnregisterAllEvents()
         optionsMenu:SetScript("OnEvent", nil)
@@ -267,7 +295,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
                     local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
                     questRewardID[i] = id
                 end
-                local choice = ScanBags(nil, nil, questRewardID)
+                local choice = AutoGearScanBags(nil, nil, questRewardID)
                 GetQuestReward(choice)
             end
         end
@@ -291,7 +319,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         if (dataAvailable ~= nil) then
             --AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
             AutoGearPrint("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.", 2)
-            ScanBags()
+            AutoGearScanBags()
         end
     elseif (event == "START_LOOT_ROLL") then
         SetStatWeights()
@@ -300,7 +328,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             reason = "(no reason set)"
             link = GetLootRollItemLink(arg1)
             local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-            local wouldNeed = ScanBags(lootRollItemID, arg1)
+            local wouldNeed = AutoGearScanBags(lootRollItemID, arg1)
             local rollItemInfo = ReadItemInfo(nil, arg1)
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
             if (wouldNeed and canNeed) then roll = 1 else roll = 2 end
@@ -1412,7 +1440,7 @@ function ItemContainsText(container, slot, search)
     return nil
 end
 
-function ScanBags(lootRollItemID, lootRollID, questRewardID)
+function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
     SetStatWeights()
     if (not weighting) then
         return nil
@@ -1681,7 +1709,7 @@ function PrintItem(info)
     end
 end
 
-function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex)
+function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex, link)
     local info = {}
     local cannotUse = nil
     AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE");
@@ -1694,6 +1722,8 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
         AutoGearTooltip:SetBagItem(container, slot)
     elseif (questRewardIndex) then
         AutoGearTooltip:SetQuestItem("choice", questRewardIndex)
+	elseif (link) then
+		AutoGearTooltip:SetHyperlink(link)
     end
     info.RedSockets = 0
     info.YellowSockets = 0
@@ -2059,8 +2089,16 @@ SlashCmdList["AutoGear"] = function(msg)
         else
             ToggleAutoAcceptPartyInvitations()
         end
+	elseif (param1 == "score" or param1 == "tooltip" or param1 == "tooltips") then
+        if (param2 == "show" or param2 == "enable" or param2 == "on" or param2 == "start") then
+            ToggleScoreInTooltips(true)
+        elseif (param2 == "hide" or param2 == "disable" or param2 == "off" or param2 == "stop") then
+            ToggleScoreInTooltips(false)
+        else
+            ToggleScoreInTooltips()
+        end
     elseif (param1 == "scan") then
-        Scan()
+        AutoGearScan()
     elseif (param1 == "spec") then
         AutoGearPrint("AutoGear: Looks like you are "..GetSpec()..".", 0)
     elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
@@ -2071,11 +2109,12 @@ SlashCmdList["AutoGear"] = function(msg)
         AutoGearPrint("AutoGear: "..((param1 == "help") and "" or "Unrecognized command.  ").."Recognized commands:", 0)
         AutoGearPrint("AutoGear:    '/ag': options menu", 0)
         AutoGearPrint("AutoGear:    '/ag help': command line help", 0)
-        AutoGearPrint("AutoGear:    '/ag scan': scan all bags", 0)
-        AutoGearPrint("AutoGear:    '/ag spec': query name of current specialization", 0)
+        AutoGearPrint("AutoGear:    '/ag scan': scan all bags for gear upgrades", 0)
+        AutoGearPrint("AutoGear:    '/ag spec': get name of current talent specialization", 0)
         AutoGearPrint("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing and loot rolling", 0)
         AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
         AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
+		AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
         AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
     end
 end
@@ -2104,6 +2143,14 @@ function ToggleAutoAcceptPartyInvitations(force)
     AutoGearPartyInvitationsCheckButton:SetChecked(AutoGearDB.AutoAcceptPartyInvitations)
 end
 
+function ToggleScoreInTooltips(force)
+    if AutoGearDB.ScoreInTooltips == nil then return end
+    if force ~= nil then AutoGearDB.ScoreInTooltips = force else AutoGearDB.ScoreInTooltips = not AutoGearDB.ScoreInTooltips end
+    AutoGearPrint("AutoGear: Showing score in item tooltips is now "..(AutoGearDB.ScoreInTooltips and "enabled" or "disabled")..".", 0)
+    if AutoGearTooltipCheckButton == nil then return end
+    AutoGearTooltipCheckButton:SetChecked(AutoGearDB.ScoreInTooltips)
+end
+
 function SetAllowedVerbosity(allowedverbosity)
     allowedverbosity = tonumber(allowedverbosity)
     if type(allowedverbosity) ~= "number" then
@@ -2120,17 +2167,77 @@ function SetAllowedVerbosity(allowedverbosity)
     end
 end
 
-function Scan()
+function AutoGearScan()
     if (not weighting) then SetStatWeights() end
     if (not weighting) then
         AutoGearPrint("AutoGear: No weighting set for this class.", 0)
         return
     end
     AutoGearPrint("AutoGear: Scanning bags for upgrades.", 2)
-    if (not ScanBags()) then
+    if (not AutoGearScanBags()) then
         AutoGearPrint("AutoGear: Nothing better was found", 1)
     end
 end
+
+--[[ rPrint(struct, [limit], [indent])   Recursively print arbitrary data. 
+	Set limit (default 100) to stanch infinite loops.
+	Indents tables as [KEY] VALUE, nested tables as [KEY] [KEY]...[KEY] VALUE
+	Set indent ("") to prefix each line:    Mytable [KEY] [KEY]...[KEY] VALUE
+--]]
+local function rPrint(s, l, i) -- recursive Print (structure, limit, indent)
+	l = (l) or 100; i = i or "";	-- default item limit, indent string
+	if (l<1) then print "ERROR: Item limit reached."; return l-1 end;
+	local ts = type(s);
+	if (ts ~= "table") then print (i,ts,s); return l-1 end
+	print (i,ts);           -- print "table"
+	for k,v in pairs(s) do  -- print "[KEY] VALUE"
+		l = rPrint(v, l, i.."\t["..tostring(k).."]");
+		if (l < 0) then break end
+	end
+	return l
+end	
+
+function AutoGearTooltipHook(tooltip)
+	if (not AutoGearDB.ScoreInTooltips) then return end
+	if (not weighting) then SetStatWeights() end
+	local name, link = tooltip:GetItem()
+	if not link then
+		AutoGearPrint("AutoGear: No item link for "..name.." on "..tooltip:GetName(),3)
+		return
+	end
+	local tooltipItemInfo = ReadItemInfo(nil,nil,nil,nil,nil,link)
+	local score = DetermineItemScore(tooltipItemInfo, weighting)
+	--GameTooltip_AddBlankLinesToTooltip(tooltip, 1)
+	--GameTooltip_AddColoredLine(tooltip, "AutoGear total score: "..tostring(score), NORMAL_FONT_COLOR)
+	if (tooltipItemInfo.Usable == 1) then
+		local equippedItemInfo = ReadItemInfo(GetInventorySlotInfo(tooltipItemInfo.Slot))
+		local equippedScore = DetermineItemScore(equippedItemInfo, weighting)
+		local sameScore = (score == equippedScore)
+		local scoreColor = HIGHLIGHT_FONT_COLOR
+		if (score > equippedScore) then
+			scoreColor = GREEN_FONT_COLOR
+		elseif (score < equippedScore) then
+			scoreColor = RED_FONT_COLOR
+		end
+		if (not sameScore) then
+			tooltip:AddDoubleLine("AutoGear score (equipped):",
+			equippedScore or "nil",
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+		end
+		tooltip:AddDoubleLine("AutoGear score"..(sameScore and "" or " (this)")..":",
+		score or "nil",
+		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+		scoreColor.r, scoreColor.g, scoreColor.b)
+		if AutoGearDB.AllowedVerbosity >= 3 then
+			AutoGearPrint("AutoGear: The score of the item in the current tooltip is "..tostring(score),3)
+			AutoGearPrint("AutoGear: Tooltip item info:",3)
+			rPrint(tooltipItemInfo)
+		end
+	end
+end
+GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 
 function AutoGearMain()
     if (GetTime() - tUpdate > 0.05) then
@@ -2181,7 +2288,7 @@ function AutoGearMain()
                 end
             elseif (curAction.action == "scan") then
                 if (GetTime() > curAction.t) then
-                    ScanBags()
+                    AutoGearScanBags()
                     table.remove(futureAction, i)
                 end
             end
