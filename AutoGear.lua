@@ -277,10 +277,10 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         if (event == "PARTY_INVITE_REQUEST") then
             AutoGearPrint("AutoGear: Automatically accepting party invite.", 1)
             AcceptGroup()
-            AutoGearFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
-        elseif (event == "PARTY_MEMBERS_CHANGED") then --for closing the invite window once I have joined the group
+            AutoGearFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        elseif (event == "GROUP_ROSTER_UPDATE") then --for closing the invite window once I have joined the group
             StaticPopup_Hide("PARTY_INVITE")
-            AutoGearFrame:UnregisterEvent("PARTY_MEMBERS_CHANGED")
+            AutoGearFrame:UnregisterEvent("GROUP_ROSTER_UPDATE")
         end
     end
 
