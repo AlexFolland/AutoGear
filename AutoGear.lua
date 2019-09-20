@@ -2227,7 +2227,7 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
 		tooltip:AddDoubleLine("AutoGear score"..(sameScore and "" or " (this)")..":",
-		(((tooltipItemInfo.Usable == 1) and "" or "|cffFF0000(won't equip) |r")..score) or "nil",
+		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) |r"))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
 		if AutoGearDB.AllowedVerbosity >= 3 then
