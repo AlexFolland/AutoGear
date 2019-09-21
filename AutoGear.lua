@@ -2208,8 +2208,6 @@ function AutoGearTooltipHook(tooltip)
 	end
 	local tooltipItemInfo = ReadItemInfo(nil,nil,nil,nil,nil,link)
 	local score = DetermineItemScore(tooltipItemInfo, weighting)
-	--GameTooltip_AddBlankLinesToTooltip(tooltip, 1)
-	--GameTooltip_AddColoredLine(tooltip, "AutoGear total score: "..tostring(score), NORMAL_FONT_COLOR)
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
 		local equippedItemInfo = ReadItemInfo(GetInventorySlotInfo(tooltipItemInfo.Slot))
 		local equippedScore = DetermineItemScore(equippedItemInfo, weighting)
