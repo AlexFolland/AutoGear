@@ -30,9 +30,7 @@ local tUpdate = 0
 local dataAvailable = nil
 
 --check whether it's WoW classic, for automatic compatibility
-local function IsClassic()
-    return WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
-end
+local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 
 --default values for variables saved between sessions
 AutoGearDBDefaults = {
@@ -270,7 +268,7 @@ function SetAllowedVerbosity(allowedverbosity)
     end
 end
 
-if (not IsClassic()) then 
+if (not IsClassic) then 
 	--These are events that don't exist in WoW classic
 	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
@@ -340,7 +338,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             end
             --available quests
             quests = GetNumAvailableQuests()
-			if (not IsClassic()) then 
+			if (not IsClassic) then 
 				for i = 1, quests do
 					local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
 					if (not isTrivial) then
@@ -475,7 +473,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             AutoGearPrint("AutoGear: Sold all grey items for "..CashToString(totalSellValue)..".", 1)
         end
         local cashString = CashToString(GetRepairAllCost())
-		if (not IsClassic()) then
+		if (not IsClassic) then
 			if (GetRepairAllCost() > 0) then
 				if (CanGuildBankRepair()) then
 					RepairAllItems(1) --guild repair
@@ -521,7 +519,7 @@ function SetStatWeights()
     _,class = UnitClass("player")
     spec = GetSpec()
     weapons = "any"
-    if (IsClassic()) then
+    if (IsClassic) then
 	    if (class == "DEATHKNIGHT") then
 	        if (spec == "None") then
 	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
@@ -1964,7 +1962,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
                     info.Slot = "MainHandSlot"
                 end
             end
-            if (IsClassic()) then
+            if (IsClassic) then
             	if (text=="wand" or
             		text=="gun" or
             		text=="ranged" or
@@ -2094,7 +2092,7 @@ function GetAllBagsNumFreeSlots()
 end
 
 -- We run the IsClassic check before function definition to prevent poorer performance
-if (IsClassic()) then
+if (IsClassic) then
 	function GetSpec()
 		-- GetSpecialization() doesn't exist on Classic.
 		-- Instead, this finds the talent tree where the most points are allocated.
