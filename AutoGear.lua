@@ -4,14 +4,12 @@
 -- Classic 2019
 -- Needing on meteor shard as a mage
 --	In general, needing on one-handers that are near-worthless.  The plan is to only roll if it passes a minimum threshold.  That threshold should be 3x the highest weight among the 5 main stats.
--- Paladin needed on a wand which it can't use
 
 -- accomodate for "no item link received"
 -- identify bag rolls and roll need when appropriate
 -- roll need on mounts that the character doesn't have
 -- identify bag rolls and roll need when appropriate
 -- fix guild repairs
--- handle dual wielding 2h using titan's grip
 -- make seperate stat weights for main and off hand
 -- add a weight for weapon damage
 -- fix weapons for rogues properly.  (dagger and any can equip dagger and shield, put slow in main hand for outlaw, etc)
@@ -35,6 +33,8 @@ local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --default values for variables saved between sessions
 AutoGearDBDefaults = {
     Enabled = true,
+	AutoLootRoll = true,
+	AutoConfirmBinding = true,
     AutoAcceptQuests = true,
     AutoAcceptPartyInvitations = true,
 	ScoreInTooltips = true,
@@ -93,22 +93,36 @@ end)
 local checkboxes = {
 	{
 		["option"] = "Enabled",
-		["label"] = "Automatically equip gear and roll on loot",
-		["description"] = "Automatically equip gear and roll on group loot, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the SetStatWeights function in AutoGear.lua.",
-		["toggleDescriptionTrue"] = "Automatic gearing and loot rolling is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic gearing and loot rolling is now disabled.  You can still manually scan with the options menu button or \"/ag scan\"."
+		["label"] = "Automatically equip gear",
+		["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the SetStatWeights function in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
+		["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
+		["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\"."
+	},
+	{
+		["option"] = "AutoLootRoll",
+		["label"] = "Automatically roll on loot",
+		["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..GetAllowedVerbosityName(1)..") or higher.",
+		["toggleDescriptionTrue"] = "Automatically rolling on loot is now enabled.",
+		["toggleDescriptionFalse"] = "Automatically rolling on loot is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on loot manually."
+	},
+	{
+		["option"] = "AutoConfirmBinding",
+		["label"] = "Automatically confirm soul-binding",
+		["description"] = "Automatically confirm soul-binding when equipping new gear, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually.",
+		["toggleDescriptionTrue"] = "Automatically confirming soul-binding is now enabled.",
+		["toggleDescriptionFalse"] = "Automatically confirming soul-binding is now disabled.  AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually."
 	},
 	{
 		["option"] = "AutoAcceptQuests",
 		["label"] = "Automatically handle quests",
-		["description"] = "Automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.",
+		["description"] = "Automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  If this is disabled, AutoGear will not interact with quest-givers in any way, but you can still view the total AutoGear score in item tooltips.",
 		["toggleDescriptionTrue"] = "Automatic quest handling is now enabled.",
 		["toggleDescriptionFalse"] = "Automatic quest handling is now disabled."
 	},
 	{
 		["option"] = "AutoAcceptPartyInvitations",
 		["label"] = "Automatically accept party invitations",
-		["description"] = "Automatically accept party invitations.",
+		["description"] = "Automatically accept party invitations from any player.",
 		["toggleDescriptionTrue"] = "Automatic acceptance of party invitations is now enabled.",
 		["toggleDescriptionFalse"] = "Automatic acceptance of party invitations is now disabled."
 	},
@@ -170,7 +184,7 @@ local function OptionsSetup(optionsMenu)
 	frame[i]:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_NONE")
 		GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
-		GameTooltip:AddLine("Click this button to force a scan, the same way that AutoGear automatically scans whenever new gear is looted.\n\nTip: By equipping your old item, you can use this to help determine how AutoGear decided an item was an upgrade.",nil,nil,nil,false)
+		GameTooltip:AddLine("Click this button to force a scan, the same way that AutoGear scans for gear upgrades in your bags whenever new gear is looted.\n\nTip: By equipping your old item, you can use this to help determine how AutoGear decided an item was an upgrade.",nil,nil,nil,false)
 		GameTooltip:Show()
 	end)
 	frame[i]:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -200,12 +214,28 @@ SlashCmdList["AutoGear"] = function(msg)
     if (not param1) then param1 = "(nil)" end
     if (not param2) then param2 = "(nil)" end
     if (not param3) then param3 = "(nil)" end
-    if (param1 == "toggle") then
+    if (param1 == "toggle" or param1 == "gear") then
     	AutoGearToggleEnabled()
     elseif (param1 == "enable" or param1 == "on" or param1 == "start") then
     	AutoGearToggleEnabled(true)
     elseif (param1 == "disable" or param1 == "off" or param1 == "stop") then
     	AutoGearToggleEnabled(false)
+	elseif (param1 == "roll" or param1 == "loot" or param1 == "rolling") then
+		if (param2 == "enable" or param2 == "on" or param2 == "start") then
+            AutoGearToggleAutoLootRoll(true)
+        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
+            AutoGearToggleAutoLootRoll(false)
+        else
+            AutoGearToggleAutoLootRoll()
+        end
+	elseif (param1 == "bind" or param1 == "boe" or param1 == "soulbinding") then
+		if (param2 == "enable" or param2 == "on" or param2 == "start") then
+            AutoGearToggleAutoConfirmBinding(true)
+        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
+            AutoGearToggleAutoConfirmBinding(false)
+        else
+            AutoGearToggleAutoConfirmBinding()
+        end
     elseif (param1 == "quest" or param1 == "quests") then
         if (param2 == "enable" or param2 == "on" or param2 == "start") then
             AutoGearToggleAutoAcceptQuests(true)
@@ -244,7 +274,9 @@ SlashCmdList["AutoGear"] = function(msg)
         AutoGearPrint("AutoGear:    '/ag help': command line help", 0)
         AutoGearPrint("AutoGear:    '/ag scan': scan all bags for gear upgrades", 0)
         AutoGearPrint("AutoGear:    '/ag spec': get name of current talent specialization", 0)
-        AutoGearPrint("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing and loot rolling", 0)
+        AutoGearPrint("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing", 0)
+		AutoGearPrint("AutoGear:    '/ag roll [enable/on/start]/[disable/off/stop]': toggle automatic loot rolling", 0)
+		AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
         AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
         AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
 		AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
@@ -384,10 +416,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         end
     end
 
-    if AutoGearDB.Enabled ~= nil and AutoGearDB.Enabled == false then return end
-
     if (event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player") then
-        --make sure this doesn't happen as part of logon
+		--make sure this doesn't happen as part of logon
         if (dataAvailable ~= nil) then
             --AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
             AutoGearPrint("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.", 2)
@@ -447,9 +477,9 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             end
         end
     elseif (event == "EQUIP_BIND_CONFIRM") then
-        EquipPendingItem(arg1)
+		if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
     elseif (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
-        EquipPendingItem(arg1)
+        if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
     elseif (event == "MERCHANT_SHOW") then
         -- sell all grey items
         local soldSomething = nil
@@ -496,7 +526,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
         dataAvailable = 1
         AutoGearFrame:UnregisterEvent(event)
     elseif (event ~= "ADDON_LOADED") then
-        --AutoGearPrint("AutoGear: "..event, 0)
+        AutoGearPrint("AutoGear: event fired: "..event, 3)
     end
 end)
 
@@ -1579,7 +1609,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
                 equippedInfo = ReadItemInfo(i)
                 equippedScore = DetermineItemScore(equippedInfo, weighting)
                 if ((not best[i].equipped) and best[i].score > equippedScore) then
-                    AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  Equipping.", 1)
+                    AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
                     PrintItem(best[i].info)
                     PrintItem(equippedInfo)
                     anythingBetter = 1
@@ -1629,7 +1659,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
                     if (IsTwoHandEquipped()) then
                         local equippedMain = ReadItemInfo(16)
                         local mainScore = DetermineItemScore(equippedMain, weighting)
-                        AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..").  Equipping.", 1)
+                        AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
                         PrintItem(best[16].info)
                         PrintItem(best[17].info)
                         PrintItem(equippedMain)
@@ -1638,7 +1668,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
                         local mainScore = DetermineItemScore(equippedMain, weighting)
                         local equippedOff = ReadItemInfo(17)
                         local offScore = DetermineItemScore(equippedOff, weighting)
-                        AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.", 1)
+                        AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
                         PrintItem(best[16].info)
                         PrintItem(best[17].info)
                         PrintItem(equippedMain)
@@ -1649,7 +1679,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
                     if (offSwap) then i = 17 end
                     local equippedInfo = ReadItemInfo(i)
                     local equippedScore = DetermineItemScore(equippedInfo, weighting)
-                    AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  Equipping.", 1)
+                    AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
                     PrintItem(best[i].info)
                     PrintItem(equippedInfo)
                 end
@@ -1660,7 +1690,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
                 local mainScore = DetermineItemScore(equippedMain, weighting)
                 local equippedOff = ReadItemInfo(17)
                 local offScore = DetermineItemScore(equippedOff, weighting)
-                AutoGearPrint("AutoGear: "..(best[19].info.Name or "nothing").." ("..string.format("%.2f", best[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  Equipping.", 1)
+                AutoGearPrint("AutoGear: "..(best[19].info.Name or "nothing").." ("..string.format("%.2f", best[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
                 PrintItem(best[19].info)
                 PrintItem(equippedMain)
                 PrintItem(equippedOff)
@@ -2209,45 +2239,51 @@ function AutoGearMain()
         for i, curAction in ipairs(futureAction) do
             if (curAction.action == "roll") then
                 if (GetTime() > curAction.t) then
-                    if (curAction.rollType == 1) then
-                        AutoGearPrint("AutoGear: Rolling NEED on "..curAction.info.Name..".", 1)
-                    elseif (curAction.rollType == 2) then
-                        AutoGearPrint("AutoGear: Rolling GREED on "..curAction.info.Name..".", 1)
-                    end
-                    RollOnLoot(curAction.rollID, curAction.rollType)
-                    table.remove(futureAction, i)
+					if (curAction.rollType == 1) then
+						AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ").."NEED on "..curAction.info.Name..".", 1)
+					elseif (curAction.rollType == 2) then
+						AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ").."GREED on "..curAction.info.Name..".", 1)
+					end
+					if ((AutoGearDB.AutoLootRoll ~= nil) and (AutoGearDB.AutoLootRoll == true)) then
+						RollOnLoot(curAction.rollID, curAction.rollType)
+					end
+					table.remove(futureAction, i)
                 end
             elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
-                if (GetTime() > curAction.t) then
-                    if (not curAction.messageAlready) then
-                        AutoGearPrint("AutoGear: Equipping "..curAction.info.Name..".", 2)
-                        curAction.messageAlready = 1
-                    end
-                    if (curAction.removeMainHandFirst) then
-                        if (GetAllBagsNumFreeSlots() > 0) then
-                            AutoGearPrint("AutoGear: Removing the two-hander to equip the off-hand", 1)
-                            PickupInventoryItem(GetInventorySlotInfo("MainHandSlot"))
-                            PutItemInEmptyBagSlot()
-                            curAction.removeMainHandFirst = nil
-                            curAction.waitingOnEmptyMainHand = 1
-                        else
-                            AutoGearPrint("AutoGear: Cannot equip the off-hand because bags are too full to remove the two-hander", 0)
-                            table.remove(futureAction, i)
-                        end
-                    elseif (curAction.waitingOnEmptyMainHand and GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
-                    elseif (curAction.waitingOnEmptyMainHand and not GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
-                        AutoGearPrint("AutoGear: Main hand detected to be clear.  Equipping now.", 1)
-                        curAction.waitingOnEmptyMainHand = nil
-                    elseif (curAction.ensuringEquipped) then
-                        if (GetInventoryItemID("player", curAction.replaceSlot) == GetContainerItemID(curAction.container, curAction.slot)) then
-                            curAction.ensuringEquipped = nil
-                            table.remove(futureAction, i)
-                        end
-                    else
-                        PickupContainerItem(curAction.container, curAction.slot)
-                        EquipCursorItem(curAction.replaceSlot)
-                        curAction.ensuringEquipped = 1
-                    end
+				if (GetTime() > curAction.t) then
+                    if ((AutoGearDB.Enabled ~= nil) and (AutoGearDB.Enabled == true)) then
+						if (not curAction.messageAlready) then
+							AutoGearPrint("AutoGear: Equipping "..curAction.info.Name..".", 2)
+							curAction.messageAlready = 1
+						end
+						if (curAction.removeMainHandFirst) then
+							if (GetAllBagsNumFreeSlots() > 0) then
+								AutoGearPrint("AutoGear: Removing the two-hander to equip the off-hand", 1)
+								PickupInventoryItem(GetInventorySlotInfo("MainHandSlot"))
+								PutItemInEmptyBagSlot()
+								curAction.removeMainHandFirst = nil
+								curAction.waitingOnEmptyMainHand = 1
+							else
+								AutoGearPrint("AutoGear: Cannot equip the off-hand because bags are too full to remove the two-hander", 0)
+								table.remove(futureAction, i)
+							end
+						elseif (curAction.waitingOnEmptyMainHand and GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
+						elseif (curAction.waitingOnEmptyMainHand and not GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
+							AutoGearPrint("AutoGear: Main hand detected to be clear.  Equipping now.", 1)
+							curAction.waitingOnEmptyMainHand = nil
+						elseif (curAction.ensuringEquipped) then
+							if (GetInventoryItemID("player", curAction.replaceSlot) == GetContainerItemID(curAction.container, curAction.slot)) then
+								curAction.ensuringEquipped = nil
+								table.remove(futureAction, i)
+							end
+						else
+							PickupContainerItem(curAction.container, curAction.slot)
+							EquipCursorItem(curAction.replaceSlot)
+							curAction.ensuringEquipped = 1
+						end
+					else
+						table.remove(futureAction, i)
+					end
                 end
             elseif (curAction.action == "scan") then
                 if (GetTime() > curAction.t) then
