@@ -2054,27 +2054,24 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	if (info.YellowSockets == 0) then info.YellowSockets = nil end
 	if (info.BlueSockets == 0) then info.BlueSockets = nil end
 	if (info.MetaSockets == 0) then info.MetaSockets = nil end
+
+	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
+		if (not link) then _, link = AutoGearTooltip:GetItem() end
+		local PawnItemData = PawnGetItemData(link)
+		local PawnUpgradeTable
+		if PawnItemData then
+			PawnUpgradeTable = PawnIsItemAnUpgrade(PawnItemData)
+		else
+			AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
+		end
+		if PawnUpgradeTable then
+			info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, PawnUpgradeTable[1].ScaleName)
+		end
+	end
+
 	if (info.Slot or info.isMount) then info.shouldShowScoreInTooltip = 1 end
 	if (not cannotUse and (info.Slot or info.isMount)) then
 		info.Usable = 1
-		if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
-			PawnItemData = PawnGetItemDataFromTooltip(AutoGearTooltip:GetName())
-			--AutoGearRecursivePrint(PawnItemData)
-			if PawnItemData ~= nil then
-				PawnUpgradeTable = PawnIsItemAnUpgrade(PawnItemData)
-				AutoGearRecursivePrint(PawnUpgradeTable)
-			else
-				AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo",3)
-			end
-			if (PawnUpgradeTable ~= nil) then
-				AutoGearRecursivePrint(PawnUpgradeTable)
-				info.upgradeAccordingToPawn = 1
-				AutoGearPrint("AutoGear: Pawn thinks this is an upgrade!",3)
-				info.PawnItemData = PawnItemData
-				AutoGearRecursivePrint(PawnUpgradeTable)
-				info.PawnItemValue = 999--PawnGetSingleValueFromItem(info.PawnItemData, PawnUpgradeTable[]["ScaleName"])
-			end
-		end
 	elseif (not info.Slot) then
 		cannotUse = 1
 		reason = "(info.Slot was nil)"
@@ -2109,7 +2106,7 @@ end
 
 function DetermineItemScore(itemInfo, weighting)
 	if itemInfo.isMount then return 999999 end
-	if (itemInfo.upgradeAccordingToPawn == 1) and (itemInfo.PawnItemValue ~= nil) then return itemInfo.PawnItemValue end
+	if itemInfo.PawnItemValue then return itemInfo.PawnItemValue end
 	return (weighting.Strength or 0) * (itemInfo.Strength or 0) +
 		(weighting.Agility or 0) * (itemInfo.Agility or 0) +
 		(weighting.Stamina or 0) * (itemInfo.Stamina or 0) +
