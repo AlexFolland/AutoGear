@@ -2072,7 +2072,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				AutoGearPrint("AutoGear: Pawn thinks this is an upgrade!",3)
 				info.PawnItemData = PawnItemData
 				AutoGearRecursivePrint(PawnUpgradeTable)
-				info.PawnItemValue = PawnGetSingleValueFromItem(info.PawnItemData, PawnUpgradeTable[]["ScaleName"])
+				info.PawnItemValue = 999--PawnGetSingleValueFromItem(info.PawnItemData, PawnUpgradeTable[]["ScaleName"])
 			end
 		end
 	elseif (not info.Slot) then
