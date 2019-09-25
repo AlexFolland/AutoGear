@@ -2068,13 +2068,10 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
         if (not link) then _, link = AutoGearTooltip:GetItem() end
         local PawnItemData = PawnGetItemData(link)
         local PawnUpgradeTable
-        if (PawnItemData ~= nil) then
-            PawnUpgradeTable = PawnIsItemAnUpgrade(PawnItemData)
-        else
+        if PawnItemData then
+            info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, GetPawnScaleName())
+	    else
             AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
-        end
-        if (PawnUpgradeTable ~= nil) then
-            info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, PawnUpgradeTable[1].ScaleName)
         end
     end
 	
@@ -2088,6 +2085,31 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 
 	if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
 	return info
+end
+
+function GetPawnScaleName()
+	local _, _, ClassID = UnitClass("player")
+
+	local spec = GetSpec()
+
+	-- Try to find the matching class
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(ScaleName) and Scale.ClassID == ClassID and Scale.Provider ~= nil then
+			return ScaleName
+		end
+	end
+
+	-- Use the first visible
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(ScaleName) and Scale.ClassID == ClassID and Scale.Provider ~= nil then
+			return ScaleName
+		end
+	end
+
+	-- Just use the first one
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		return ScaleName
+	end
 end
 
 function GetWeaponType()
