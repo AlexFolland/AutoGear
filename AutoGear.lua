@@ -38,6 +38,7 @@ AutoGearDBDefaults = {
     AutoAcceptQuests = true,
     AutoAcceptPartyInvitations = true,
 	ScoreInTooltips = true,
+	UsePawn = true,
     AllowedVerbosity = 2
 }
 
@@ -132,6 +133,13 @@ local checkboxes = {
 		["description"] = "Show total AutoGear item score from internal AutoGear stat weights in item tooltips.",
 		["toggleDescriptionTrue"] = "Showing score in item tooltips is now enabled.",
 		["toggleDescriptionFalse"] = "Showing score in item tooltips is now disabled."
+	},
+	{
+		["option"] = "UsePawn",
+		["label"] = "Use Pawn to evaluate upgrades",
+		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.",
+		["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
+		["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
 	}
 }
 
@@ -430,7 +438,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             reason = "(no reason set)"
             link = GetLootRollItemLink(arg1)
             local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-            local wouldNeed = AutoGearScanBags(lootRollItemID, arg1)
+			local wouldNeed = AutoGearScanBags(lootRollItemID, arg1)
             local rollItemInfo = ReadItemInfo(nil, arg1)
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
             if (wouldNeed and canNeed) then roll = 1 else roll = 2 end
@@ -1744,7 +1752,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
     return anythingBetter
 end
 
---companion function to ScanBags
+--companion function to AutoGearScanBags
 function LookAtItem(best, info, bag, slot, rollOn, itemID, chooseReward)
     local score, i, i2
     if (info.Usable or (rollOn and info.Within5levels)) then
@@ -1812,249 +1820,267 @@ function PrintItem(info)
 end
 
 function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex, link)
-    local info = {}
-    local cannotUse = nil
-    AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE");
-    AutoGearTooltip:ClearLines()
-    if (inventoryID) then
-        AutoGearTooltip:SetInventoryItem("player", inventoryID)
-    elseif (lootRollID) then
-        AutoGearTooltip:SetLootRollItem(lootRollID)
-    elseif (container and slot) then
-        AutoGearTooltip:SetBagItem(container, slot)
-    elseif (questRewardIndex) then
-        AutoGearTooltip:SetQuestItem("choice", questRewardIndex)
+	local info = {}
+	local cannotUse = nil
+	AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE");
+	AutoGearTooltip:ClearLines()
+	if (inventoryID) then
+		AutoGearTooltip:SetInventoryItem("player", inventoryID)
+	elseif (lootRollID) then
+		AutoGearTooltip:SetLootRollItem(lootRollID)
+	elseif (container and slot) then
+		AutoGearTooltip:SetBagItem(container, slot)
+	elseif (questRewardIndex) then
+		AutoGearTooltip:SetQuestItem("choice", questRewardIndex)
 	elseif (link) then
 		AutoGearTooltip:SetHyperlink(link)
-    end
-    info.RedSockets = 0
-    info.YellowSockets = 0
-    info.BlueSockets = 0
-    info.MetaSockets = 0
-    spec = GetSpec()
-    for i = 1, AutoGearTooltip:NumLines() do
-        local mytext = getglobal("AutoGearTooltipTextLeft"..i)
-        if (mytext) then
-            local r, g, b, a = mytext:GetTextColor()
-            local text = select(1,string.gsub(mytext:GetText():lower(),",",""))
-            if (i==1) then
-                info.Name = mytext:GetText()
-                if (info.Name == "Retrieving item information") then
-                    cannotUse = 1
-                    reason = "(this item's tooltip is not yet available)"
-                    --AutoGearPrint("AutoGear: Item's name says \"Retrieving item information\"; cannotUse: "..tostring(cannotUse), 0)
-                end
-            end
-            local multiplier = 1.0
-            if (string.find(text, "chance to")) then multiplier = multiplier/3.0 end
-            if (string.find(text, "use:")) then multiplier = multiplier/6.0 end
-            -- don't count greyed out set bonus lines
-            if (r < 0.8 and g < 0.8 and b < 0.8 and string.find(text, "set:")) then multiplier = 0 end
-            -- note: these proc checks may not be correct for all cases
-            if (string.find(text, "deal damage")) then multiplier = multiplier * (weighting.DamageProc or 0) end
-            if (string.find(text, "damage and healing")) then multiplier = multiplier * math.max((weighting.HealingProc or 0), (weighting.DamageProc or 0))
-            elseif (string.find(text, "healing spells")) then multiplier = multiplier * (weighting.HealingProc or 0)
-            elseif (string.find(text, "damage spells")) then multiplier = multiplier * (weighting.DamageSpellProc or 0)
-            end
-            if (string.find(text, "melee and ranged")) then multiplier = multiplier * math.max((weighting.MeleeProc or 0), (weighting.RangedProc or 0))
-            elseif (string.find(text, "melee attacks")) then multiplier = multiplier * (weighting.MeleeProc or 0)
-            elseif (string.find(text, "ranged attacks")) then multiplier = multiplier * (weighting.RangedProc or 0)
-            end
-            local value = 0
-            _,_,value = string.find(text, "(%d+)")
-            if (value) then
-                value = value * multiplier
-            else
-                value = 0
-            end
-            if (string.find(text, "unique")) then
-                if (PlayerIsWearingItem(info.Name)) then
-                    cannotUse = 1
-                    reason = "(this item is unique and you already have one)"
-                end
-            end
-            if (string.find(text, "already known")) then
-                if (PlayerIsWearingItem(info.Name)) then
-                    cannotUse = 1
-                    reason = "(this item has been learned already)"
-                end
-            end
-            local _, class = UnitClass("player")
-            if (string.find(text, "strength")) then info.Strength = (info.Strength or 0) + value end
-            if (string.find(text, "agility")) then info.Agility = (info.Agility or 0) + value end
-            if (string.find(text, "intellect")) then info.Intellect = (info.Intellect or 0) + value end
-            if (string.find(text, "stamina")) then info.Stamina = (info.Stamina or 0) + value end
-            if (string.find(text, "spirit")) then info.Spirit = (info.Spirit or 0) + value end
-            if (string.find(text, "armor") and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
-            if (string.find(text, "attack power")) then info.AttackPower = (info.AttackPower or 0) + value end
-            if (string.find(text, "spell power") or 
-                string.find(text, "frost spell damage") and (spec=="Frost" or class=="MAGE" and spec=="None") or
-                string.find(text, "fire spell damage") and (spec=="Fire" or class=="MAGE" and spec=="None") or
-                string.find(text, "arcane spell damage") and (spec=="Arcane" or class=="MAGE" and spec=="None") or
-                string.find(text, "nature spell damage") and spec=="Balance" or
-            	string.find(text, "healing spells")) then info.SpellPower = (info.SpellPower or 0) + value end
-            if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
-            if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
-            if (string.find(text, "mana per 5")) then info.Mp5 = (info.Mp5 or 0) + value end
-            if (string.find(text, "meta socket")) then info.MetaSockets = info.MetaSockets + 1 end
-            if (string.find(text, "red socket")) then info.RedSockets = info.RedSockets + 1 end
-            if (string.find(text, "yellow socket")) then info.YellowSockets = info.YellowSockets + 1 end
-            if (string.find(text, "blue socket")) then info.BlueSockets = info.BlueSockets + 1 end
-            if (string.find(text, "dodge")) then info.Dodge = (info.Dodge or 0) + value end
-            if (string.find(text, "parry")) then info.Parry = (info.Parry or 0) + value end
-            if (string.find(text, "block")) then info.Block = (info.Block or 0) + value end
-            if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
-            if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
-            if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
-            if (string.find(text, "experience gained")) then
-                if (UnitLevel("player") < 120 and not IsXPUserDisabled()) then
-                    info.ExperienceGained = (info.ExperienceGained or 0) + value
-                end
-            end
-            if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
+	end
+	info.RedSockets = 0
+	info.YellowSockets = 0
+	info.BlueSockets = 0
+	info.MetaSockets = 0
+	spec = GetSpec()
+	for i = 1, AutoGearTooltip:NumLines() do
+		local mytext = getglobal("AutoGearTooltipTextLeft"..i)
+		if (mytext) then
+			local r, g, b, a = mytext:GetTextColor()
+			local text = select(1,string.gsub(mytext:GetText():lower(),",",""))
+			if (i==1) then
+				info.Name = mytext:GetText()
+				if (info.Name == "Retrieving item information") then
+					cannotUse = 1
+					reason = "(this item's tooltip is not yet available)"
+					--AutoGearPrint("AutoGear: Item's name says \"Retrieving item information\"; cannotUse: "..tostring(cannotUse), 0)
+				end
+			end
+			local multiplier = 1.0
+			if (string.find(text, "chance to")) then multiplier = multiplier/3.0 end
+			if (string.find(text, "use:")) then multiplier = multiplier/6.0 end
+			-- don't count greyed out set bonus lines
+			if (r < 0.8 and g < 0.8 and b < 0.8 and string.find(text, "set:")) then multiplier = 0 end
+			-- note: these proc checks may not be correct for all cases
+			if (string.find(text, "deal damage")) then multiplier = multiplier * (weighting.DamageProc or 0) end
+			if (string.find(text, "damage and healing")) then multiplier = multiplier * math.max((weighting.HealingProc or 0), (weighting.DamageProc or 0))
+			elseif (string.find(text, "healing spells")) then multiplier = multiplier * (weighting.HealingProc or 0)
+			elseif (string.find(text, "damage spells")) then multiplier = multiplier * (weighting.DamageSpellProc or 0)
+			end
+			if (string.find(text, "melee and ranged")) then multiplier = multiplier * math.max((weighting.MeleeProc or 0), (weighting.RangedProc or 0))
+			elseif (string.find(text, "melee attacks")) then multiplier = multiplier * (weighting.MeleeProc or 0)
+			elseif (string.find(text, "ranged attacks")) then multiplier = multiplier * (weighting.RangedProc or 0)
+			end
+			local value = 0
+			_,_,value = string.find(text, "(%d+)")
+			if (value) then
+				value = value * multiplier
+			else
+				value = 0
+			end
+			if (string.find(text, "unique")) then
+				if (PlayerIsWearingItem(info.Name)) then
+					cannotUse = 1
+					reason = "(this item is unique and you already have one)"
+				end
+			end
+			if (string.find(text, "already known")) then
+				if (PlayerIsWearingItem(info.Name)) then
+					cannotUse = 1
+					reason = "(this item has been learned already)"
+				end
+			end
+			local _, class = UnitClass("player")
+			if (string.find(text, "strength")) then info.Strength = (info.Strength or 0) + value end
+			if (string.find(text, "agility")) then info.Agility = (info.Agility or 0) + value end
+			if (string.find(text, "intellect")) then info.Intellect = (info.Intellect or 0) + value end
+			if (string.find(text, "stamina")) then info.Stamina = (info.Stamina or 0) + value end
+			if (string.find(text, "spirit")) then info.Spirit = (info.Spirit or 0) + value end
+			if (string.find(text, "armor") and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
+			if (string.find(text, "attack power")) then info.AttackPower = (info.AttackPower or 0) + value end
+			if (string.find(text, "spell power") or 
+				string.find(text, "frost spell damage") and (spec=="Frost" or class=="MAGE" and spec=="None") or
+				string.find(text, "fire spell damage") and (spec=="Fire" or class=="MAGE" and spec=="None") or
+				string.find(text, "arcane spell damage") and (spec=="Arcane" or class=="MAGE" and spec=="None") or
+				string.find(text, "nature spell damage") and spec=="Balance" or
+				string.find(text, "healing spells")) then info.SpellPower = (info.SpellPower or 0) + value end
+			if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
+			if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
+			if (string.find(text, "mana per 5")) then info.Mp5 = (info.Mp5 or 0) + value end
+			if (string.find(text, "meta socket")) then info.MetaSockets = info.MetaSockets + 1 end
+			if (string.find(text, "red socket")) then info.RedSockets = info.RedSockets + 1 end
+			if (string.find(text, "yellow socket")) then info.YellowSockets = info.YellowSockets + 1 end
+			if (string.find(text, "blue socket")) then info.BlueSockets = info.BlueSockets + 1 end
+			if (string.find(text, "dodge")) then info.Dodge = (info.Dodge or 0) + value end
+			if (string.find(text, "parry")) then info.Parry = (info.Parry or 0) + value end
+			if (string.find(text, "block")) then info.Block = (info.Block or 0) + value end
+			if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
+			if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
+			if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
+			if (string.find(text, "experience gained")) then
+				if (UnitLevel("player") < 120 and not IsXPUserDisabled()) then
+					info.ExperienceGained = (info.ExperienceGained or 0) + value
+				end
+			end
+			if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
 
-            if (text=="mount") then info.isMount = 1 end
-            if (text=="head") then info.Slot = "HeadSlot" end
-            if (text=="neck") then info.Slot = "NeckSlot" end
-            if (text=="shoulder") then info.Slot = "ShoulderSlot" end
-            if (text=="back") then info.Slot = "BackSlot" end
-            if (text=="chest") then info.Slot = "ChestSlot" end
-            if (text=="shirt") then info.Slot = "ShirtSlot" end
-            if (text=="tabard") then info.Slot = "TabardSlot" end
-            if (text=="wrist") then info.Slot = "WristSlot" end
-            if (text=="hands") then info.Slot = "HandsSlot" end
-            if (text=="waist") then info.Slot = "WaistSlot" end
-            if (text=="legs") then info.Slot = "LegsSlot" end
-            if (text=="feet") then info.Slot = "FeetSlot" end
-            if (text=="finger") then info.Slot = "Finger0Slot" end
-            if (text=="trinket") then info.Slot = "Trinket0Slot" end
-            local weaponType = GetWeaponType()
-            if (text=="main hand") then
-                if (weapons == "dagger and any" and weaponType ~= "dagger") then
-                    cannotUse = 1
-                    reason = "(this spec needs a dagger main hand)"
-                elseif (weapons == "2h" or weapon == "ranged" or weapon == "2hDW") then --Alitwin: adding 2hdw
-                    cannotUse = 1
-                    reason = "(this spec needs a two-hand weapon)"
-                end
-                info.Slot = "MainHandSlot"
-            end
-            if (text=="two-hand") then
-                if (weapons == "weapon and shield") then
-                    cannotUse = 1
-                    reason = "(this spec needs weapon and shield)"
-                elseif (weapons == "dual wield") then
-                    cannotUse = 1
-                    reason = "(this spec should dual wield)"
-                elseif (weapons == "ranged") then
-                    cannotUse = 1
-                    reason = "(this spec should use a ranged weapon)"
-                end
-                if (weapons == "2hDW") then	--Alitwin: adding 2hdw
+			if (text=="mount") then info.isMount = 1 end
+			if (text=="head") then info.Slot = "HeadSlot" end
+			if (text=="neck") then info.Slot = "NeckSlot" end
+			if (text=="shoulder") then info.Slot = "ShoulderSlot" end
+			if (text=="back") then info.Slot = "BackSlot" end
+			if (text=="chest") then info.Slot = "ChestSlot" end
+			if (text=="shirt") then info.Slot = "ShirtSlot" end
+			if (text=="tabard") then info.Slot = "TabardSlot" end
+			if (text=="wrist") then info.Slot = "WristSlot" end
+			if (text=="hands") then info.Slot = "HandsSlot" end
+			if (text=="waist") then info.Slot = "WaistSlot" end
+			if (text=="legs") then info.Slot = "LegsSlot" end
+			if (text=="feet") then info.Slot = "FeetSlot" end
+			if (text=="finger") then info.Slot = "Finger0Slot" end
+			if (text=="trinket") then info.Slot = "Trinket0Slot" end
+			local weaponType = GetWeaponType()
+			if (text=="main hand") then
+				if (weapons == "dagger and any" and weaponType ~= "dagger") then
+					cannotUse = 1
+					reason = "(this spec needs a dagger main hand)"
+				elseif (weapons == "2h" or weapon == "ranged" or weapon == "2hDW") then --Alitwin: adding 2hdw
+					cannotUse = 1
+					reason = "(this spec needs a two-hand weapon)"
+				end
+				info.Slot = "MainHandSlot"
+			end
+			if (text=="two-hand") then
+				if (weapons == "weapon and shield") then
+					cannotUse = 1
+					reason = "(this spec needs weapon and shield)"
+				elseif (weapons == "dual wield") then
+					cannotUse = 1
+					reason = "(this spec should dual wield)"
+				elseif (weapons == "ranged") then
+					cannotUse = 1
+					reason = "(this spec should use a ranged weapon)"
+				end
+				if (weapons == "2hDW") then	--Alitwin: adding 2hdw
 					info.Slot = "MainHandSlot"
 					info.Slot2 = "SecondaryHandSlot"
 				else
 					info.Slot = "MainHandSlot"; info.IncludeOffHand=1
 				end
-                info.Slot = "MainHandSlot"; info.IncludeOffHand=1
-            end
-            if (text=="held in off-hand") then
-                if (weapons == "2h" or weapons == "dual wield" or weapons == "weapon and shield" or weapons == "ranged") then
-                    cannotUse = 1
-                    reason = "(this spec needs the off-hand for a weapon or shield)"
-                end
-                info.Slot = "SecondaryHandSlot"
-            end
-            if (text=="off hand") then
-                if (weapons == "2h" or weapons == "ranged") then
-                    cannotUse = 1
-                    reason = "(this spec should use a two-hand weapon)"
-                elseif (weapons == "weapon and shield" and weaponType ~= "shield") then
-                    cannotUse = 1
-                    reason = "(this spec needs a shield in the off-hand)"
-                elseif (weapons == "dual wield" and weaponType == "shield") then
-                    cannotUse = 1
-                    reason = "(this spec should dual wield and not use a shield)"
-                end
-                info.Slot = "SecondaryHandSlot"
-            end
-            if (text=="one-hand") then
-                if (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then --Alitwin: adding 2hdw
-                    cannotUse = 1
-                    reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
-                end
-                if (weapons == "dagger and any" and weaponType ~= "dagger") then
-                    info.Slot = "SecondaryHandSlot"
-                elseif (weapons == "dual wield" or weapons == "dagger and any") then
-                    info.Slot = "MainHandSlot"
-                    info.Slot2 = "SecondaryHandSlot"
-                else
-                    info.Slot = "MainHandSlot"
-                end
-            end
-            if (IsClassic) then
-            	if (text=="wand" or
-            		text=="gun" or
-            		text=="ranged" or
-            		text=="crossbow" or
-            		text=="idol" or
-            		text=="libram" or
-            		text=="totem" or
-            		text=="sigil" or
-            		text=="relic") then
-            		info.Slot = "RangedSlot"
-            	end
-            else
-	            if (text=="ranged") then
-	                info.Slot = "MainHandSlot"
-	                if (weapons ~= "ranged" and weaponType ~= "wand") then
-	                    cannotUse = 1
-	                    reason = "(this class or spec should not use a ranged 2h weapon)"
-	                end
-	            end
-	        end
-            
-            --check for being a pattern or the like
-            if (string.find(text, "pattern:")) then cannotUse = 1 end
-            if (string.find(text, "plans:")) then cannotUse = 1 end
-            
-            --check for red text
-            local r, g, b, a = mytext:GetTextColor()
-            if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and mytext:GetText()) then --this is red text
-            	--if Within5levels was already set but we found another red text, clear it, because we really can't use this
-            	if (info.Within5levels) then info.Within5levels = nil end
-            	--if there's not already a reason we cannot use and this is just a required level, check if it's within 5 levels
-                if (not cannotUse and string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
-                    info.Within5levels = 1
-                end
-                reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(mytext:GetText() or "nil").."'')"
-                cannotUse = 1
-            end
-        end
-        
-        --check for red text on the right side
-        rightText = getglobal("AutoGearTooltipTextRight"..i)
-        if (rightText) then
-            local r, g, b, a = rightText:GetTextColor()
-            if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and rightText:GetText()) then --this is red text
-                reason = "(found red text on the right.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(rightText:GetText() or "nil").."'')"
-                cannotUse = 1
-            end
-        end
-    end
-    if (info.RedSockets == 0) then info.RedSockets = nil end
-    if (info.YellowSockets == 0) then info.YellowSockets = nil end
-    if (info.BlueSockets == 0) then info.BlueSockets = nil end
-    if (info.MetaSockets == 0) then info.MetaSockets = nil end
+				info.Slot = "MainHandSlot"; info.IncludeOffHand=1
+			end
+			if (text=="held in off-hand") then
+				if (weapons == "2h" or weapons == "dual wield" or weapons == "weapon and shield" or weapons == "ranged") then
+					cannotUse = 1
+					reason = "(this spec needs the off-hand for a weapon or shield)"
+				end
+				info.Slot = "SecondaryHandSlot"
+			end
+			if (text=="off hand") then
+				if (weapons == "2h" or weapons == "ranged") then
+					cannotUse = 1
+					reason = "(this spec should use a two-hand weapon)"
+				elseif (weapons == "weapon and shield" and weaponType ~= "shield") then
+					cannotUse = 1
+					reason = "(this spec needs a shield in the off-hand)"
+				elseif (weapons == "dual wield" and weaponType == "shield") then
+					cannotUse = 1
+					reason = "(this spec should dual wield and not use a shield)"
+				end
+				info.Slot = "SecondaryHandSlot"
+			end
+			if (text=="one-hand") then
+				if (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then --Alitwin: adding 2hdw
+					cannotUse = 1
+					reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
+				end
+				if (weapons == "dagger and any" and weaponType ~= "dagger") then
+					info.Slot = "SecondaryHandSlot"
+				elseif (weapons == "dual wield" or weapons == "dagger and any") then
+					info.Slot = "MainHandSlot"
+					info.Slot2 = "SecondaryHandSlot"
+				else
+					info.Slot = "MainHandSlot"
+				end
+			end
+			if (IsClassic) then
+				if (text=="wand" or
+					text=="gun" or
+					text=="ranged" or
+					text=="crossbow" or
+					text=="idol" or
+					text=="libram" or
+					text=="totem" or
+					text=="sigil" or
+					text=="relic") then
+					info.Slot = "RangedSlot"
+				end
+			else
+				if (text=="ranged") then
+					info.Slot = "MainHandSlot"
+					if (weapons ~= "ranged" and weaponType ~= "wand") then
+						cannotUse = 1
+						reason = "(this class or spec should not use a ranged 2h weapon)"
+					end
+				end
+			end
+			
+			--check for being a pattern or the like
+			if (string.find(text, "pattern:")) then cannotUse = 1 end
+			if (string.find(text, "plans:")) then cannotUse = 1 end
+			
+			--check for red text
+			local r, g, b, a = mytext:GetTextColor()
+			if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and mytext:GetText()) then --this is red text
+				--if Within5levels was already set but we found another red text, clear it, because we really can't use this
+				if (info.Within5levels) then info.Within5levels = nil end
+				--if there's not already a reason we cannot use and this is just a required level, check if it's within 5 levels
+				if (not cannotUse and string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
+					info.Within5levels = 1
+				end
+				reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(mytext:GetText() or "nil").."'')"
+				cannotUse = 1
+			end
+		end
+		
+		--check for red text on the right side
+		rightText = getglobal("AutoGearTooltipTextRight"..i)
+		if (rightText) then
+			local r, g, b, a = rightText:GetTextColor()
+			if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and rightText:GetText()) then --this is red text
+				reason = "(found red text on the right.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(rightText:GetText() or "nil").."'')"
+				cannotUse = 1
+			end
+		end
+	end
+	if (info.RedSockets == 0) then info.RedSockets = nil end
+	if (info.YellowSockets == 0) then info.YellowSockets = nil end
+	if (info.BlueSockets == 0) then info.BlueSockets = nil end
+	if (info.MetaSockets == 0) then info.MetaSockets = nil end
 	if (info.Slot or info.isMount) then info.shouldShowScoreInTooltip = 1 end
-    if (not cannotUse and (info.Slot or info.isMount)) then
-        info.Usable = 1
-    elseif (not info.Slot) then
-    	cannotUse = 1
-        reason = "(info.Slot was nil)"
-    end
-    if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or "(nil)").." "..reason, 3) end
-    return info
+	if (not cannotUse and (info.Slot or info.isMount)) then
+		info.Usable = 1
+		if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
+			PawnItemData = PawnGetItemDataFromTooltip(AutoGearTooltip:GetName())
+			--AutoGearRecursivePrint(PawnItemData)
+			if PawnItemData ~= nil then
+				PawnUpgradeTable = PawnIsItemAnUpgrade(PawnItemData)
+				AutoGearRecursivePrint(PawnUpgradeTable)
+			else
+				AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo",3)
+			end
+			if (PawnUpgradeTable ~= nil) then
+				AutoGearRecursivePrint(PawnUpgradeTable)
+				info.upgradeAccordingToPawn = 1
+				AutoGearPrint("AutoGear: Pawn thinks this is an upgrade!",3)
+				info.PawnItemData = PawnItemData
+				AutoGearRecursivePrint(PawnUpgradeTable)
+				info.PawnItemValue = PawnGetSingleValueFromItem(info.PawnItemData, PawnUpgradeTable[]["ScaleName"])
+			end
+		end
+	elseif (not info.Slot) then
+		cannotUse = 1
+		reason = "(info.Slot was nil)"
+	end
+	if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
+	return info
 end
 
 function GetWeaponType()
@@ -2082,32 +2108,33 @@ function PlayerIsWearingItem(name)
 end
 
 function DetermineItemScore(itemInfo, weighting)
-    if itemInfo.isMount then return 999999 end
-    return (weighting.Strength or 0) * (itemInfo.Strength or 0) +
-        (weighting.Agility or 0) * (itemInfo.Agility or 0) +
-        (weighting.Stamina or 0) * (itemInfo.Stamina or 0) +
-        (weighting.Intellect or 0) * (itemInfo.Intellect or 0) +
-        (weighting.Spirit or 0) * (itemInfo.Spirit or 0) +
-        (weighting.Armor or 0) * (itemInfo.Armor or 0) +
-        (weighting.Dodge or 0) * (itemInfo.Dodge or 0) +
-        (weighting.Parry or 0) * (itemInfo.Parry or 0) +
-        (weighting.Block or 0) * (itemInfo.Block or 0) +
-        (weighting.SpellPower or 0) * (itemInfo.SpellPower or 0) +
-        (weighting.SpellPenetration or 0) * (itemInfo.SpellPenetration or 0) +
-        (weighting.Haste or 0) * (itemInfo.Haste or 0) +
-        (weighting.Mp5 or 0) * (itemInfo.Mp5 or 0) +
-        (weighting.AttackPower or 0) * (itemInfo.AttackPower or 0) +
-        (weighting.ArmorPenetration or 0) * (itemInfo.ArmorPenetration or 0) +
-        (weighting.Crit or 0) * (itemInfo.Crit or 0) +
-        (weighting.RedSockets or 0) * (itemInfo.RedSockets or 0) +
-        (weighting.YellowSockets or 0) * (itemInfo.YellowSockets or 0) +
-        (weighting.BlueSockets or 0) * (itemInfo.BlueSockets or 0) +
-        (weighting.MetaSockets or 0) * (itemInfo.MetaSockets or 0) +
-        (weighting.Mastery or 0) * (itemInfo.Mastery or 0) +
-        (weighting.Multistrike or 0) * (itemInfo.Multistrike or 0) +
-        (weighting.Versatility or 0) * (itemInfo.Versatility or 0) +
-        (weighting.ExperienceGained or 0) * (itemInfo.ExperienceGained or 0) +
-        (weighting.DPS or 0) * (itemInfo.DPS or 0)
+	if itemInfo.isMount then return 999999 end
+	if (itemInfo.upgradeAccordingToPawn == 1) and (itemInfo.PawnItemValue ~= nil) then return itemInfo.PawnItemValue end
+	return (weighting.Strength or 0) * (itemInfo.Strength or 0) +
+		(weighting.Agility or 0) * (itemInfo.Agility or 0) +
+		(weighting.Stamina or 0) * (itemInfo.Stamina or 0) +
+		(weighting.Intellect or 0) * (itemInfo.Intellect or 0) +
+		(weighting.Spirit or 0) * (itemInfo.Spirit or 0) +
+		(weighting.Armor or 0) * (itemInfo.Armor or 0) +
+		(weighting.Dodge or 0) * (itemInfo.Dodge or 0) +
+		(weighting.Parry or 0) * (itemInfo.Parry or 0) +
+		(weighting.Block or 0) * (itemInfo.Block or 0) +
+		(weighting.SpellPower or 0) * (itemInfo.SpellPower or 0) +
+		(weighting.SpellPenetration or 0) * (itemInfo.SpellPenetration or 0) +
+		(weighting.Haste or 0) * (itemInfo.Haste or 0) +
+		(weighting.Mp5 or 0) * (itemInfo.Mp5 or 0) +
+		(weighting.AttackPower or 0) * (itemInfo.AttackPower or 0) +
+		(weighting.ArmorPenetration or 0) * (itemInfo.ArmorPenetration or 0) +
+		(weighting.Crit or 0) * (itemInfo.Crit or 0) +
+		(weighting.RedSockets or 0) * (itemInfo.RedSockets or 0) +
+		(weighting.YellowSockets or 0) * (itemInfo.YellowSockets or 0) +
+		(weighting.BlueSockets or 0) * (itemInfo.BlueSockets or 0) +
+		(weighting.MetaSockets or 0) * (itemInfo.MetaSockets or 0) +
+		(weighting.Mastery or 0) * (itemInfo.Mastery or 0) +
+		(weighting.Multistrike or 0) * (itemInfo.Multistrike or 0) +
+		(weighting.Versatility or 0) * (itemInfo.Versatility or 0) +
+		(weighting.ExperienceGained or 0) * (itemInfo.ExperienceGained or 0) +
+		(weighting.DPS or 0) * (itemInfo.DPS or 0)
 end
 
 function GetAllBagsNumFreeSlots()
@@ -2222,11 +2249,13 @@ function AutoGearTooltipHook(tooltip)
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) |r"))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
+		--[[
 		if AutoGearDB.AllowedVerbosity >= 3 then
 			AutoGearPrint("AutoGear: The score of the item in the current tooltip is "..tostring(score),3)
 			AutoGearPrint("AutoGear: Tooltip item info:",3)
 			AutoGearRecursivePrint(tooltipItemInfo)
 		end
+		]]
 	end
 end
 GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
