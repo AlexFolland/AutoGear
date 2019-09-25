@@ -260,6 +260,14 @@ SlashCmdList["AutoGear"] = function(msg)
         else
             AutoGearToggleAutoAcceptPartyInvitations()
         end
+	elseif (param1 == "pawn") then
+    	if (param2 == "enable" or param2 == "on" or param2 == "start") then
+            AutoGearToggleUsePawn(true)
+        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
+            AutoGearToggleUsePawn(false)
+        else
+            AutoGearToggleUsePawn()
+        end
 	elseif (param1 == "score" or param1 == "tooltip" or param1 == "tooltips") then
         if (param2 == "show" or param2 == "enable" or param2 == "on" or param2 == "start") then
             AutoGearToggleScoreInTooltips(true)
@@ -287,6 +295,7 @@ SlashCmdList["AutoGear"] = function(msg)
 		AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
         AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
         AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
+		AutoGearPrint("AutoGear:    '/ag pawn [enable/on/start]/[disable/off/stop]': toggle using Pawn scales", 0)
 		AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
         AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
     end
@@ -2054,21 +2063,21 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	if (info.YellowSockets == 0) then info.YellowSockets = nil end
 	if (info.BlueSockets == 0) then info.BlueSockets = nil end
 	if (info.MetaSockets == 0) then info.MetaSockets = nil end
-
+	
 	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
-		if (not link) then _, link = AutoGearTooltip:GetItem() end
-		local PawnItemData = PawnGetItemData(link)
-		local PawnUpgradeTable
-		if PawnItemData then
-			PawnUpgradeTable = PawnIsItemAnUpgrade(PawnItemData)
-		else
-			AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
-		end
-		if PawnUpgradeTable then
-			info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, PawnUpgradeTable[1].ScaleName)
-		end
-	end
-
+        if (not link) then _, link = AutoGearTooltip:GetItem() end
+        local PawnItemData = PawnGetItemData(link)
+        local PawnUpgradeTable
+        if (PawnItemData ~= nil) then
+            PawnUpgradeTable = PawnIsItemAnUpgrade(PawnItemData)
+        else
+            AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
+        end
+        if (PawnUpgradeTable ~= nil) then
+            info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, PawnUpgradeTable[1].ScaleName)
+        end
+    end
+	
 	if (info.Slot or info.isMount) then info.shouldShowScoreInTooltip = 1 end
 	if (not cannotUse and (info.Slot or info.isMount)) then
 		info.Usable = 1
@@ -2076,6 +2085,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 		cannotUse = 1
 		reason = "(info.Slot was nil)"
 	end
+
 	if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
 	return info
 end
