@@ -39,6 +39,8 @@ AutoGearDBDefaults = {
     AutoAcceptPartyInvitations = true,
 	ScoreInTooltips = true,
 	UsePawn = true,
+	AutoSellGreys = true,
+	AutoRepair = true,
     AllowedVerbosity = 2
 }
 
@@ -140,6 +142,20 @@ local checkboxes = {
 		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.",
 		["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
 		["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
+	},
+	{
+		["option"] = "AutoSellGreys",
+		["label"] = "Automatically sell greys",
+		["description"] = "Automatically sell all grey items when interacting with a vendor.",
+		["toggleDescriptionTrue"] = "Automatic selling of grey items is now enabled.",
+		["toggleDescriptionFalse"] = "Automatic selling of grey items is now disabled."
+	},
+	{
+		["option"] = "AutoRepair",
+		["label"] = "Automatically repair",
+		["description"] = "Automatically repair all gear when interacting with a repair-enabled vendor.  If you have a guild bank and guild bank repair funds, this will use guild bank repair funds first.",
+		["toggleDescriptionTrue"] = "Automatic repairing is now enabled.",
+		["toggleDescriptionFalse"] = "Automatic repairing is now disabled."
 	}
 }
 
@@ -276,6 +292,22 @@ SlashCmdList["AutoGear"] = function(msg)
         else
             AutoGearToggleScoreInTooltips()
         end
+	elseif (param1 == "sell" or param1 == "sellgreys" or param1 == "greys") then
+    	if (param2 == "enable" or param2 == "on" or param2 == "start") then
+            AutoGearToggleAutoSellGreys(true)
+        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
+            AutoGearToggleAutoSellGreys(false)
+        else
+            AutoGearToggleAutoSellGreys()
+        end
+	elseif (param1 == "repair") then
+    	if (param2 == "enable" or param2 == "on" or param2 == "start") then
+            AutoGearToggleAutoRepair(true)
+        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
+            AutoGearToggleAutoRepair(false)
+        else
+            AutoGearToggleAutoRepair()
+        end
     elseif (param1 == "scan") then
         AutoGearScan()
     elseif (param1 == "spec") then
@@ -296,6 +328,8 @@ SlashCmdList["AutoGear"] = function(msg)
         AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
         AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
 		AutoGearPrint("AutoGear:    '/ag pawn [enable/on/start]/[disable/off/stop]': toggle using Pawn scales", 0)
+		AutoGearPrint("AutoGear:    '/ag sell [enable/on/start]/[disable/off/stop]': toggle automatic selling of grey items", 0)
+		AutoGearPrint("AutoGear:    '/ag repair [enable/on/start]/[disable/off/stop]': toggle automatic repairing", 0)
 		AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
         AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
     end
@@ -498,47 +532,52 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
     elseif (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
         if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
     elseif (event == "MERCHANT_SHOW") then
-        -- sell all grey items
-        local soldSomething = nil
-        local totalSellValue = 0
-        for i = 0, NUM_BAG_SLOTS do
-            slotMax = GetContainerNumSlots(i)
-            for j = 0, slotMax do
-                _, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
-                if (link) then
-                    local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
-                    if (string.find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
-                        totalSellValue = totalSellValue + select(11, GetItemInfo(link)) * count
-                        PickupContainerItem(i, j)
-                        PickupMerchantItem()
-                        soldSomething = 1
-                    end
-                end
-            end
-        end
-        if (soldSomething) then
-            AutoGearPrint("AutoGear: Sold all grey items for "..CashToString(totalSellValue)..".", 1)
-        end
-        local cashString = CashToString(GetRepairAllCost())
-		if (not IsClassic) then
-			if (GetRepairAllCost() > 0) then
-				if (CanGuildBankRepair()) then
-					RepairAllItems(1) --guild repair
-					--fix this.  it doesn't see 0 yet, even if it repaired
-					if (GetRepairAllCost() == 0) then
-						AutoGearPrint("AutoGear: Repaired all items for "..cashString.." using guild funds.", 1)
+		if (AutoGearDB.AutoSellGreys == true) then
+			-- sell all grey items
+			local soldSomething = nil
+			local totalSellValue = 0
+			for i = 0, NUM_BAG_SLOTS do
+				slotMax = GetContainerNumSlots(i)
+				for j = 0, slotMax do
+					_, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
+					if (link) then
+						local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
+						if (string.find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
+							totalSellValue = totalSellValue + select(11, GetItemInfo(link)) * count
+							PickupContainerItem(i, j)
+							PickupMerchantItem()
+							soldSomething = 1
+						end
 					end
 				end
 			end
+			if (soldSomething) then
+				AutoGearPrint("AutoGear: Sold all grey items for "..CashToString(totalSellValue)..".", 1)
+			end
 		end
-        if (GetRepairAllCost() > 0) then
-            if (GetRepairAllCost() <= GetMoney()) then
-                AutoGearPrint("AutoGear: Repaired all items for "..cashString..".", 1)
-                RepairAllItems()
-            elseif (GetRepairAllCost() > GetMoney()) then
-                AutoGearPrint("AutoGear: Not enough money to repair all items ("..cashString..").", 0)
-            end
-        end
+		if (AutoGearDB.AutoRepair == true) then
+			-- repair all gear
+			local cashString = CashToString(GetRepairAllCost())
+			if (not IsClassic) then
+				if (GetRepairAllCost() > 0) then
+					if (CanGuildBankRepair()) then
+						RepairAllItems(1) --guild repair
+						--fix this.  it doesn't see 0 yet, even if it repaired
+						if (GetRepairAllCost() == 0) then
+							AutoGearPrint("AutoGear: Repaired all items for "..cashString.." using guild funds.", 1)
+						end
+					end
+				end
+			end
+			if (GetRepairAllCost() > 0) then
+				if (GetRepairAllCost() <= GetMoney()) then
+					AutoGearPrint("AutoGear: Repaired all items for "..cashString..".", 1)
+					RepairAllItems()
+				elseif (GetRepairAllCost() > GetMoney()) then
+					AutoGearPrint("AutoGear: Not enough money to repair all items ("..cashString..").", 0)
+				end
+			end
+		end
     elseif (event == "GET_ITEM_INFO_RECEIVED") then
         dataAvailable = 1
         AutoGearFrame:UnregisterEvent(event)
