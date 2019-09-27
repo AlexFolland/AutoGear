@@ -2301,20 +2301,20 @@ function AutoGearTooltipHook(tooltip)
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
 		local equippedItemInfo = ReadItemInfo(GetInventorySlotInfo(tooltipItemInfo.Slot))
 		local equippedScore = DetermineItemScore(equippedItemInfo, weighting)
-		local sameScore = (score == equippedScore)
+		local comparing = ShoppingTooltip1:IsVisible() or tooltip:IsEquippedItem() --(IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems"))
 		local scoreColor = HIGHLIGHT_FONT_COLOR
 		if (score > equippedScore) then
 			scoreColor = GREEN_FONT_COLOR
 		elseif (score < equippedScore) then
 			scoreColor = RED_FONT_COLOR
 		end
-		if (not sameScore) then
+		if (not comparing) then
 			tooltip:AddDoubleLine("AutoGear score (equipped):",
 			equippedScore or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine("AutoGear score"..(sameScore and "" or " (this)")..":",
+		tooltip:AddDoubleLine("AutoGear score"..(comparing and "" or " (this)")..":",
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) |r"))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
@@ -2328,6 +2328,8 @@ function AutoGearTooltipHook(tooltip)
 	end
 end
 GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 
 function AutoGearMain()
