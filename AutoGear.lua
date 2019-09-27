@@ -876,7 +876,7 @@ function SetStatWeights()
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+	                         HealingProc = 0.3, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
 	                         DPS = 0.01}
 	        end
 	    elseif (class == "ROGUE") then
@@ -1905,6 +1905,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (string.find(text, "armor") and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
 			if (string.find(text, "attack power")) then info.AttackPower = (info.AttackPower or 0) + value end
 			if (string.find(text, "spell power") or 
+				string.find(text, "damage and healing") or
 				string.find(text, "frost spell damage") and (spec=="Frost" or class=="MAGE" and spec=="None") or
 				string.find(text, "fire spell damage") and (spec=="Fire" or class=="MAGE" and spec=="None") or
 				string.find(text, "arcane spell damage") and (spec=="Arcane" or class=="MAGE" and spec=="None") or
