@@ -2140,7 +2140,7 @@ function GetPawnScaleName()
 
 	-- Use the first visible
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName) and Scale.ClassID == ClassID and Scale.Provider ~= nil then
+		if PawnIsScaleVisible(ScaleName) then
 			return ScaleName
 		end
 	end
