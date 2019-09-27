@@ -508,7 +508,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
     elseif (event == "ITEM_PUSH") then
         --AutoGearPrint("AutoGear: Received an item.  Checking for gear upgrades.")
         --make sure a fishing pole isn't replaced while fishing
-        if (GetMainHandType() ~= "Fishing Poles") then
+        if (GetMainHandType() ~= "Fishing Pole") then
             --check if there's already a scan action in queue
             local scanFound = nil
             for i, curAction in ipairs(futureAction) do
@@ -1834,7 +1834,7 @@ function IsItemTwoHanded(itemID)
     return mainHandType and 
         (string.find(mainHandType, "Two") or
         string.find(mainHandType, "Staves") or
-        string.find(mainHandType, "Fishing Poles") or
+        string.find(mainHandType, "Fishing Pole") or
         string.find(mainHandType, "Polearms") or
         string.find(mainHandType, "Guns") or
         string.find(mainHandType, "Bows") or
