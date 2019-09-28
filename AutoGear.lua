@@ -38,6 +38,7 @@ AutoGearDBDefaults = {
     AutoAcceptQuests = true,
     AutoAcceptPartyInvitations = true,
 	ScoreInTooltips = true,
+	AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
 	UsePawn = true,
 	AutoSellGreys = true,
 	AutoRepair = true,
@@ -137,6 +138,14 @@ local checkboxes = {
 		["toggleDescriptionFalse"] = "Showing score in item tooltips is now disabled."
 	},
 	{
+		["option"] = "AlwaysCompareGear",
+		["cvar"] = "alwaysCompareItems",
+		["label"] = "Always compare gear",
+		["description"] = "Always show gear comparison tooltips when viewing gear tooltips.  If this is disabled, you can still show gear comparison tooltips while holding the "..strupper(strsub(GetModifiedClick("COMPAREITEMS"),1,1))..strlower(strsub(GetModifiedClick("COMPAREITEMS"),2)).." key.",
+		["toggleDescriptionTrue"] = "Always showing gear comparison tooltips when viewing gear tooltips is now enabled.",
+		["toggleDescriptionFalse"] = "Always showing gear comparison tooltips when viewing gear tooltips is now disabled.  You can still show gear comparison tooltips while holding the "..strupper(strsub(GetModifiedClick("COMPAREITEMS"),1,1))..strlower(strsub(GetModifiedClick("COMPAREITEMS"),2)).." key."
+	},
+	{
 		["option"] = "UsePawn",
 		["label"] = "Use Pawn to evaluate upgrades",
 		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.",
@@ -186,18 +195,34 @@ local function OptionsSetup(optionsMenu)
 	frame[i]:SetText("AutoGear")
 	for _, v in ipairs(checkboxes) do
 		i = i + 1
-		frame[i] = newCheckbox(v["option"], v["label"], v["description"], function(self, value) AutoGearDB[v["option"]] = value end, optionsMenu)
+		_G["AutoGearSimpleToggle"..v["option"]] = function(self, value)
+			if v["cvar"] then
+				SetCVar(v["cvar"], value and 1 or 0)
+			end
+			AutoGearDB[v["option"]] = value
+		end
+		local description = v["description"]..(v["cvar"] and "\n\nThis is a shortcut for the \""..v["cvar"].."\" CVar provided by Blizzard.  Toggling this will toggle that CVar." or "")
+		frame[i] = newCheckbox(v["option"], v["label"], description, _G["AutoGearSimpleToggle"..v["option"]], optionsMenu)
 		frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, -8)
 		frame[i]:SetHitRectInsets(0, -280, 0, 0)
 		frame[i]:SetChecked(AutoGearDB[v["option"]])
 		_G["AutoGearToggle"..v["option"]] = function(force)
 			if AutoGearDB[v["option"]] == nil then return end
-			if force ~= nil then AutoGearDB[v["option"]] = force else AutoGearDB[v["option"]] = not AutoGearDB[v["option"]] end
+			AutoGearDB[v["option"]] = force or (not AutoGearDB[v["option"]])
+			if v["cvar"] then SetCVar(v["cvar"], force or (GetCVarBool(v["cvar"]) and 0 or 1)) end
 			AutoGearPrint("AutoGear: "..(AutoGearDB[v["option"]] and v["toggleDescriptionTrue"] or v["toggleDescriptionFalse"]), 0)
 			if _G["AutoGear"..v["option"].."CheckButton"] == nil then return end
-			_G["AutoGear"..v["option"].."CheckButton"]:SetChecked(AutoGearDB[v["option"]])
+			_G["AutoGear"..v["option"].."CheckButton"]:SetChecked(v["cvar"] and GetCVarBool(v["cvar"]) or AutoGearDB[v["option"]])
+		end
+		if v["cvar"] then
+			hooksecurefunc("SetCVar",function(CVar, ...)
+				if ((_G["AutoGear"..v["option"].."CheckButton"] ~= nil) and (CVar == v["cvar"])) then
+					_G["AutoGear"..v["option"].."CheckButton"]:SetChecked(GetCVarBool(v["cvar"]))
+				end
+			end)
 		end
 	end
+	
 	i = i + 1
 	frame[i] = CreateFrame("Button", nil, optionsMenu, "UIPanelButtonTemplate")
 	frame[i]:SetWidth(100)
@@ -292,6 +317,14 @@ SlashCmdList["AutoGear"] = function(msg)
         else
             AutoGearToggleScoreInTooltips()
         end
+	elseif (param1 == "compare" or param1 == "alwayscompare" or param1 == "alwayscomparegear") then
+        if (param2 == "enable" or param2 == "on" or param2 == "start") then
+            AutoGearToggleAlwaysCompareGear(true)
+        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
+            AutoGearToggleAlwaysCompareGear(false)
+        else
+            AutoGearToggleAlwaysCompareGear()
+        end
 	elseif (param1 == "sell" or param1 == "sellgreys" or param1 == "greys") then
     	if (param2 == "enable" or param2 == "on" or param2 == "start") then
             AutoGearToggleAutoSellGreys(true)
@@ -327,10 +360,11 @@ SlashCmdList["AutoGear"] = function(msg)
 		AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
         AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
         AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
+		AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
+		AutoGearPrint("AutoGear:    '/ag compare [enable/on/start]/[disable/off/stop]': toggle always comparing gear", 0)
 		AutoGearPrint("AutoGear:    '/ag pawn [enable/on/start]/[disable/off/stop]': toggle using Pawn scales", 0)
 		AutoGearPrint("AutoGear:    '/ag sell [enable/on/start]/[disable/off/stop]': toggle automatic selling of grey items", 0)
 		AutoGearPrint("AutoGear:    '/ag repair [enable/on/start]/[disable/off/stop]': toggle automatic repairing", 0)
-		AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
         AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
     end
 end
