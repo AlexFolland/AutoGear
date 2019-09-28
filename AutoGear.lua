@@ -643,7 +643,7 @@ function SetStatWeights()
 	    if (class == "DEATHKNIGHT") then
 	        if (spec == "None") then
 	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
+	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
 	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -653,7 +653,7 @@ function SetStatWeights()
 	        elseif (spec == "Blood") then
 	            weapons = "2h"
 	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
+	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
 	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -663,7 +663,7 @@ function SetStatWeights()
 	        elseif (spec == "Frost") then
 	            if (CanDualWield()) then weapons = "dual wield" end
 	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
+	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
 	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -673,7 +673,7 @@ function SetStatWeights()
 	        elseif (spec == "Unholy") then
 	            weapons = "2h"
 	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
+	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
 	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -684,7 +684,7 @@ function SetStatWeights()
 	    elseif (class == "DEMONHUNTER") then
 	        if (spec == "None") then
 	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
 	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
@@ -694,7 +694,7 @@ function SetStatWeights()
 	        elseif (spec == "Havoc") then
 	            if (CanDualWield()) then weapons = "dual wield" end
 	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
 	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
@@ -704,7 +704,7 @@ function SetStatWeights()
 	        elseif (spec == "Vengeance") then
 	            if (CanDualWield()) then weapons = "dual wield" end
 	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
+	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
 	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -715,7 +715,7 @@ function SetStatWeights()
 	    elseif (class == "DRUID") then
 	        if (spec == "None") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
@@ -724,7 +724,7 @@ function SetStatWeights()
 	                         DPS = 1}
 	        elseif (spec == "Balance") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
@@ -733,7 +733,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Feral") then
 	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
+	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
 	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -742,7 +742,7 @@ function SetStatWeights()
 	                         DPS = 0.8}
 	        elseif (spec == "Guardian") then
 	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
+	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 1.33,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
 	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -751,7 +751,7 @@ function SetStatWeights()
 	                         DPS = 0.8}
 	        elseif (spec == "Restoration") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
@@ -762,7 +762,7 @@ function SetStatWeights()
 	    elseif (class == "HUNTER") then
 	        if (spec == "None") then
 	            weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
 	                         Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 100,
@@ -771,7 +771,7 @@ function SetStatWeights()
 	                         DPS = 2}
 	        elseif (spec == "Beast Mastery") then
 	            weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4, 
 	                         Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
@@ -780,7 +780,7 @@ function SetStatWeights()
 	                         DPS = 2}
 	        elseif (spec == "Marksmanship") then
 	            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.005, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
@@ -789,7 +789,7 @@ function SetStatWeights()
 	                         DPS = 2}
 	        elseif (spec == "Survival") then
 	            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.005, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
@@ -800,7 +800,7 @@ function SetStatWeights()
 	    elseif (class == "MAGE") then
 	        if (spec == "None") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.34, Hit = 3.21, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
@@ -809,7 +809,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Arcane") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 1, Spirit = 0,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
@@ -818,7 +818,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Fire") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
@@ -827,7 +827,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Frost") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
@@ -838,7 +838,7 @@ function SetStatWeights()
 	    elseif (class == "MONK") then
 	        if (spec == "None") then
 	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
 	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
@@ -848,7 +848,7 @@ function SetStatWeights()
 	        elseif (spec == "Brewmaster") then
 	            weapons = "2h"
 	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
+	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
 	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -858,7 +858,7 @@ function SetStatWeights()
 	        elseif (spec == "Windwalker") then
 	            if (CanDualWield()) then weapons = "dual wield" end
 	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
 	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
@@ -867,7 +867,7 @@ function SetStatWeights()
 	                         DPS = 3.075}
 	        elseif (spec == "Mistweaver") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
@@ -878,7 +878,7 @@ function SetStatWeights()
 	    elseif (class == "PALADIN") then
 	        if (spec == "None") then
 	            weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
 	                         Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
@@ -887,7 +887,7 @@ function SetStatWeights()
 	                         DPS = 2}
 	        elseif (spec == "Holy") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
@@ -897,16 +897,17 @@ function SetStatWeights()
 	        elseif (spec == "Protection") then
 	            weapons = "weapon and shield"
 	            weighting = {Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = 0,
-	                         Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, SpellPower = 0.05,
-	                         AttackPower = 0.4, Haste = 0.5, ArmorPenetration = 0.1,
-	                         Crit = 0.25, Hit = 0, Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
+	                         Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, Defense = 5,
+	                         SpellPower = 0.05, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
+	                         AttackPower = 0.4, ArmorPenetration = 0.1, Crit = 0.25, Hit = 0,
+	                         Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
 	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 	                         MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
 	                         DPS = 2}
 	        elseif (spec == "Retribution") then
 	            weapons = "2h"
 	            weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
 	                         Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
@@ -917,7 +918,7 @@ function SetStatWeights()
 	    elseif (class == "PRIEST") then
 	        if (spec == "None") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100, 
@@ -926,7 +927,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Discipline") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100, 
@@ -935,7 +936,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Holy") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
@@ -944,7 +945,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Shadow") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -956,7 +957,7 @@ function SetStatWeights()
 	        if (CanDualWield()) then weapons = "dual wield" end
 	        if (spec == "None") then
 	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
 	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
@@ -966,7 +967,7 @@ function SetStatWeights()
 	        elseif (spec == "Assassination") then
 	            weapons = "dagger and any"
 	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
 	                         Expertise = 1.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.3, ExperienceGained = 100, 
@@ -976,7 +977,7 @@ function SetStatWeights()
 	        elseif ((spec == "Outlaw") or (spec == "Combat")) then
 	            
 	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
 	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
@@ -986,7 +987,7 @@ function SetStatWeights()
 	        elseif (spec == "Subtlety") then
 	            weapons = "dagger and any"
 	            weighting = {Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0,
+	                         Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
 	                         AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
@@ -997,7 +998,7 @@ function SetStatWeights()
 	    elseif (class == "SHAMAN") then
 	        if (spec == "None") then
 	            weighting = {Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100, 
@@ -1006,7 +1007,7 @@ function SetStatWeights()
 	                         DPS = 2}
 	        elseif (spec == "Elemental") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
@@ -1016,7 +1017,7 @@ function SetStatWeights()
 	        elseif (spec == "Enhancement") then
 	            if (CanDualWield()) then weapons = "dual wield" end
 	            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
 	                         AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, Hit = 0.8, 
 	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100, 
@@ -1025,7 +1026,7 @@ function SetStatWeights()
 	                         DPS = 2}
 	        elseif (spec == "Restoration") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100, 
@@ -1036,7 +1037,7 @@ function SetStatWeights()
 	    elseif (class == "WARLOCK") then
 	        if (spec == "None") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
@@ -1045,7 +1046,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Affliction") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
@@ -1054,7 +1055,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Demonology") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.79, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 2.91, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.95, Hit = 3.74, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100, 
@@ -1063,7 +1064,7 @@ function SetStatWeights()
 	                         DPS = 0.01}
 	        elseif (spec == "Destruction") then
 	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.3, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 2.62, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.4, Hit = 2.83, 
 	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100, 
@@ -1074,7 +1075,7 @@ function SetStatWeights()
 	    elseif (class == "WARRIOR") then
 	        if (spec == "None") then
 	            weighting = {Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0.5, Defense = 4,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
 	                         Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
@@ -1084,7 +1085,7 @@ function SetStatWeights()
 	        elseif (spec == "Arms") then
 	            weapons = "2h"
 	            weighting = {Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 	                         AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
 	                         Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
@@ -1094,7 +1095,7 @@ function SetStatWeights()
 	        elseif (spec == "Fury") then
 				if (CanDualWield()) then weapons = "dual wield" end
 	            weighting = {Strength = 2.98, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
 	                         AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, Hit = 2.47, 
 	                         Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100, 
@@ -1104,7 +1105,7 @@ function SetStatWeights()
 	        elseif (spec == "Protection") then
 	            weapons = "weapon and shield"
 	            weighting = {Strength = 1.2, Agility = 0.5, Stamina = 1.5, Intellect = 0, Spirit = 0,
-	                         Armor = 0.16, Dodge = 1, Parry = 1.03, Block = 0,
+	                         Armor = 0.16, Dodge = 1, Parry = 1.03, Block = 0.5, Defense = 4,
 	                         SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
 	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.02, 
 	                         Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
@@ -2268,6 +2269,17 @@ if (IsClassic) then
 		end
 		if (highestPointsSpent == 0) then
 			return "None"
+		end
+
+		-- If they're feral, determine if they're a tank and call it Guardian.
+		if (highestSpec == "Feral") then
+			local tankiness = 0
+			tankiness = tankiness + select(5, GetTalentInfo(2, 3)) * 1.0 --Feral Instinct
+			tankiness = tankiness + select(5, GetTalentInfo(2, 7)) * 5 --Feral Charge
+			tankiness = tankiness + select(5, GetTalentInfo(2, 5)) * 0.5 --Thick Hide
+			tankiness = tankiness + select(5, GetTalentInfo(2, 9)) * -100 --Improved Shred
+			tankiness = tankiness + select(5, GetTalentInfo(2, 12)) * 100 --Primal Fury
+			if (tankiness >= 5) then return "Guardian" end
 		end
 
 		return highestSpec
