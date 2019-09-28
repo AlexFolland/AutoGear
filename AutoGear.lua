@@ -148,7 +148,7 @@ local checkboxes = {
 	{
 		["option"] = "UsePawn",
 		["label"] = "Use Pawn to evaluate upgrades",
-		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.\n\nTip: To guarantee that AutoGear will use the Pawn scale you want, hide all scales in Pawn except the you want AutoGear to use.",
+		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.\n\nTip: If AutoGear's not using the scale you want it to use, to guarantee that AutoGear will use that Pawn scale, hide all scales in Pawn except that one.  Alternatively, name it \"[class]: [spec]\"; example \"Paladin: Retribution\".",
 		["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
 		["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
 	},
