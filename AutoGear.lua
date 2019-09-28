@@ -141,14 +141,14 @@ local checkboxes = {
 		["option"] = "AlwaysCompareGear",
 		["cvar"] = "alwaysCompareItems",
 		["label"] = "Always compare gear",
-		["description"] = "Always show gear comparison tooltips when viewing gear tooltips.  If this is disabled, you can still show gear comparison tooltips while holding the "..strupper(strsub(GetModifiedClick("COMPAREITEMS"),1,1))..strlower(strsub(GetModifiedClick("COMPAREITEMS"),2)).." key.",
+		["description"] = "Always show gear comparison tooltips when viewing gear tooltips.  If this is disabled, you can still show gear comparison tooltips while holding the Shift key.",
 		["toggleDescriptionTrue"] = "Always showing gear comparison tooltips when viewing gear tooltips is now enabled.",
-		["toggleDescriptionFalse"] = "Always showing gear comparison tooltips when viewing gear tooltips is now disabled.  You can still show gear comparison tooltips while holding the "..strupper(strsub(GetModifiedClick("COMPAREITEMS"),1,1))..strlower(strsub(GetModifiedClick("COMPAREITEMS"),2)).." key."
+		["toggleDescriptionFalse"] = "Always showing gear comparison tooltips when viewing gear tooltips is now disabled.  You can still show gear comparison tooltips while holding the Shift key."
 	},
 	{
 		["option"] = "UsePawn",
 		["label"] = "Use Pawn to evaluate upgrades",
-		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.",
+		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.\n\nTip: To guarantee that AutoGear will use the Pawn scale you want, hide all scales in Pawn except the you want AutoGear to use.",
 		["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
 		["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
 	},
@@ -2143,7 +2143,8 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
         local PawnItemData = PawnGetItemData(link)
         local PawnUpgradeTable
         if PawnItemData then
-            info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, GetPawnScaleName())
+			info.PawnScaleName = GetPawnScaleName()
+            info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, info.PawnScaleName)
 	    else
             AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
         end
@@ -2342,14 +2343,17 @@ function AutoGearTooltipHook(tooltip)
 		elseif (score < equippedScore) then
 			scoreColor = RED_FONT_COLOR
 		end
+		-- 3 decimal places max
+		score = math.floor(score * 1000) / 1000
 		if (not comparing) then
-			tooltip:AddDoubleLine("AutoGear score (equipped):",
+			equippedScore = math.floor(equippedScore * 1000) / 1000
+			tooltip:AddDoubleLine((tooltipItemInfo.PawnScaleName and "AutoGear: Pawn \""..PawnGetScaleColor(tooltipItemInfo.PawnScaleName)..tooltipItemInfo.PawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped):",
 			equippedScore or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine("AutoGear score"..(comparing and "" or " (this)")..":",
-		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) |r"))..score) or "nil",
+		tooltip:AddDoubleLine((tooltipItemInfo.PawnScaleName and "AutoGear: Pawn \""..PawnGetScaleColor(tooltipItemInfo.PawnScaleName)..tooltipItemInfo.PawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..(comparing and "" or " (this)")..":",
+		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
 		--[[
