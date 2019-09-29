@@ -34,6 +34,7 @@ local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 AutoGearDBDefaults = {
     Enabled = true,
 	AutoLootRoll = true,
+	RollOnNonGearLoot = true,
 	AutoConfirmBinding = true,
     AutoAcceptQuests = true,
     AutoAcceptPartyInvitations = true,
@@ -108,6 +109,13 @@ local checkboxes = {
 		["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..GetAllowedVerbosityName(1)..") or higher.",
 		["toggleDescriptionTrue"] = "Automatically rolling on loot is now enabled.",
 		["toggleDescriptionFalse"] = "Automatically rolling on loot is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on loot manually."
+	},
+	{
+		["option"] = "RollOnNonGearLoot",
+		["label"] = "Roll on non-gear loot",
+		["description"] = "Roll on all group loot, including loot that is not gear.  If this is enabled, AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
+		["toggleDescriptionTrue"] = "Rolling on non-gear loot is now enabled.  AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
+		["toggleDescriptionFalse"] = "Rolling on non-gear loot is now disabled."
 	},
 	{
 		["option"] = "AutoConfirmBinding",
@@ -276,6 +284,14 @@ SlashCmdList["AutoGear"] = function(msg)
             AutoGearToggleAutoLootRoll(false)
         else
             AutoGearToggleAutoLootRoll()
+        end
+	elseif (param1 == "nongear" or param1 == "nongearloot" or param1 == "allloot") then
+		if (param2 == "enable" or param2 == "on" or param2 == "start") then
+            AutoGearToggleRollOnNonGearLoot(true)
+        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
+            AutoGearToggleRollOnNonGearLoot(false)
+        else
+            AutoGearToggleRollOnNonGearLoot()
         end
 	elseif (param1 == "bind" or param1 == "boe" or param1 == "soulbinding") then
 		if (param2 == "enable" or param2 == "on" or param2 == "start") then
@@ -518,10 +534,17 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			local wouldNeed = AutoGearScanBags(lootRollItemID, arg1)
             local rollItemInfo = ReadItemInfo(nil, arg1)
             local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
-            if (wouldNeed and canNeed) then roll = 1 else roll = 2 end
-            if (wouldNeed and not canNeed) then
-                AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for this item.", 1)
-            end
+			if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
+				AutoGearPrint("AutoGear: This loot is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
+				--local roll is nil, so no roll
+            elseif (wouldNeed and canNeed) then
+				roll = 1 --need
+			else
+				roll = 2 --greed
+				if (wouldNeed and not canNeed) then
+					AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for this item.", 1)
+				end
+			end
             if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: This item cannot be worn.  "..reason, 1) end
             if (roll) then
                 local newAction = {}
@@ -2142,7 +2165,6 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
         if (not link) then _, link = AutoGearTooltip:GetItem() end
         local PawnItemData = PawnGetItemData(link)
-        local PawnUpgradeTable
         if PawnItemData then
 			info.PawnScaleName = GetPawnScaleName()
             info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, info.PawnScaleName)
