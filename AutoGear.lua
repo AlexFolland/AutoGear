@@ -4,6 +4,8 @@
 -- Classic 2019
 -- Needing on meteor shard as a mage
 --	In general, needing on one-handers that are near-worthless.  The plan is to only roll if it passes a minimum threshold.  That threshold should be 3x the highest weight among the 5 main stats.
+-- Don't roll on loot I already have in my bag
+-- Weapon damage as a separate weight
 
 -- accomodate for "no item link received"
 -- identify bag rolls and roll need when appropriate
@@ -1977,7 +1979,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (string.find(text, "stamina")) then info.Stamina = (info.Stamina or 0) + value end
 			if (string.find(text, "spirit")) then info.Spirit = (info.Spirit or 0) + value end
 			if (string.find(text, "armor") and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
-			if (string.find(text, "attack power")) then info.AttackPower = (info.AttackPower or 0) + value end
+			if (string.find(text, "attack power")) and not string.find(text, "when fighting") then info.AttackPower = (info.AttackPower or 0) + value end
 			if (string.find(text, "spell power") or 
 				string.find(text, "damage and healing") or
 				string.find(text, "frost spell damage") and (spec=="Frost" or class=="MAGE" and spec=="None") or
