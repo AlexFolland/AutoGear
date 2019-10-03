@@ -28,6 +28,7 @@ local futureAction = {}
 local weighting --gear stat weighting
 local tUpdate = 0
 local dataAvailable = nil
+local shouldPrintHelp = false
 
 --check whether it's WoW classic, for automatic compatibility
 local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
@@ -97,7 +98,7 @@ AutoGearFrame:SetScript("OnUpdate", function()
     AutoGearMain()
 end)
 
-local checkboxes = {
+local options = {
 	{
 		["option"] = "Enabled",
 		["cliCommands"] = { "toggle", "gear" },
@@ -236,7 +237,7 @@ local function OptionsSetup(optionsMenu)
 	frame[i] = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	frame[i]:SetPoint("TOPLEFT", 16, -16)
 	frame[i]:SetText("AutoGear")
-	for _, v in ipairs(checkboxes) do
+	for _, v in ipairs(options) do
 		i = i + 1
 		_G["AutoGearSimpleToggle"..v["option"]] = function(self, value)
 			if v["cvar"] then
@@ -271,6 +272,8 @@ local function OptionsSetup(optionsMenu)
 				for _, w in ipairs(v["cliCommands"]) do
 					if param1 == w then
 						command = v["option"]
+						shouldPrintHelp = false
+						if not v["cliTrue"] then break end
 						for _, x in ipairs(v["cliTrue"]) do
 							if param2 == x then
 								force = true
@@ -284,13 +287,19 @@ local function OptionsSetup(optionsMenu)
 								break
 							end
 						end
+						break
 					end
 				end
 				if command then _G["AutoGearToggle"..command](force) end
 			end)
 		end
 	end
-	
+	hooksecurefunc(SlashCmdList, "AutoGear", function(msg, ...)
+		if shouldPrintHelp then
+			AutoGearPrintHelp()
+			shouldPrintHelp = false
+		end
+	end)
 	i = i + 1
 	frame[i] = CreateFrame("Button", nil, optionsMenu, "UIPanelButtonTemplate")
 	frame[i]:SetWidth(100)
@@ -331,9 +340,7 @@ SlashCmdList["AutoGear"] = function(msg)
     if (not param1) then param1 = "(nil)" end
     if (not param2) then param2 = "(nil)" end
     if (not param3) then param3 = "(nil)" end
-    if (param1 == "toggle" or param1 == "gear") then
-    	AutoGearToggleEnabled()
-    elseif (param1 == "enable" or param1 == "on" or param1 == "start") then
+    if (param1 == "enable" or param1 == "on" or param1 == "start") then
     	AutoGearToggleEnabled(true)
     elseif (param1 == "disable" or param1 == "off" or param1 == "stop") then
     	AutoGearToggleEnabled(false)
@@ -342,27 +349,31 @@ SlashCmdList["AutoGear"] = function(msg)
     elseif (param1 == "spec") then
         AutoGearPrint("AutoGear: Looks like you are "..GetSpec()..".", 0)
     elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
-            SetAllowedVerbosity(param2)
+        SetAllowedVerbosity(param2)
     elseif (param1 == "") then
         InterfaceOptionsFrame_OpenToCategory(optionsMenu)
-    else
-        AutoGearPrint("AutoGear: "..((param1 == "help") and "" or "Unrecognized command.  ").."Recognized commands:", 0)
-        AutoGearPrint("AutoGear:    '/ag': options menu", 0)
-        AutoGearPrint("AutoGear:    '/ag help': command line help", 0)
-        AutoGearPrint("AutoGear:    '/ag scan': scan all bags for gear upgrades", 0)
-        AutoGearPrint("AutoGear:    '/ag spec': get name of current talent specialization", 0)
-        AutoGearPrint("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing", 0)
-		AutoGearPrint("AutoGear:    '/ag roll [enable/on/start]/[disable/off/stop]': toggle automatic loot rolling", 0)
-		AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
-        AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
-        AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
-		AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
-		AutoGearPrint("AutoGear:    '/ag compare [enable/on/start]/[disable/off/stop]': toggle always comparing gear", 0)
-		AutoGearPrint("AutoGear:    '/ag pawn [enable/on/start]/[disable/off/stop]': toggle using Pawn scales", 0)
-		AutoGearPrint("AutoGear:    '/ag sell [enable/on/start]/[disable/off/stop]': toggle automatic selling of grey items", 0)
-		AutoGearPrint("AutoGear:    '/ag repair [enable/on/start]/[disable/off/stop]': toggle automatic repairing", 0)
-        AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
+	else
+		shouldPrintHelp = true
     end
+end
+
+function AutoGearPrintHelp()
+	AutoGearPrint("AutoGear: "..((param1 == "help") and "" or "Unrecognized command.  ").."Recognized commands:", 0)
+	AutoGearPrint("AutoGear:    '/ag': options menu", 0)
+	AutoGearPrint("AutoGear:    '/ag help': command line help", 0)
+	AutoGearPrint("AutoGear:    '/ag scan': scan all bags for gear upgrades", 0)
+	AutoGearPrint("AutoGear:    '/ag spec': get name of current talent specialization", 0)
+	AutoGearPrint("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing", 0)
+	AutoGearPrint("AutoGear:    '/ag roll [enable/on/start]/[disable/off/stop]': toggle automatic loot rolling", 0)
+	AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
+	AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
+	AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
+	AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
+	AutoGearPrint("AutoGear:    '/ag compare [enable/on/start]/[disable/off/stop]': toggle always comparing gear", 0)
+	AutoGearPrint("AutoGear:    '/ag pawn [enable/on/start]/[disable/off/stop]': toggle using Pawn scales", 0)
+	AutoGearPrint("AutoGear:    '/ag sell [enable/on/start]/[disable/off/stop]': toggle automatic selling of grey items", 0)
+	AutoGearPrint("AutoGear:    '/ag repair [enable/on/start]/[disable/off/stop]': toggle automatic repairing", 0)
+	AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
 end
 
 function SetAllowedVerbosity(allowedverbosity)
