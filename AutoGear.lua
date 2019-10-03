@@ -273,13 +273,13 @@ local function OptionsSetup(optionsMenu)
 						for _, x in ipairs(v["cliTrue"]) do
 							if param2 == x then
 								command = v["option"]
-								truth = true
+								force = true
 							end
 						end
 						for _, x in ipairs(v["cliFalse"]) do
 							if param2 == x then
 								command = v["option"]
-								truth = false
+								force = false
 							end
 						end
 					end
