@@ -2009,7 +2009,8 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				string.find(text, "fire spell damage") and (spec=="Fire" or class=="MAGE" and spec=="None") or
 				string.find(text, "arcane spell damage") and (spec=="Arcane" or class=="MAGE" and spec=="None") or
 				string.find(text, "nature spell damage") and spec=="Balance" or
-				string.find(text, "healing spells")) then info.SpellPower = (info.SpellPower or 0) + value end
+				string.find(text, "healing spells") or
+				string.find(text, "healing done")) then info.SpellPower = (info.SpellPower or 0) + value end
 			if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
 			if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
 			if (string.find(text, "mana per 5")) then info.Mp5 = (info.Mp5 or 0) + value end
