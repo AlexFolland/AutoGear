@@ -100,6 +100,9 @@ end)
 local checkboxes = {
 	{
 		["option"] = "Enabled",
+		["cliCommands"] = { "toggle", "gear" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Automatically equip gear",
 		["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the SetStatWeights function in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
 		["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
@@ -107,6 +110,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "AutoLootRoll",
+		["cliCommands"] = { "roll", "loot", "rolling" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Automatically roll on loot",
 		["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..GetAllowedVerbosityName(1)..") or higher.",
 		["toggleDescriptionTrue"] = "Automatically rolling on loot is now enabled.",
@@ -114,6 +120,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "RollOnNonGearLoot",
+		["cliCommands"] = { "nongear", "nongearloot", "allloot" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Roll on non-gear loot",
 		["description"] = "Roll on all group loot, including loot that is not gear.  If this is enabled, AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
 		["toggleDescriptionTrue"] = "Rolling on non-gear loot is now enabled.  AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
@@ -121,6 +130,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "AutoConfirmBinding",
+		["cliCommands"] = { "bind", "boe", "soulbinding" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Automatically confirm soul-binding",
 		["description"] = "Automatically confirm soul-binding when equipping new gear, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually.",
 		["toggleDescriptionTrue"] = "Automatically confirming soul-binding is now enabled.",
@@ -128,6 +140,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "AutoAcceptQuests",
+		["cliCommands"] = { "quest", "quests" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Automatically handle quests",
 		["description"] = "Automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  If this is disabled, AutoGear will not interact with quest-givers in any way, but you can still view the total AutoGear score in item tooltips.",
 		["toggleDescriptionTrue"] = "Automatic quest handling is now enabled.",
@@ -135,6 +150,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "AutoAcceptPartyInvitations",
+		["cliCommands"] = { "party" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Automatically accept party invitations",
 		["description"] = "Automatically accept party invitations from any player.",
 		["toggleDescriptionTrue"] = "Automatic acceptance of party invitations is now enabled.",
@@ -142,6 +160,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "ScoreInTooltips",
+		["cliCommands"] = { "score", "tooltip", "tooltips" },
+		["cliTrue"] = { "show", "enable", "on", "start" },
+		["cliFalse"] = { "hide", "disable", "off", "stop" },
 		["label"] = "Show AutoGear score in item tooltips",
 		["description"] = "Show total AutoGear item score from internal AutoGear stat weights in item tooltips.",
 		["toggleDescriptionTrue"] = "Showing score in item tooltips is now enabled.",
@@ -149,6 +170,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "AlwaysCompareGear",
+		["cliCommands"] = { "compare", "alwayscompare", "alwayscomparegear" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["cvar"] = "alwaysCompareItems",
 		["label"] = "Always compare gear",
 		["description"] = "Always show gear comparison tooltips when viewing gear tooltips.  If this is disabled, you can still show gear comparison tooltips while holding the Shift key.",
@@ -157,6 +181,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "UsePawn",
+		["cliCommands"] = { "pawn" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Use Pawn to evaluate upgrades",
 		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.\n\nTip: If AutoGear's not using the scale you want it to use, to guarantee that AutoGear will use that Pawn scale, hide all scales in Pawn except that one.  Alternatively, name it \"[class]: [spec]\"; example \"Paladin: Retribution\".",
 		["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
@@ -164,6 +191,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "AutoSellGreys",
+		["cliCommands"] = { "sell", "sellgreys", "greys" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Automatically sell greys",
 		["description"] = "Automatically sell all grey items when interacting with a vendor.",
 		["toggleDescriptionTrue"] = "Automatic selling of grey items is now enabled.",
@@ -171,6 +201,9 @@ local checkboxes = {
 	},
 	{
 		["option"] = "AutoRepair",
+		["cliCommands"] = { "repair" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Automatically repair",
 		["description"] = "Automatically repair all gear when interacting with a repair-enabled vendor.  If you have a guild bank and guild bank repair funds, this will use guild bank repair funds first.",
 		["toggleDescriptionTrue"] = "Automatic repairing is now enabled.",
@@ -231,6 +264,29 @@ local function OptionsSetup(optionsMenu)
 				end
 			end)
 		end
+		if v["cliCommands"] then
+			hooksecurefunc(SlashCmdList, "AutoGear", function(msg, ...)
+				local command = nil
+				local force = nil
+				for _, w in ipairs(v["cliCommands"]) do
+					if param1 == w then
+						for _, x in ipairs(v["cliTrue"]) do
+							if param2 == x then
+								command = v["option"]
+								force = true
+							end
+						end
+						for _, x in ipairs(v["cliFalse"]) do
+							if param2 == x then
+								command = v["option"]
+								force = false
+							end
+						end
+					end
+				end
+				if command then _G["AutoGearToggle"..command](force) end
+			end)
+		end
 	end
 	
 	i = i + 1
@@ -279,86 +335,6 @@ SlashCmdList["AutoGear"] = function(msg)
     	AutoGearToggleEnabled(true)
     elseif (param1 == "disable" or param1 == "off" or param1 == "stop") then
     	AutoGearToggleEnabled(false)
-	elseif (param1 == "roll" or param1 == "loot" or param1 == "rolling") then
-		if (param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleAutoLootRoll(true)
-        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleAutoLootRoll(false)
-        else
-            AutoGearToggleAutoLootRoll()
-        end
-	elseif (param1 == "nongear" or param1 == "nongearloot" or param1 == "allloot") then
-		if (param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleRollOnNonGearLoot(true)
-        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleRollOnNonGearLoot(false)
-        else
-            AutoGearToggleRollOnNonGearLoot()
-        end
-	elseif (param1 == "bind" or param1 == "boe" or param1 == "soulbinding") then
-		if (param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleAutoConfirmBinding(true)
-        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleAutoConfirmBinding(false)
-        else
-            AutoGearToggleAutoConfirmBinding()
-        end
-    elseif (param1 == "quest" or param1 == "quests") then
-        if (param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleAutoAcceptQuests(true)
-        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleAutoAcceptQuests(false)
-        else
-            AutoGearToggleAutoAcceptQuests()
-        end
-    elseif (param1 == "party") then
-    	if (param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleAutoAcceptPartyInvitations(true)
-        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleAutoAcceptPartyInvitations(false)
-        else
-            AutoGearToggleAutoAcceptPartyInvitations()
-        end
-	elseif (param1 == "pawn") then
-    	if (param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleUsePawn(true)
-        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleUsePawn(false)
-        else
-            AutoGearToggleUsePawn()
-        end
-	elseif (param1 == "score" or param1 == "tooltip" or param1 == "tooltips") then
-        if (param2 == "show" or param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleScoreInTooltips(true)
-        elseif (param2 == "hide" or param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleScoreInTooltips(false)
-        else
-            AutoGearToggleScoreInTooltips()
-        end
-	elseif (param1 == "compare" or param1 == "alwayscompare" or param1 == "alwayscomparegear") then
-        if (param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleAlwaysCompareGear(true)
-        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleAlwaysCompareGear(false)
-        else
-            AutoGearToggleAlwaysCompareGear()
-        end
-	elseif (param1 == "sell" or param1 == "sellgreys" or param1 == "greys") then
-    	if (param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleAutoSellGreys(true)
-        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleAutoSellGreys(false)
-        else
-            AutoGearToggleAutoSellGreys()
-        end
-	elseif (param1 == "repair") then
-    	if (param2 == "enable" or param2 == "on" or param2 == "start") then
-            AutoGearToggleAutoRepair(true)
-        elseif (param2 == "disable" or param2 == "off" or param2 == "stop") then
-            AutoGearToggleAutoRepair(false)
-        else
-            AutoGearToggleAutoRepair()
-        end
     elseif (param1 == "scan") then
         AutoGearScan()
     elseif (param1 == "spec") then
