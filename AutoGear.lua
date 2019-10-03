@@ -280,7 +280,7 @@ local function OptionsSetup(optionsMenu)
 								break
 							end
 						end
-						if force then break end
+						if force or (not v["cliFalse"]) then break end
 						for _, x in ipairs(v["cliFalse"]) do
 							if param2 == x then
 								force = false
