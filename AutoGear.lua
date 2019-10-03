@@ -270,16 +270,17 @@ local function OptionsSetup(optionsMenu)
 				local force = nil
 				for _, w in ipairs(v["cliCommands"]) do
 					if param1 == w then
+						command = v["option"]
 						for _, x in ipairs(v["cliTrue"]) do
 							if param2 == x then
-								command = v["option"]
 								force = true
+								break
 							end
 						end
 						for _, x in ipairs(v["cliFalse"]) do
 							if param2 == x then
-								command = v["option"]
 								force = false
+								break
 							end
 						end
 					end
@@ -321,9 +322,9 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
     end
 end)
 
-_G["SLASH_AutoGear1"] = "/AutoGear";
-_G["SLASH_AutoGear2"] = "/autogear";
-_G["SLASH_AutoGear3"] = "/ag";
+_G["SLASH_AutoGear1"] = "/AutoGear"
+_G["SLASH_AutoGear2"] = "/autogear"
+_G["SLASH_AutoGear3"] = "/ag"
 SlashCmdList["AutoGear"] = function(msg)
     param1, param2, param3 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
     if (not param1) then param1 = "(nil)" end
@@ -1985,8 +1986,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				string.find(text, "fire spell damage") and (spec=="Fire" or class=="MAGE" and spec=="None") or
 				string.find(text, "arcane spell damage") and (spec=="Arcane" or class=="MAGE" and spec=="None") or
 				string.find(text, "nature spell damage") and spec=="Balance" or
-				string.find(text, "healing spells") or
-				string.find(text, "healing done")) then info.SpellPower = (info.SpellPower or 0) + value end
+				string.find(text, "healing spells")) then info.SpellPower = (info.SpellPower or 0) + value end
 			if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
 			if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
 			if (string.find(text, "mana per 5")) then info.Mp5 = (info.Mp5 or 0) + value end
