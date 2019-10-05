@@ -101,7 +101,7 @@ end)
 local options = {
 	{
 		["option"] = "Enabled",
-		["cliCommands"] = { "toggle", "gear" },
+		["cliCommands"] = { "toggle", "gear", "equip" },
 		["cliTrue"] = { "enable", "on", "start" },
 		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Automatically equip gear",
