@@ -973,7 +973,7 @@ if (IsClassic) then
 			["None"] = {
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 0,
+				SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
@@ -983,7 +983,7 @@ if (IsClassic) then
 			["Discipline"] = {
 				Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 0,
+				SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
@@ -993,7 +993,7 @@ if (IsClassic) then
 			["Holy"] = {
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
+				SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
@@ -1003,7 +1003,7 @@ if (IsClassic) then
 			["Shadow"] = {
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 0,
+				SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 3,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
@@ -2136,7 +2136,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				string.find(text, "healing spells")) then info.SpellPower = (info.SpellPower or 0) + value end
 			if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
 			if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
-			if (string.find(text, "mana per 5")) then info.Mp5 = (info.Mp5 or 0) + value end
+			if (string.find(text, "mana per 5") or string.find(text, "mana every 5")) then info.Mp5 = (info.Mp5 or 0) + value end
 			if (string.find(text, "meta socket")) then info.MetaSockets = info.MetaSockets + 1 end
 			if (string.find(text, "red socket")) then info.RedSockets = info.RedSockets + 1 end
 			if (string.find(text, "yellow socket")) then info.YellowSockets = info.YellowSockets + 1 end
