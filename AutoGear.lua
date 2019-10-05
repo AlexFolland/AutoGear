@@ -26,6 +26,7 @@
 local reason
 local futureAction = {}
 local weighting --gear stat weighting
+local weapons
 local tUpdate = 0
 local dataAvailable = nil
 local shouldPrintHelp = false
@@ -105,10 +106,24 @@ local options = {
 		["cliTrue"] = { "enable", "on", "start" },
 		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Automatically equip gear",
-		["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the SetStatWeights function in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
+		["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the AutoGearDefaultWeights table in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
 		["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
 		["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\"."
 	},
+	--[[{
+		["option"] = "Override",
+		["cliCommands"] = { "override" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Override spec",
+		["description"] = "Override spec with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen spec instead of the spec detected automatically.",
+		["child"] = {
+			["option"] = "OverrideSpec",
+			["options"] = GetSpecsForOverride(),
+			["label"] = "Override spec",
+			["description"] = "Override spec with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen spec instead of the spec detected automatically.",
+		},
+	},]]
 	{
 		["option"] = "AutoLootRoll",
 		["cliCommands"] = { "roll", "loot", "rolling" },
@@ -636,979 +651,1097 @@ end)
 
 -- supported stats are:
 --[[
-    weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
-                 Armor = 0, Dodge = 0, Parry = 0, Block = 0,
-                 SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
-
-                 AttackPower = 0, ArmorPenetration = 0, Crit = 0, Hit = 0, 
-                 Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 0,
-                 RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-
-                 HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-                 
-                 DPS = 0}
+    weighting = {
+		Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
+		Armor = 0, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+		SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
+		AttackPower = 0, ArmorPenetration = 0, Crit = 0, Hit = 0, 
+		Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 0,
+		RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+		HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+		DPS = 0
+	}
 ]]
+if (IsClassic) then
+	AutoGearDefaultWeights = {
+		["DEATHKNIGHT"] = {
+			["None"] = {
+				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Blood"] = {
+				weapons = "2h",
+				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Frost"] = {
+				weapons = "dual wield",
+				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Unholy"] = {
+				weapons = "2h",
+				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			}
+		},
+		["DEMONHUNTER"] = {
+			["None"] = {
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Havoc"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Vengeance"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 2
+			}
+		},
+		["DRUID"] = {
+			["None"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 1
+			},
+			["Balance"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Feral"] = {
+				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 0.8
+			},
+			["Guardian"] = {
+				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 1.33,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 0.8
+			},
+			["Restoration"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["HUNTER"] = {
+			["None"] = {
+				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
+				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
+				DPS = 2
+			},
+			["Beast Mastery"] = {
+				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4, 
+				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
+				DPS = 2
+			},
+			["Marksmanship"] = {
+				Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.005, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Survival"] = {
+				Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.005, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			}
+		},
+		["MAGE"] = {
+			["None"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.34, Hit = 3.21, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Arcane"] = {
+				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 1, Spirit = 0,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Fire"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Frost"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["MONK"] = {
+			["None"] = {
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Brewmaster"] = {
+				weapons = "2h",
+				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 2
+			},
+			["Windwalker"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Mistweaver"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 1
+			}
+		},
+		["PALADIN"] = {
+			["None"] = {
+				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
+				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Holy"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Protection"] = {
+				weapons = "weapon and shield",
+				Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = 0,
+				Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, Defense = 5,
+				SpellPower = 0.05, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
+				AttackPower = 0.4, ArmorPenetration = 0.1, Crit = 0.25, Hit = 0,
+				Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
+				DPS = 2
+			},
+			["Retribution"] = {
+				weapons = "2h",
+				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
+				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			}
+		},
+		["PRIEST"] = {
+			["None"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Discipline"] = {
+				Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Holy"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Shadow"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0.3, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["ROGUE"] = {
+			["None"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Assassination"] = {
+				weapons = "dagger and any",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.3, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Outlaw"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Combat"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Subtlety"] = {
+				weapons = "dagger and any",
+				Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
+				AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 2
+			}		
+		},
+		["SHAMAN"] = {
+			["None"] = {
+				Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Elemental"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Enhancement"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, Hit = 0.8, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 2
+			},
+			["Restoration"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["WARLOCK"] = {
+			["None"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Affliction"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Demonology"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.79, Spirit = 0.005,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.91, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.95, Hit = 3.74, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Destruction"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.3, Spirit = 0.005,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.62, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.4, Hit = 2.83, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["WARRIOR"] = {
+			["None"] = {
+				Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0.5, Defense = 4,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
+				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Arms"] = {
+				weapons = "2h",
+				Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
+				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Fury"] = {
+				weapons = "dual wield",
+				Strength = 2.98, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
+				AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, Hit = 2.47, 
+				Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Protection"] = {
+				weapons = "weapon and shield",
+				Strength = 1.2, Agility = 0.5, Stamina = 1.5, Intellect = 0, Spirit = 0,
+				Armor = 0.16, Dodge = 1, Parry = 1.03, Block = 0.5, Defense = 4,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.02, 
+				Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			}
+		}
+	}
+else
+	AutoGearDefaultWeights = {
+		["DEATHKNIGHT"] = {
+			["None"] = {
+				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Blood"] = {
+				weapons = "2h",
+				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Frost"] = {
+				weapons = "dual wield",
+				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Unholy"] = {
+				weapons = "2h",
+				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			}
+		},
+		["DEMONHUNTER"] = {
+			["None"] = {
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Havoc"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Vengeance"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 2
+			}
+		},
+		["DRUID"] = {
+			["None"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 1
+			},
+			["Balance"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Feral"] = {
+				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 0.8
+			},
+			["Guardian"] = {
+				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 0.8
+			},
+			["Restoration"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["HUNTER"] = {
+			["None"] = {
+				weapons = "ranged",
+				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
+				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
+				DPS = 2
+			},
+			["Beast Mastery"] = {
+				weapons = "ranged",
+				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4, 
+				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
+				DPS = 2
+			},
+			["Marksmanship"] = {
+				weapons = "ranged",
+				Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Survival"] = {
+				Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			}
+		},
+		["MAGE"] = {
+			["None"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.34, Hit = 3.21, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Arcane"] = {
+				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 1, Spirit = 0,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Fire"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Frost"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["MONK"] = {
+			["None"] = {
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Brewmaster"] = {
+				weapons = "2h",
+				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
+				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 2
+			},
+			["Windwalker"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Mistweaver"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 1
+			}
+		},
+		["PALADIN"] = {
+			["None"] = {
+				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
+				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Holy"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Protection"] = {
+				weapons = "weapon and shield",
+				Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = 0,
+				Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, SpellPower = 0.05,
+				AttackPower = 0.4, Haste = 0.5, ArmorPenetration = 0.1,
+				Crit = 0.25, Hit = 0, Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
+				DPS = 2
+			},
+			["Retribution"] = {
+				weapons = "2h",
+				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
+				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			}
+		},
+		["PRIEST"] = {
+			["None"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Discipline"] = {
+				Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Holy"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Shadow"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["ROGUE"] = {
+			["None"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Assassination"] = {
+				weapons = "dagger and any",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.3, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Outlaw"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Combat"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 3.075
+			},
+			["Subtlety"] = {
+				weapons = "dagger and any",
+				Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
+				AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 2
+			}		
+		},
+		["SHAMAN"] = {
+			["None"] = {
+				Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Elemental"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Enhancement"] = {
+				weapons = "dual wield",
+				Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
+				AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, Hit = 0.8, 
+				Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				DPS = 2
+			},
+			["Restoration"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["WARLOCK"] = {
+			["None"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Affliction"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Demonology"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.79, Spirit = 0.005,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.91, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.95, Hit = 3.74, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			},
+			["Destruction"] = {
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.3, Spirit = 0.005,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 2.62, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 1.4, Hit = 2.83, 
+				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 0.01
+			}
+		},
+		["WARRIOR"] = {
+			["None"] = {
+				Strength = 2.02, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
+				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Arms"] = {
+				weapons = "2h",
+				Strength = 2.02, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
+				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Fury"] = {
+				weapons = "2hDW", --Alitiwn: creating new weapons class for unique Fury handling
+				Strength = 2.98, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
+				AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, Hit = 2.47, 
+				Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			},
+			["Protection"] = {
+				weapons = "weapon and shield",
+				Strength = 1.2, Agility = 0, Stamina = 1.5, Intellect = 0, Spirit = 0,
+				Armor = 0.16, Dodge = 1, Parry = 1.03, Block = 0,
+				SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.02, 
+				Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
+				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				DPS = 2
+			}
+		}
+	}
+end
+
 function SetStatWeights()
     local class, spec
     _,class = UnitClass("player")
     spec = GetSpec()
-    weapons = "any"
-    if (IsClassic) then
-	    if (class == "DEATHKNIGHT") then
-	        if (spec == "None") then
-	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Blood") then
-	            weapons = "2h"
-	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Frost") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Unholy") then
-	            weapons = "2h"
-	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "DEMONHUNTER") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Havoc") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Vengeance") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "DRUID") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 1}
-	        elseif (spec == "Balance") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Feral") then
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 0.8}
-	        elseif (spec == "Guardian") then
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 1.33,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 0.8}
-	        elseif (spec == "Restoration") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "HUNTER") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
-	                         Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
-	                         DPS = 2}
-	        elseif (spec == "Beast Mastery") then
-	            weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4, 
-	                         Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
-	                         DPS = 2}
-	        elseif (spec == "Marksmanship") then
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.005, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Survival") then
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.005, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "MAGE") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.34, Hit = 3.21, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Arcane") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 1, Spirit = 0,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Fire") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Frost") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "MONK") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Brewmaster") then
-	            weapons = "2h"
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Windwalker") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Mistweaver") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 1}
-	        end
-	    elseif (class == "PALADIN") then
-	        if (spec == "None") then
-	            weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
-	                         Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Holy") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Protection") then
-	            weapons = "weapon and shield"
-	            weighting = {Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = 0,
-	                         Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, Defense = 5,
-	                         SpellPower = 0.05, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
-	                         AttackPower = 0.4, ArmorPenetration = 0.1, Crit = 0.25, Hit = 0,
-	                         Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
-	                         DPS = 2}
-	        elseif (spec == "Retribution") then
-	            weapons = "2h"
-	            weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
-	                         Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "PRIEST") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Discipline") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Holy") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Shadow") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0.3, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "ROGUE") then
-	        if (CanDualWield()) then weapons = "dual wield" end
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Assassination") then
-	            weapons = "dagger and any"
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.3, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif ((spec == "Outlaw") or (spec == "Combat")) then
-	            
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Subtlety") then
-	            weapons = "dagger and any"
-	            weighting = {Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
-	                         AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "SHAMAN") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Elemental") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Enhancement") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, Hit = 0.8, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Restoration") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "WARLOCK") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Affliction") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Demonology") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.79, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 2.91, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.95, Hit = 3.74, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Destruction") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.3, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 2.62, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.4, Hit = 2.83, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "WARRIOR") then
-	        if (spec == "None") then
-	            weighting = {Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0.5, Defense = 4,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
-	                         Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Arms") then
-	            weapons = "2h"
-	            weighting = {Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
-	                         Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Fury") then
-				if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 2.98, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
-	                         AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, Hit = 2.47, 
-	                         Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Protection") then
-	            weapons = "weapon and shield"
-	            weighting = {Strength = 1.2, Agility = 0.5, Stamina = 1.5, Intellect = 0, Spirit = 0,
-	                         Armor = 0.16, Dodge = 1, Parry = 1.03, Block = 0.5, Defense = 4,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.02, 
-	                         Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    else
-	        weighting = nil
-	    end
-    else
-	    if (class == "DEATHKNIGHT") then
-	        if (spec == "None") then
-	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Blood") then
-	            weapons = "2h"
-	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Frost") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Unholy") then
-	            weapons = "2h"
-	            weighting = {Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "DEMONHUNTER") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Havoc") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Vengeance") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "DRUID") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 1}
-	        elseif (spec == "Balance") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Feral") then
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 0.8}
-	        elseif (spec == "Guardian") then
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 0.8}
-	        elseif (spec == "Restoration") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "HUNTER") then
-	        weapons = "ranged"
-	        if (spec == "None") then
-	            weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
-	                         Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
-	                         DPS = 2}
-	        elseif (spec == "Beast Mastery") then
-	            weighting = {Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4, 
-	                         Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
-	                         DPS = 2}
-	        elseif (spec == "Marksmanship") then
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Survival") then
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "MAGE") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.34, Hit = 3.21, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Arcane") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 1, Spirit = 0,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Fire") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Frost") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "MONK") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Brewmaster") then
-	            weapons = "2h"
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
-	                         Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Windwalker") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Mistweaver") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 1}
-	        end
-	    elseif (class == "PALADIN") then
-	        if (spec == "None") then
-	            weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
-	                         Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Holy") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Protection") then
-	            weapons = "weapon and shield"
-	            weighting = {Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = 0,
-	                         Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, SpellPower = 0.05,
-	                         AttackPower = 0.4, Haste = 0.5, ArmorPenetration = 0.1,
-	                         Crit = 0.25, Hit = 0, Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
-	                         DPS = 2}
-	        elseif (spec == "Retribution") then
-	            weapons = "2h"
-	            weighting = {Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
-	                         Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "PRIEST") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Discipline") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
-	                         Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Holy") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Shadow") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "ROGUE") then
-	        if (CanDualWield()) then weapons = "dual wield" end
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Assassination") then
-	            weapons = "dagger and any"
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.3, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif ((spec == "Outlaw") or (spec == "Combat")) then
-	            
-	            weighting = {Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
-	                         Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 3.075}
-	        elseif (spec == "Subtlety") then
-	            weapons = "dagger and any"
-	            weighting = {Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
-	                         AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    elseif (class == "SHAMAN") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Elemental") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Enhancement") then
-	            if (CanDualWield()) then weapons = "dual wield" end
-	            weighting = {Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
-	                         AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, Hit = 0.8, 
-	                         Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Restoration") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "WARLOCK") then
-	        if (spec == "None") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Affliction") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Demonology") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.79, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 2.91, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.95, Hit = 3.74, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        elseif (spec == "Destruction") then
-	            weighting = {Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.3, Spirit = 0.005,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 2.62, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 1.4, Hit = 2.83, 
-	                         Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 0.01}
-	        end
-	    elseif (class == "WARRIOR") then
-	        if (spec == "None") then
-	            weighting = {Strength = 2.02, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
-	                         Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Arms") then
-	            weapons = "2h"
-	            weighting = {Strength = 2.02, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-	                         AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
-	                         Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Fury") then
-				weapons = "2hDW" --Alitiwn: creating new weapons class for unique Fury handling
-	            weighting = {Strength = 2.98, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-	                         Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
-	                         AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, Hit = 2.47, 
-	                         Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        elseif (spec == "Protection") then
-	            weapons = "weapon and shield"
-	            weighting = {Strength = 1.2, Agility = 0, Stamina = 1.5, Intellect = 0, Spirit = 0,
-	                         Armor = 0.16, Dodge = 1, Parry = 1.03, Block = 0,
-	                         SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
-	                         AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.02, 
-	                         Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
-	                         RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-	                         HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-	                         DPS = 2}
-	        end
-	    else
-	        weighting = nil
-	    end
-    end
-
+	weighting = AutoGearDefaultWeights[class][spec] or nil
+	weapons = weighting.weapons or "any"
 end
 
 -- from Attrition addon
@@ -2049,7 +2182,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				if (weapons == "weapon and shield") then
 					cannotUse = 1
 					reason = "(this spec needs weapon and shield)"
-				elseif (weapons == "dual wield") then
+				elseif (weapons == "dual wield" and CanDualWield()) then
 					cannotUse = 1
 					reason = "(this spec should dual wield)"
 				elseif (weapons == "ranged") then
@@ -2065,7 +2198,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				info.Slot = "MainHandSlot"; info.IncludeOffHand=1
 			end
 			if (text=="held in off-hand") then
-				if (weapons == "2h" or weapons == "dual wield" or weapons == "weapon and shield" or weapons == "ranged") then
+				if (weapons == "2h" or (weapons == "dual wield" and CanDualWield()) or weapons == "weapon and shield" or weapons == "ranged") then
 					cannotUse = 1
 					reason = "(this spec needs the off-hand for a weapon or shield)"
 				end
@@ -2078,7 +2211,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				elseif (weapons == "weapon and shield" and weaponType ~= "shield") then
 					cannotUse = 1
 					reason = "(this spec needs a shield in the off-hand)"
-				elseif (weapons == "dual wield" and weaponType == "shield") then
+				elseif (weapons == "dual wield" and CanDualWield() and weaponType == "shield") then
 					cannotUse = 1
 					reason = "(this spec should dual wield and not use a shield)"
 				end
@@ -2091,7 +2224,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				end
 				if (weapons == "dagger and any" and weaponType ~= "dagger") then
 					info.Slot = "SecondaryHandSlot"
-				elseif (weapons == "dual wield" or weapons == "dagger and any") then
+				elseif (((weapons == "dual wield") and CanDualWield()) or weapons == "dagger and any") then
 					info.Slot = "MainHandSlot"
 					info.Slot2 = "SecondaryHandSlot"
 				else
