@@ -2101,7 +2101,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			elseif (string.find(text, "ranged attacks")) then multiplier = multiplier * (weighting.RangedProc or 0)
 			end
 			local value = 0
-			_,_,value = string.find(text, "(%d+)")
+			value = tonumber(string.match(text, "[0-9]+%.?[0-9]*"))
 			if (value) then
 				value = value * multiplier
 			else
@@ -2144,6 +2144,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (string.find(text, "dodge")) then info.Dodge = (info.Dodge or 0) + value end
 			if (string.find(text, "parry")) then info.Parry = (info.Parry or 0) + value end
 			if (string.find(text, "block")) then info.Block = (info.Block or 0) + value end
+			if (string.find(text, "defense")) then info.Defense = (info.Defense or 0) + value end
 			if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
 			if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
 			if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
