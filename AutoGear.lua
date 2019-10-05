@@ -662,6 +662,8 @@ end)
 		DPS = 0
 	}
 ]]
+local E = 0.000001 --epsilon; non-zero value that's insignificantly different from 0, used here for the purpose of valuing gear that has higher stats that give the player "almost no benefit"
+-- regex for finding 0 in this block to replace with E: (?<=[^ ] = )0(?=[^\.0-9])
 if (IsClassic) then
 	AutoGearDefaultWeights = {
 		["DEATHKNIGHT"] = {
@@ -2370,6 +2372,7 @@ function DetermineItemScore(itemInfo, weighting)
 		(weighting.Dodge or 0) * (itemInfo.Dodge or 0) +
 		(weighting.Parry or 0) * (itemInfo.Parry or 0) +
 		(weighting.Block or 0) * (itemInfo.Block or 0) +
+		(weighting.Defense or 0) * (itemInfo.Defense or 0) +
 		(weighting.SpellPower or 0) * (itemInfo.SpellPower or 0) +
 		(weighting.SpellPenetration or 0) * (itemInfo.SpellPenetration or 0) +
 		(weighting.Haste or 0) * (itemInfo.Haste or 0) +
