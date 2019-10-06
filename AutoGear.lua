@@ -5,7 +5,7 @@
 -- Needing on meteor shard as a mage
 --	In general, needing on one-handers that are near-worthless.  The plan is to only roll if it passes a minimum threshold.  That threshold should be 3x the highest weight among the 5 main stats.
 -- Don't roll on loot I already have in my bag
--- Weapon damage as a separate weight
+-- Greeded in something within 5 levels that was an upgrade.  Specifically, Gauntlets of Divinity versus equipped Algae Fists.
 
 -- accomodate for "no item link received"
 -- identify bag rolls and roll need when appropriate
