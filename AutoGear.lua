@@ -2276,7 +2276,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				if (not cannotUse and string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
 					info.Within5levels = 1
 				end
-				reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(mytext:GetText() or "nil").."'')"
+				reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: \""..(mytext:GetText() or "nil").."\")"
 				cannotUse = 1
 			end
 		end
@@ -2286,7 +2286,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 		if (rightText) then
 			local r, g, b, a = rightText:GetTextColor()
 			if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and rightText:GetText()) then --this is red text
-				reason = "(found red text on the right.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: ''"..(rightText:GetText() or "nil").."'')"
+				reason = "(found red text on the right.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: \""..(rightText:GetText() or "nil").."\")"
 				cannotUse = 1
 			end
 		end
@@ -2316,6 +2316,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	end
 
 	if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
+	info.reason = reason
 	return info
 end
 
@@ -2526,6 +2527,12 @@ function AutoGearTooltipHook(tooltip)
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
+		if not tooltipItemInfo.Usable then
+			tooltip:AddDoubleLine("won't auto-equip",
+			tooltipItemInfo.reason,
+			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b,
+			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b)
+		end
 		--[[
 		if AutoGearDB.AllowedVerbosity >= 3 then
 			AutoGearPrint("AutoGear: The score of the item in the current tooltip is "..tostring(score),3)
