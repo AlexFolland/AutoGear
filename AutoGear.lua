@@ -675,7 +675,7 @@ if (IsClassic) then
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1.2, Damage = 0.8
 			},
 			["Blood"] = {
 				weapons = "2h",
@@ -686,7 +686,7 @@ if (IsClassic) then
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1, Damage = 1
 			},
 			["Frost"] = {
 				weapons = "dual wield",
@@ -697,7 +697,7 @@ if (IsClassic) then
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1.2, Damage = 0.8
 			},
 			["Unholy"] = {
 				weapons = "2h",
@@ -708,7 +708,7 @@ if (IsClassic) then
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1.33333, Damage = 0.66667
 			}
 		},
 		["DEMONHUNTER"] = {
@@ -901,7 +901,7 @@ if (IsClassic) then
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-				DPS = 2
+				DPS = 1, Damage = 1
 			},
 			["Windwalker"] = {
 				weapons = "dual wield",
@@ -922,7 +922,7 @@ if (IsClassic) then
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 1
+				DPS = 0.13333, Damage = 0.06667
 			}
 		},
 		["PALADIN"] = {
@@ -934,7 +934,7 @@ if (IsClassic) then
 				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1.33333, Damage = 0.66667
 			},
 			["Holy"] = {
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
@@ -955,7 +955,7 @@ if (IsClassic) then
 				Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
-				DPS = 2
+				DPS = 1.33333, Damage = 0.66667
 			},
 			["Retribution"] = {
 				weapons = "2h",
@@ -966,7 +966,7 @@ if (IsClassic) then
 				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1, Damage = 1
 			}
 		},
 		["PRIEST"] = {
@@ -1077,7 +1077,7 @@ if (IsClassic) then
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1.2, Damage = 0.8
 			},
 			["Elemental"] = {
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
@@ -1087,7 +1087,7 @@ if (IsClassic) then
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 0.13333, Damage = 0.06667
 			},
 			["Enhancement"] = {
 				weapons = "dual wield",
@@ -1098,7 +1098,7 @@ if (IsClassic) then
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
-				DPS = 2
+				DPS = 1.2, Damage = 0.8
 			},
 			["Restoration"] = {
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
@@ -1162,7 +1162,7 @@ if (IsClassic) then
 				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1.33333, Damage = 0.66667
 			},
 			["Arms"] = {
 				weapons = "2h",
@@ -1173,7 +1173,7 @@ if (IsClassic) then
 				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1, Damage = 1
 			},
 			["Fury"] = {
 				weapons = "dual wield",
@@ -1184,7 +1184,7 @@ if (IsClassic) then
 				Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1.2, Damage = 0.8
 			},
 			["Protection"] = {
 				weapons = "weapon and shield",
@@ -1195,7 +1195,7 @@ if (IsClassic) then
 				Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-				DPS = 2
+				DPS = 1.33333, Damage = 0.66667
 			}
 		}
 	}
@@ -2072,6 +2072,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	info.BlueSockets = 0
 	info.MetaSockets = 0
 	spec = GetSpec()
+	local weaponType = GetWeaponType()
 	for i = 1, AutoGearTooltip:NumLines() do
 		local mytext = getglobal("AutoGearTooltipTextLeft"..i)
 		if (mytext) then
@@ -2153,7 +2154,14 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 					info.ExperienceGained = (info.ExperienceGained or 0) + value
 				end
 			end
-			if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
+			if weaponType then
+				if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
+				local minDamage, maxDamage = string.match(text, "([0-9]+%.?[0-9]*) ?%- ?([0-9]+%.?[0-9]*) damage")
+				if (minDamage and maxDamage) then
+					info.Damage = (info.Damage or 0) + ((tonumber(minDamage) + tonumber(maxDamage))/2)
+					minDamage, maxDamage = nil
+				end
+			end
 
 			if (text=="mount") then info.isMount = 1 end
 			if (text=="head") then info.Slot = "HeadSlot" end
@@ -2170,7 +2178,6 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (text=="feet") then info.Slot = "FeetSlot" end
 			if (text=="finger") then info.Slot = "Finger0Slot" end
 			if (text=="trinket") then info.Slot = "Trinket0Slot" end
-			local weaponType = GetWeaponType()
 			if (text=="main hand") then
 				if (weapons == "dagger and any" and weaponType ~= "dagger") then
 					cannotUse = 1
@@ -2389,7 +2396,8 @@ function DetermineItemScore(itemInfo, weighting)
 		(weighting.Multistrike or 0) * (itemInfo.Multistrike or 0) +
 		(weighting.Versatility or 0) * (itemInfo.Versatility or 0) +
 		(weighting.ExperienceGained or 0) * (itemInfo.ExperienceGained or 0) +
-		(weighting.DPS or 0) * (itemInfo.DPS or 0)
+		(weighting.DPS or 0) * (itemInfo.DPS or 0) +
+		(weighting.Damage or 0) * (itemInfo.Damage or 0)
 end
 
 function GetAllBagsNumFreeSlots()
