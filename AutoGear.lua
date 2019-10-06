@@ -30,6 +30,7 @@ local weapons
 local tUpdate = 0
 local dataAvailable = nil
 local shouldPrintHelp = false
+local maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
 
 --check whether it's WoW classic, for automatic compatibility
 local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
@@ -88,8 +89,6 @@ end
 
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate")
-
-local weaponTypes = {dagger=1, sword=1, mace=1, shield=1, thrown=1, axe=1, bow=1, gun=1, polearm=1, staff=1, ["fist weapon"]=1, ["fishing pole"]=1, wand=1}
 
 --the main frame
 AutoGearFrame = CreateFrame("Frame", nil, UIParent)
@@ -2150,10 +2149,11 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
 			if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
 			if (string.find(text, "experience gained")) then
-				if (UnitLevel("player") < 120 and not IsXPUserDisabled()) then
+				if (UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) then
 					info.ExperienceGained = (info.ExperienceGained or 0) + value
 				end
 			end
+			
 			if weaponType then
 				if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
 				local minDamage, maxDamage = string.match(text, "([0-9]+%.?[0-9]*) ?%- ?([0-9]+%.?[0-9]*) damage")
@@ -2179,10 +2179,10 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (text=="finger") then info.Slot = "Finger0Slot" end
 			if (text=="trinket") then info.Slot = "Trinket0Slot" end
 			if (text=="main hand") then
-				if (weapons == "dagger and any" and weaponType ~= "dagger") then
+				if (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
 					reason = "(this spec needs a dagger main hand)"
-				elseif (weapons == "2h" or weapon == "ranged" or weapon == "2hDW") then --Alitwin: adding 2hdw
+				elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then --Alitwin: adding 2hdw
 					cannotUse = 1
 					reason = "(this spec needs a two-hand weapon)"
 				end
@@ -2218,10 +2218,10 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				if (weapons == "2h" or weapons == "ranged") then
 					cannotUse = 1
 					reason = "(this spec should use a two-hand weapon)"
-				elseif (weapons == "weapon and shield" and weaponType ~= "shield") then
+				elseif (weapons == "weapon and shield" and weaponType ~= LE_ITEM_ARMOR_SHIELD) then
 					cannotUse = 1
 					reason = "(this spec needs a shield in the off-hand)"
-				elseif (weapons == "dual wield" and CanDualWield() and weaponType == "shield") then
+				elseif (weapons == "dual wield" and CanDualWield() and weaponType == LE_ITEM_ARMOR_SHIELD) then
 					cannotUse = 1
 					reason = "(this spec should dual wield and not use a shield)"
 				end
@@ -2232,7 +2232,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 					cannotUse = 1
 					reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
 				end
-				if (weapons == "dagger and any" and weaponType ~= "dagger") then
+				if (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					info.Slot = "SecondaryHandSlot"
 				elseif (((weapons == "dual wield") and CanDualWield()) or weapons == "dagger and any") then
 					info.Slot = "MainHandSlot"
@@ -2256,7 +2256,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			else
 				if (text=="ranged") then
 					info.Slot = "MainHandSlot"
-					if (weapons ~= "ranged" and weaponType ~= "wand") then
+					if (weapons ~= "ranged" and weaponType ~= LE_ITEM_WEAPON_WAND) then
 						cannotUse = 1
 						reason = "(this class or spec should not use a ranged 2h weapon)"
 					end
@@ -2345,15 +2345,15 @@ function GetPawnScaleName()
 end
 
 function GetWeaponType()
-    --this function assumes the tooltip has already been set
-    --search the right text for a recognized weapon type
-    for i=1, AutoGearTooltip:NumLines() do
-        rightText = getglobal("AutoGearTooltipTextRight"..i)
-        if (rightText and rightText:GetText()) then
-            local text = rightText:GetText():lower()
-            if (weaponTypes[text]) then return text end
-        end
-    end
+	--this function assumes the tooltip has already been set
+	--ask WoW what type of weapon it is
+	local name, link = AutoGearTooltip:GetItem()
+	if link then
+		local itemID, itemType, itemSubType, itemEquipLoc, icon, itemClassID, itemSubClassID = GetItemInfoInstant(link)
+		if (itemClassID == LE_ITEM_CLASS_WEAPON) or ((itemClassID == LE_ITEM_CLASS_ARMOR) and (itemSubClassID == LE_ITEM_ARMOR_SHIELD)) then
+			return itemSubClassID
+		end
+	end
 end
 
 --used for unique
@@ -2506,7 +2506,7 @@ function AutoGearTooltipHook(tooltip)
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
 		local equippedItemInfo = ReadItemInfo(GetInventorySlotInfo(tooltipItemInfo.Slot))
 		local equippedScore = DetermineItemScore(equippedItemInfo, weighting)
-		local comparing = ShoppingTooltip1:IsVisible() or tooltip:IsEquippedItem() --(IsModifiedClick("COMPAREITEMS") or GetCVarBool("alwaysCompareItems"))
+		local comparing = ((tooltip ~= ItemRefTooltip) and (ShoppingTooltip1:IsVisible() or tooltip:IsEquippedItem()));
 		local scoreColor = HIGHLIGHT_FONT_COLOR
 		if (score > equippedScore) then
 			scoreColor = GREEN_FONT_COLOR
