@@ -44,8 +44,9 @@ AutoGearDBDefaults = {
     AutoAcceptQuests = true,
     AutoAcceptPartyInvitations = true,
 	ScoreInTooltips = true,
+	ReasonsInTooltips = false,
 	AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
-	UsePawn = true,
+	UsePawn = false,
 	AutoSellGreys = true,
 	AutoRepair = true,
     AllowedVerbosity = 2
@@ -182,6 +183,16 @@ local options = {
 		["description"] = "Show total AutoGear item score from internal AutoGear stat weights in item tooltips.",
 		["toggleDescriptionTrue"] = "Showing score in item tooltips is now enabled.",
 		["toggleDescriptionFalse"] = "Showing score in item tooltips is now disabled."
+	},
+	{
+		["option"] = "ReasonsInTooltips",
+		["cliCommands"] = { "reason", "reasons" },
+		["cliTrue"] = { "show", "enable", "on", "start" },
+		["cliFalse"] = { "hide", "disable", "off", "stop" },
+		["label"] = "Show reasons AutoGear won't auto-equip items in item tooltips",
+		["description"] = "Show reasons AutoGear won't automatically equip items in item tooltips, except when the score is lower than the equipped item's score.",
+		["toggleDescriptionTrue"] = "Showing won't-auto-equip reasons reasons in item tooltips is now enabled.",
+		["toggleDescriptionFalse"] = "Showing won't-auto-equip reasons in item tooltips is now disabled."
 	},
 	{
 		["option"] = "AlwaysCompareGear",
@@ -383,6 +394,7 @@ function AutoGearPrintHelp()
 	AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
 	AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
 	AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
+	AutoGearPrint("AutoGear:    '/ag reasons [toggle/show/hide]': toggle showing won't-auto-equip reasons in item tooltips", 0)
 	AutoGearPrint("AutoGear:    '/ag compare [enable/on/start]/[disable/off/stop]': toggle always comparing gear", 0)
 	AutoGearPrint("AutoGear:    '/ag pawn [enable/on/start]/[disable/off/stop]': toggle using Pawn scales", 0)
 	AutoGearPrint("AutoGear:    '/ag sell [enable/on/start]/[disable/off/stop]': toggle automatic selling of grey items", 0)
@@ -2527,7 +2539,7 @@ function AutoGearTooltipHook(tooltip)
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
-		if not tooltipItemInfo.Usable then
+		if (AutoGearDB.ReasonsInTooltips == true) and (not tooltipItemInfo.Usable) then
 			tooltip:AddDoubleLine("won't auto-equip",
 			tooltipItemInfo.reason,
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b,
