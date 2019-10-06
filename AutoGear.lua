@@ -990,9 +990,9 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1.2,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
+				SpellPower = 0.9, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
