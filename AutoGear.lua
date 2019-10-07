@@ -189,7 +189,7 @@ local options = {
 		["cliCommands"] = { "reason", "reasons" },
 		["cliTrue"] = { "show", "enable", "on", "start" },
 		["cliFalse"] = { "hide", "disable", "off", "stop" },
-		["label"] = "Show reasons AutoGear won't auto-equip items in item tooltips",
+		["label"] = "Show won't-equip reasons in item tooltips",
 		["description"] = "Show reasons AutoGear won't automatically equip items in item tooltips, except when the score is lower than the equipped item's score.",
 		["toggleDescriptionTrue"] = "Showing won't-auto-equip reasons reasons in item tooltips is now enabled.",
 		["toggleDescriptionFalse"] = "Showing won't-auto-equip reasons in item tooltips is now disabled."
@@ -260,7 +260,7 @@ local function OptionsSetup(optionsMenu)
 	local i = 0
 	local frame = {}
 	frame[i] = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-	frame[i]:SetPoint("TOPLEFT", 16, -16)
+	frame[i]:SetPoint("TOPLEFT", 8, -8)
 	frame[i]:SetText("AutoGear")
 	for _, v in ipairs(options) do
 		i = i + 1
@@ -272,7 +272,7 @@ local function OptionsSetup(optionsMenu)
 		end
 		local description = v["description"]..(v["cvar"] and "\n\nThis is a shortcut for the \""..v["cvar"].."\" CVar provided by Blizzard.  Toggling this will toggle that CVar." or "")
 		frame[i] = newCheckbox(v["option"], v["label"], description, _G["AutoGearSimpleToggle"..v["option"]], optionsMenu)
-		frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, -8)
+		frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, 0)
 		frame[i]:SetHitRectInsets(0, -280, 0, 0)
 		frame[i]:SetChecked(AutoGearDB[v["option"]])
 		_G["AutoGearToggle"..v["option"]] = function(force)
@@ -331,7 +331,7 @@ local function OptionsSetup(optionsMenu)
 	frame[i]:SetHeight(30)
 	frame[i]:SetScript("OnClick", function() AutoGearScan() end)
 	frame[i]:SetText("Scan")
-	frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, -8)
+	frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, 0)
 	frame[i]:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_NONE")
 		GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
@@ -2113,7 +2113,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			elseif (string.find(text, "ranged attacks")) then multiplier = multiplier * (weighting.RangedProc or 0)
 			end
 			local value = 0
-			value = tonumber(string.match(text, "[0-9]+%.?[0-9]*"))
+			value = tonumber(string.match(text, "-?[0-9]+%.?[0-9]*"))
 			if (value) then
 				value = value * multiplier
 			else
