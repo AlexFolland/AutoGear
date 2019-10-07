@@ -1002,9 +1002,9 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1.2,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1.5,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.9, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
+				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
@@ -2145,7 +2145,8 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				string.find(text, "fire spell damage") and (spec=="Fire" or class=="MAGE" and spec=="None") or
 				string.find(text, "arcane spell damage") and (spec=="Arcane" or class=="MAGE" and spec=="None") or
 				string.find(text, "nature spell damage") and spec=="Balance" or
-				string.find(text, "healing spells")) then info.SpellPower = (info.SpellPower or 0) + value end
+				string.find(text, "healing spells") or
+				string.find(text, "increases healing done")) then info.SpellPower = (info.SpellPower or 0) + value end
 			if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
 			if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
 			if (string.find(text, "mana per 5") or string.find(text, "mana every 5")) then info.Mp5 = (info.Mp5 or 0) + value end
