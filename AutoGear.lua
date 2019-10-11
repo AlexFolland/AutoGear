@@ -23,6 +23,7 @@
 -- factor in racial weapon bonuses
 -- eye of arachnida slot nil error
 
+local _ --prevent taint when using throwaway variable
 local reason
 local futureAction = {}
 local weighting --gear stat weighting
@@ -960,7 +961,7 @@ if (IsClassic) then
 			["Protection"] = {
 				weapons = "weapon and shield",
 				Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = 0,
-				Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, Defense = 5,
+				Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, Defense = 3,
 				SpellPower = 0.05, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
 				AttackPower = 0.4, ArmorPenetration = 0.1, Crit = 0.25, Hit = 0,
 				Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
