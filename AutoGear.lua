@@ -39,6 +39,8 @@ local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 --default values for variables saved between sessions
 AutoGearDBDefaults = {
     Enabled = true,
+	Override = false,
+	OverrideSpec = "Druid: None",
 	AutoLootRoll = true,
 	RollOnNonGearLoot = true,
 	AutoConfirmBinding = true,
@@ -111,20 +113,71 @@ local options = {
 		["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
 		["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\"."
 	},
-	--[[{
+	{
 		["option"] = "Override",
 		["cliCommands"] = { "override" },
 		["cliTrue"] = { "enable", "on", "start" },
 		["cliFalse"] = { "disable", "off", "stop" },
 		["label"] = "Override spec",
 		["description"] = "Override spec with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen spec instead of the spec detected automatically.",
+		["toggleDescriptionTrue"] = "Spec overriding is now enabled.  AutoGear will use the spec selected in the dropdown for evaluating gear.",
+		["toggleDescriptionFalse"] = "Spec overriding is now disabled.  AutoGear will use your class and its detected spec for evaluating gear.  Type \"/ag spec\" to check what spec AutoGear detects for your character.",
 		["child"] = {
 			["option"] = "OverrideSpec",
-			["options"] = GetSpecsForOverride(),
+			["options"] = --[[AutoGearGetSpecsForOverride()]]{
+				{
+					["label"] = "Death Knight",
+					["subLabels"] = {"None", "Blood", "Frost", "Unholy"}
+				},
+				{
+					["label"] = "Demon Hunter",
+					["subLabels"] = {"None", "Havoc", "Vengeance"}
+				},
+				{
+					["label"] = "Druid",
+					["subLabels"] = {"None", "Balance", "Feral", "Guardian", "Restoration"}
+				},
+				{
+					["label"] = "Hunter",
+					["subLabels"] = {"None", "Beast Mastery", "Marksmanship", "Survival"}
+				},
+				{
+					["label"] = "Mage",
+					["subLabels"] = {"None", "Arcane", "Fire", "Frost"}
+				},
+				{
+					["label"] = "Monk",
+					["subLabels"] = {"None", "Brewmaster", "Mistweaver", "Windwalker"}
+				},
+				{
+					["label"] = "Paladin",
+					["subLabels"] = {"None", "Holy", "Protection", "Retribution"}
+				},
+				{
+					["label"] = "Priest",
+					["subLabels"] = {"None", "Discipline", "Holy", "Shadow"}
+				},
+				{
+					["label"] = "Rogue",
+					["subLabels"] = {"None", "Assassination", "Combat", "Outlaw", "Subtlety"}
+				},
+				{
+					["label"] = "Shaman",
+					["subLabels"] = {"None", "Enhancement", "Elemental", "Restoration"}
+				},
+				{
+					["label"] = "Warlock",
+					["subLabels"] = {"None", "Affliction", "Demonology", "Destruction"}
+				},
+				{
+					["label"] = "Warrior",
+					["subLabels"] = {"None", "Arms", "Fury", "Protection"}
+				}
+			},
 			["label"] = "Override spec",
-			["description"] = "Override spec with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen spec instead of the spec detected automatically.",
-		},
-	},]]
+			["description"] = "Override spec with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen spec instead of the spec detected automatically."
+		}
+	},
 	{
 		["option"] = "AutoLootRoll",
 		["cliCommands"] = { "roll", "loot", "rolling" },
@@ -238,6 +291,17 @@ local options = {
 	}
 }
 
+function AutoGearGetSpecsForOverride()
+	local overrideSpecs = {}
+	for class, specs in pairs(AutoGearDefaultWeights) do
+		overrideSpecs[class]["label"] = class
+		for spec, weights in pairs(AutoGearDefaultWeights[class]) do
+			overrideSpecs[class]["subLabels"][spec] = spec
+		end
+	end
+	return overrideSpecs
+end
+
 local function newCheckbox(dbname, label, description, onClick, optionsMenu)
 	local check = CreateFrame("CheckButton", "AutoGear" .. dbname .. "CheckButton", optionsMenu, "InterfaceOptionsCheckButtonTemplate")
 	check:SetScript("OnClick", function(self)
@@ -263,19 +327,31 @@ local function OptionsSetup(optionsMenu)
 	frame[i] = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	frame[i]:SetPoint("TOPLEFT", 8, -8)
 	frame[i]:SetText("AutoGear")
+
+	--loop through options table to build our options menu programmatically
 	for _, v in ipairs(options) do
+		
+		--manual iterator to be able to start from 0 and add another one outside the loop
 		i = i + 1
+
+		--function to run when toggling this option by clicking the checkbox
 		_G["AutoGearSimpleToggle"..v["option"]] = function(self, value)
 			if v["cvar"] then
 				SetCVar(v["cvar"], value and 1 or 0)
 			end
 			AutoGearDB[v["option"]] = value
 		end
+
+		--set description, and if this option is a cvar shortcut, add explanation of cvars to description
 		local description = v["description"]..(v["cvar"] and "\n\nThis is a shortcut for the \""..v["cvar"].."\" CVar provided by Blizzard.  Toggling this will toggle that CVar." or "")
+
+		--make a checkbox for this option
 		frame[i] = newCheckbox(v["option"], v["label"], description, _G["AutoGearSimpleToggle"..v["option"]], optionsMenu)
-		frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, 0)
-		frame[i]:SetHitRectInsets(0, -280, 0, 0)
-		frame[i]:SetChecked(AutoGearDB[v["option"]])
+		frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, 0) --attach to previous element
+		frame[i]:SetHitRectInsets(0, -280, 0, 0) --change click region to not be super wide
+		frame[i]:SetChecked(AutoGearDB[v["option"]]) --set initial checked state based on db
+
+		--function to run when toggling this option via command-line interface
 		_G["AutoGearToggle"..v["option"]] = function(force)
 			if AutoGearDB[v["option"]] == nil then return end
 			AutoGearDB[v["option"]] = force or (not AutoGearDB[v["option"]])
@@ -284,6 +360,54 @@ local function OptionsSetup(optionsMenu)
 			if _G["AutoGear"..v["option"].."CheckButton"] == nil then return end
 			_G["AutoGear"..v["option"].."CheckButton"]:SetChecked(v["cvar"] and GetCVarBool(v["cvar"]) or AutoGearDB[v["option"]])
 		end
+		
+		--if this has a child defined, build its child
+		if v["child"] then
+			
+			--if the child is a dropdown, build it that way
+			if v["child"]["options"] then
+
+				frame[i].dropDown = CreateFrame("FRAME", "AutoGear"..v["child"]["option"].."Dropdown", optionsMenu, "UIDropDownMenuTemplate")
+				--newDropdown(v["child"]["option"], v["child"]["label"], v["child"]["description"], _G["AutoGearSelectFrom"..v["child"]["option"].."Dropdown"], v["child"]["options"], optionsMenu)
+				local width = 150
+				frame[i].dropDown:SetPoint("TOPLEFT", frame[i], "TOPRIGHT", width, 0) --attach to parent
+				UIDropDownMenu_SetWidth(frame[i].dropDown, width)
+				--frame[i].dropDown:SetHitRectInsets(0, -280, 0, 0) --change click region to not be super wide
+				UIDropDownMenu_SetText(frame[i].dropDown, AutoGearDB[v["child"]["option"]])
+
+				--function to run when using this dropdown
+				_G["AutoGear"..v["child"]["option"].."Dropdown"].SetValue = function(self, value)
+					AutoGearDB[v["child"]["option"]] = value
+					UIDropDownMenu_SetText(_G["AutoGear"..v["child"]["option"].."Dropdown"], AutoGearDB[v["child"]["option"]])
+					CloseDropDownMenus()
+				end
+
+				UIDropDownMenu_Initialize(_G["AutoGear"..v["child"]["option"].."Dropdown"], function(self, level, menuList)
+					local info = UIDropDownMenu_CreateInfo()
+					if (level or 1) == 1 then
+						--display the labels
+						for _, j in ipairs(v["child"]["options"]) do
+							info.text = j["label"]
+							info.checked = (string.find(AutoGearDB[v["child"]["option"]], j["label"], 1, true) and true or false)
+							info.menuList = j
+							info.hasArrow = (j["subLabels"] and true or false)
+							UIDropDownMenu_AddButton(info)
+						end
+					else
+						--display the subLabels
+						info.func = self.SetValue
+						for _, z in ipairs(menuList["subLabels"]) do
+							info.text = z
+							info.arg1 = menuList["label"]..": "..z
+							info.checked = (AutoGearDB[v["child"]["option"]] == info.arg1)
+							UIDropDownMenu_AddButton(info, level)
+						end
+					end
+				end)
+			end
+		end
+
+		--if this is a cvar, hook Blizzard's SetCVar function to update our checkbox
 		if v["cvar"] then
 			hooksecurefunc("SetCVar",function(CVar, ...)
 				if ((_G["AutoGear"..v["option"].."CheckButton"] ~= nil) and (CVar == v["cvar"])) then
@@ -291,6 +415,8 @@ local function OptionsSetup(optionsMenu)
 				end
 			end)
 		end
+
+		--if command-line interface commands are defined, add handling of those to the end of our cli command handling function
 		if v["cliCommands"] then
 			hooksecurefunc(SlashCmdList, "AutoGear", function(msg, ...)
 				local command = nil
@@ -373,7 +499,7 @@ SlashCmdList["AutoGear"] = function(msg)
     elseif (param1 == "scan") then
         AutoGearScan()
     elseif (param1 == "spec") then
-        AutoGearPrint("AutoGear: Looks like you are "..GetSpec()..".", 0)
+        AutoGearPrint("AutoGear: Looks like you are "..AutoGearGetSpec()..".", 0)
     elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
         SetAllowedVerbosity(param2)
     elseif (param1 == "") then
@@ -543,7 +669,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
             AutoGearScanBags()
         end
     elseif (event == "START_LOOT_ROLL") then
-        SetStatWeights()
+        AutoGearSetStatWeights()
         if (weighting) then
             local roll = nil
             reason = "(no reason set)"
@@ -1750,12 +1876,23 @@ else
 	}
 end
 
-function SetStatWeights()
-    local class, spec
-    _,class = UnitClass("player")
-    spec = GetSpec()
+function AutoGearSetStatWeights()
+    local class, spec = AutoGearGetClassAndSpec()
 	weighting = AutoGearDefaultWeights[class][spec] or nil
 	weapons = weighting.weapons or "any"
+end
+
+function AutoGearGetClassAndSpec()
+	local class, spec
+	if (AutoGearDB.Override and AutoGearDB.OverrideSpec) then
+		class, spec = string.match(AutoGearDB.OverrideSpec,"(.+): ?(.+)")
+		class = string.upper(string.gsub(class, "%s+", ""))
+	end
+	if ((class == nil) or (spec == nil)) then
+		_, class = UnitClass("player")
+		spec = AutoGearGetSpec()
+	end
+	return class, spec
 end
 
 -- from Attrition addon
@@ -1795,7 +1932,7 @@ function ItemContainsText(container, slot, search)
 end
 
 function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
-    SetStatWeights()
+    AutoGearSetStatWeights()
     if (not weighting) then
         return nil
     end
@@ -2083,7 +2220,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	info.YellowSockets = 0
 	info.BlueSockets = 0
 	info.MetaSockets = 0
-	spec = GetSpec()
+	local class, spec = AutoGearGetClassAndSpec()
 	local weaponType = GetWeaponType()
 	for i = 1, AutoGearTooltip:NumLines() do
 		local mytext = getglobal("AutoGearTooltipTextLeft"..i)
@@ -2132,7 +2269,6 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 					reason = "(this item has been learned already)"
 				end
 			end
-			local _, class = UnitClass("player")
 			if (string.find(text, "strength")) then info.Strength = (info.Strength or 0) + value end
 			if (string.find(text, "agility")) then info.Agility = (info.Agility or 0) + value end
 			if (string.find(text, "intellect")) then info.Intellect = (info.Intellect or 0) + value end
@@ -2314,7 +2450,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
         if (not link) then _, link = AutoGearTooltip:GetItem() end
         local PawnItemData = PawnGetItemData(link)
         if PawnItemData then
-			info.PawnScaleName = GetPawnScaleName()
+			info.PawnScaleName = AutoGearGetPawnScaleName()
             info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, info.PawnScaleName)
 	    else
             AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
@@ -2334,10 +2470,10 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	return info
 end
 
-function GetPawnScaleName()
+function AutoGearGetPawnScaleName()
 	local _, _, ClassID = UnitClass("player")
 
-	local spec = GetSpec()
+	local spec = AutoGearGetSpec()
 
 	-- Try to find the matching class
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
@@ -2428,7 +2564,7 @@ end
 
 -- We run the IsClassic check before function definition to prevent poorer performance
 if (IsClassic) then
-	function GetSpec()
+	function AutoGearGetSpec()
 		-- GetSpecialization() doesn't exist on Classic.
 		-- Instead, this finds the talent tree where the most points are allocated.
 		local highestSpec = nil
@@ -2458,7 +2594,7 @@ if (IsClassic) then
 		return highestSpec
 	end
 else
-	function GetSpec()
+	function AutoGearGetSpec()
 		local currentSpec = GetSpecialization()
 		local currentSpecName = currentSpec and select(2, GetSpecializationInfo(currentSpec)) or "None"
 		return currentSpecName
@@ -2479,7 +2615,7 @@ function PutItemInEmptyBagSlot()
 end
 
 function AutoGearScan()
-    if (not weighting) then SetStatWeights() end
+    if (not weighting) then AutoGearSetStatWeights() end
     if (not weighting) then
         AutoGearPrint("AutoGear: No weighting set for this class.", 0)
         return
@@ -2510,7 +2646,7 @@ end
 
 function AutoGearTooltipHook(tooltip)
 	if (not AutoGearDB.ScoreInTooltips) then return end
-	if (not weighting) then SetStatWeights() end
+	if (not weighting) then AutoGearSetStatWeights() end
 	local name, link = tooltip:GetItem()
 	if not link then
 		AutoGearPrint("AutoGear: No item link for "..name.." on "..tooltip:GetName(),3)
