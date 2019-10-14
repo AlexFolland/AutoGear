@@ -33,8 +33,44 @@ local dataAvailable = nil
 local shouldPrintHelp = false
 local maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
 
+--initialize table for storing saved variables
+if (not AutoGearDB) then AutoGearDB = {} end
+
 --check whether it's WoW classic, for automatic compatibility
 local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
+
+--initialize missing saved variables with default values
+function InitializeAutoGearDB(defaults, reset)
+    if AutoGearDB == nil or reset ~= nil then AutoGearDB = {} end
+    for k,v in pairs(defaults) do
+        if AutoGearDB[k] == nil then
+            AutoGearDB[k] = defaults[k]
+        end
+    end
+end
+
+--printing function to check allowed verbosity level
+function AutoGearPrint(text, verbosity)
+    if verbosity == nil then verbosity = 0 end
+    if (AutoGearDB.AllowedVerbosity == nil) or (verbosity <= AutoGearDB.AllowedVerbosity) then
+        print(text)
+    end
+end
+
+--names of verbosity levels
+local function GetAllowedVerbosityName(allowedverbosity)
+    if allowedverbosity == 0 then
+        return "errors"
+    elseif allowedverbosity == 1 then
+        return "info"
+    elseif allowedverbosity == 2 then
+        return "details"
+    elseif allowedverbosity == 3 then
+    	return "debug"
+    else
+        return "funky"
+    end
+end
 
 -- We run the IsClassic check before function definition to prevent poorer performance
 if (IsClassic) then
@@ -43,7 +79,11 @@ if (IsClassic) then
 		-- Instead, this finds the talent tree where the most points are allocated.
 		local highestSpec = nil
 		local highestPointsSpent = nil
-		for i = 1, GetNumTalentTabs() do
+		local numTalentTabs = GetNumTalentTabs()
+		if (not numTalentTabs) or (numTalentTabs < 2) then
+			AutoGearPrint("AutoGear: numTalentTabs in AutoGearGetSpec() is "..tostring(numTalentTabs),0)
+		end
+		for i = 1, numTalentTabs do
 			local spec, _, pointsSpent = GetTalentTabInfo(i)
 			if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
 				highestPointsSpent = pointsSpent
@@ -75,64 +115,34 @@ else
 	end
 end
 
+function AutoGearGetDefaultOverrideSpec()
+	className = UnitClass("player")
+	spec = AutoGearGetSpec()
+	if spec then
+		return className..": "..spec
+	end
+end
+
 --default values for variables saved between sessions
 AutoGearDBDefaults = {
-    Enabled = true,
+	Enabled = true,
 	Override = false,
-	OverrideSpec = (function()
-		className = UnitClass("player")
-		spec = AutoGearGetSpec()
-		return className..": "..spec
-	end)(),
+	OverrideSpec = AutoGearGetDefaultOverrideSpec(),
 	AutoLootRoll = true,
 	RollOnNonGearLoot = true,
 	AutoConfirmBinding = true,
-    AutoAcceptQuests = true,
-    AutoAcceptPartyInvitations = true,
+	AutoAcceptQuests = true,
+	AutoAcceptPartyInvitations = true,
 	ScoreInTooltips = true,
 	ReasonsInTooltips = false,
 	AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
 	UsePawn = false,
 	AutoSellGreys = true,
 	AutoRepair = true,
-    AllowedVerbosity = 2
+	AllowedVerbosity = 2
 }
 
---initialize table for storing saved variables
-if (not AutoGearDB) then AutoGearDB = {} end
-
---initialize missing saved variables with default values
-local function InitializeAutoGearDB(defaults, reset)
-    if AutoGearDB == nil or reset ~= nil then AutoGearDB = {} end
-    for k,v in pairs(defaults) do
-        if AutoGearDB[k] == nil then
-            AutoGearDB[k] = defaults[k]
-        end
-    end
-end
-
---printing function to check allowed verbosity level
-function AutoGearPrint(text, verbosity)
-    if verbosity == nil then verbosity = 0 end
-    if verbosity <= AutoGearDB.AllowedVerbosity then
-        print(text)
-    end
-end
-
---names of verbosity levels
-local function GetAllowedVerbosityName(allowedverbosity)
-    if allowedverbosity == 0 then
-        return "errors"
-    elseif allowedverbosity == 1 then
-        return "info"
-    elseif allowedverbosity == 2 then
-        return "details"
-    elseif allowedverbosity == 3 then
-    	return "debug"
-    else
-        return "funky"
-    end
-end
+InitializeAutoGearDB(AutoGearDBDefaults)
 
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate")
@@ -1343,148 +1353,6 @@ function AutoGearSetStatWeights()
 	AutoGearPrint("AutoGear: stat weights set for "..class..": "..spec, 3)
 end
 
-local options = {
-	{
-		["option"] = "Enabled",
-		["cliCommands"] = { "toggle", "gear", "equip" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically equip gear",
-		["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the AutoGearDefaultWeights table in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
-		["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\"."
-	},
-	{
-		["option"] = "Override",
-		["cliCommands"] = { "override" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Override specialization",
-		["description"] = "Override specialization with the specialization chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the spec detected automatically.",
-		["toggleDescriptionTrue"] = "Specialization overriding is now enabled.  AutoGear will use the specialization selected in the dropdown for evaluating gear.",
-		["toggleDescriptionFalse"] = "Specialization overriding is now disabled.  AutoGear will use your class and its detected specialization for evaluating gear.  Type \"/ag spec\" to check what specialization AutoGear detects for your character.",
-		["togglePostHook"] = function() AutoGearSetStatWeights() end,
-		["child"] = {
-			["option"] = "OverrideSpec",
-			["options"] = AutoGearGetOverrideSpecs(),
-			["label"] = "Override specialization",
-			["description"] = "Override specialization with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the specialization detected automatically.",
-			["dropdownPostHook"] = function() AutoGearSetStatWeights() end
-		}
-	},
-	{
-		["option"] = "AutoLootRoll",
-		["cliCommands"] = { "roll", "loot", "rolling" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically roll on loot",
-		["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..GetAllowedVerbosityName(1)..") or higher.",
-		["toggleDescriptionTrue"] = "Automatically rolling on loot is now enabled.",
-		["toggleDescriptionFalse"] = "Automatically rolling on loot is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on loot manually."
-	},
-	{
-		["option"] = "RollOnNonGearLoot",
-		["cliCommands"] = { "nongear", "nongearloot", "allloot" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Roll on non-gear loot",
-		["description"] = "Roll on all group loot, including loot that is not gear.  If this is enabled, AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
-		["toggleDescriptionTrue"] = "Rolling on non-gear loot is now enabled.  AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
-		["toggleDescriptionFalse"] = "Rolling on non-gear loot is now disabled."
-	},
-	{
-		["option"] = "AutoConfirmBinding",
-		["cliCommands"] = { "bind", "boe", "soulbinding" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically confirm soul-binding",
-		["description"] = "Automatically confirm soul-binding when equipping new gear, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually.",
-		["toggleDescriptionTrue"] = "Automatically confirming soul-binding is now enabled.",
-		["toggleDescriptionFalse"] = "Automatically confirming soul-binding is now disabled.  AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually."
-	},
-	{
-		["option"] = "AutoAcceptQuests",
-		["cliCommands"] = { "quest", "quests" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically handle quests",
-		["description"] = "Automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  If this is disabled, AutoGear will not interact with quest-givers in any way, but you can still view the total AutoGear score in item tooltips.",
-		["toggleDescriptionTrue"] = "Automatic quest handling is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic quest handling is now disabled."
-	},
-	{
-		["option"] = "AutoAcceptPartyInvitations",
-		["cliCommands"] = { "party" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically accept party invitations",
-		["description"] = "Automatically accept party invitations from any player.",
-		["toggleDescriptionTrue"] = "Automatic acceptance of party invitations is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic acceptance of party invitations is now disabled."
-	},
-	{
-		["option"] = "ScoreInTooltips",
-		["cliCommands"] = { "score", "tooltip", "tooltips" },
-		["cliTrue"] = { "show", "enable", "on", "start" },
-		["cliFalse"] = { "hide", "disable", "off", "stop" },
-		["label"] = "Show AutoGear score in item tooltips",
-		["description"] = "Show total AutoGear item score from internal AutoGear stat weights in item tooltips.",
-		["toggleDescriptionTrue"] = "Showing score in item tooltips is now enabled.",
-		["toggleDescriptionFalse"] = "Showing score in item tooltips is now disabled."
-	},
-	{
-		["option"] = "ReasonsInTooltips",
-		["cliCommands"] = { "reason", "reasons" },
-		["cliTrue"] = { "show", "enable", "on", "start" },
-		["cliFalse"] = { "hide", "disable", "off", "stop" },
-		["label"] = "Show won't-equip reasons in item tooltips",
-		["description"] = "Show reasons AutoGear won't automatically equip items in item tooltips, except when the score is lower than the equipped item's score.",
-		["toggleDescriptionTrue"] = "Showing won't-auto-equip reasons in item tooltips is now enabled.",
-		["toggleDescriptionFalse"] = "Showing won't-auto-equip reasons in item tooltips is now disabled."
-	},
-	{
-		["option"] = "AlwaysCompareGear",
-		["cliCommands"] = { "compare", "alwayscompare", "alwayscomparegear" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["cvar"] = "alwaysCompareItems",
-		["label"] = "Always compare gear",
-		["description"] = "Always show gear comparison tooltips when viewing gear tooltips.  If this is disabled, you can still show gear comparison tooltips while holding the Shift key.",
-		["toggleDescriptionTrue"] = "Always showing gear comparison tooltips when viewing gear tooltips is now enabled.",
-		["toggleDescriptionFalse"] = "Always showing gear comparison tooltips when viewing gear tooltips is now disabled.  You can still show gear comparison tooltips while holding the Shift key."
-	},
-	{
-		["option"] = "UsePawn",
-		["cliCommands"] = { "pawn" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Use Pawn to evaluate upgrades",
-		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.\n\nTip: If AutoGear's not using the scale you want it to use, to guarantee that AutoGear will use that Pawn scale, hide all scales in Pawn except that one.  Alternatively, name it \"[class]: [spec]\"; example \"Paladin: Retribution\".",
-		["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
-		["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
-	},
-	{
-		["option"] = "AutoSellGreys",
-		["cliCommands"] = { "sell", "sellgreys", "greys" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically sell greys",
-		["description"] = "Automatically sell all grey items when interacting with a vendor.",
-		["toggleDescriptionTrue"] = "Automatic selling of grey items is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic selling of grey items is now disabled."
-	},
-	{
-		["option"] = "AutoRepair",
-		["cliCommands"] = { "repair" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically repair",
-		["description"] = "Automatically repair all gear when interacting with a repair-enabled vendor.  If you have a guild bank and guild bank repair funds, this will use guild bank repair funds first.",
-		["toggleDescriptionTrue"] = "Automatic repairing is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic repairing is now disabled."
-	}
-}
-
 local function newCheckbox(dbname, label, description, onClick, optionsMenu)
 	local check = CreateFrame("CheckButton", "AutoGear" .. dbname .. "CheckButton", optionsMenu, "InterfaceOptionsCheckButtonTemplate")
 	check:SetScript("OnClick", function(self)
@@ -1504,7 +1372,6 @@ local function newCheckbox(dbname, label, description, onClick, optionsMenu)
 end
 
 local function OptionsSetup(optionsMenu)
-	InitializeAutoGearDB(AutoGearDBDefaults)
 	local i = 0
 	local frame = {}
 	frame[i] = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -1512,7 +1379,7 @@ local function OptionsSetup(optionsMenu)
 	frame[i]:SetText("AutoGear")
 
 	--loop through options table to build our options menu programmatically
-	for _, v in ipairs(options) do (function()
+	for _, v in ipairs(AutoGearOptions) do (function()
 		if not v["option"] then return end
 		--manual iterator to be able to start from 0 and add another one outside the loop
 		i = i + 1
@@ -1670,8 +1537,156 @@ InterfaceOptions_AddCategory(optionsMenu)
 optionsMenu:RegisterEvent("PLAYER_ENTERING_WORLD")
 optionsMenu:RegisterEvent("ADDON_LOADED")
 optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
-    if event == "PLAYER_ENTERING_WORLD" or arg1 == "AutoGear" then
+    if event == "PLAYER_ENTERING_WORLD" then
+		
+		--initialize options menu variables
+		AutoGearOptions = {
+			{
+				["option"] = "Enabled",
+				["cliCommands"] = { "toggle", "gear", "equip" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically equip gear",
+				["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the AutoGearDefaultWeights table in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
+				["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
+				["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\"."
+			},
+			{
+				["option"] = "Override",
+				["cliCommands"] = { "override" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Override specialization",
+				["description"] = "Override specialization with the specialization chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the spec detected automatically.",
+				["toggleDescriptionTrue"] = "Specialization overriding is now enabled.  AutoGear will use the specialization selected in the dropdown for evaluating gear.",
+				["toggleDescriptionFalse"] = "Specialization overriding is now disabled.  AutoGear will use your class and its detected specialization for evaluating gear.  Type \"/ag spec\" to check what specialization AutoGear detects for your character.",
+				["togglePostHook"] = function() AutoGearSetStatWeights() end,
+				["child"] = {
+					["option"] = "OverrideSpec",
+					["options"] = AutoGearGetOverrideSpecs(),
+					["label"] = "Override specialization",
+					["description"] = "Override specialization with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the specialization detected automatically.",
+					["dropdownPostHook"] = function() AutoGearSetStatWeights() end
+				}
+			},
+			{
+				["option"] = "AutoLootRoll",
+				["cliCommands"] = { "roll", "loot", "rolling" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically roll on loot",
+				["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..GetAllowedVerbosityName(1)..") or higher.",
+				["toggleDescriptionTrue"] = "Automatically rolling on loot is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically rolling on loot is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on loot manually."
+			},
+			{
+				["option"] = "RollOnNonGearLoot",
+				["cliCommands"] = { "nongear", "nongearloot", "allloot" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Roll on non-gear loot",
+				["description"] = "Roll on all group loot, including loot that is not gear.  If this is enabled, AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
+				["toggleDescriptionTrue"] = "Rolling on non-gear loot is now enabled.  AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
+				["toggleDescriptionFalse"] = "Rolling on non-gear loot is now disabled."
+			},
+			{
+				["option"] = "AutoConfirmBinding",
+				["cliCommands"] = { "bind", "boe", "soulbinding" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically confirm soul-binding",
+				["description"] = "Automatically confirm soul-binding when equipping new gear, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually.",
+				["toggleDescriptionTrue"] = "Automatically confirming soul-binding is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically confirming soul-binding is now disabled.  AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually."
+			},
+			{
+				["option"] = "AutoAcceptQuests",
+				["cliCommands"] = { "quest", "quests" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically handle quests",
+				["description"] = "Automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  If this is disabled, AutoGear will not interact with quest-givers in any way, but you can still view the total AutoGear score in item tooltips.",
+				["toggleDescriptionTrue"] = "Automatic quest handling is now enabled.",
+				["toggleDescriptionFalse"] = "Automatic quest handling is now disabled."
+			},
+			{
+				["option"] = "AutoAcceptPartyInvitations",
+				["cliCommands"] = { "party" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically accept party invitations",
+				["description"] = "Automatically accept party invitations from any player.",
+				["toggleDescriptionTrue"] = "Automatic acceptance of party invitations is now enabled.",
+				["toggleDescriptionFalse"] = "Automatic acceptance of party invitations is now disabled."
+			},
+			{
+				["option"] = "ScoreInTooltips",
+				["cliCommands"] = { "score", "tooltip", "tooltips" },
+				["cliTrue"] = { "show", "enable", "on", "start" },
+				["cliFalse"] = { "hide", "disable", "off", "stop" },
+				["label"] = "Show AutoGear score in item tooltips",
+				["description"] = "Show total AutoGear item score from internal AutoGear stat weights in item tooltips.",
+				["toggleDescriptionTrue"] = "Showing score in item tooltips is now enabled.",
+				["toggleDescriptionFalse"] = "Showing score in item tooltips is now disabled."
+			},
+			{
+				["option"] = "ReasonsInTooltips",
+				["cliCommands"] = { "reason", "reasons" },
+				["cliTrue"] = { "show", "enable", "on", "start" },
+				["cliFalse"] = { "hide", "disable", "off", "stop" },
+				["label"] = "Show won't-equip reasons in item tooltips",
+				["description"] = "Show reasons AutoGear won't automatically equip items in item tooltips, except when the score is lower than the equipped item's score.",
+				["toggleDescriptionTrue"] = "Showing won't-auto-equip reasons in item tooltips is now enabled.",
+				["toggleDescriptionFalse"] = "Showing won't-auto-equip reasons in item tooltips is now disabled."
+			},
+			{
+				["option"] = "AlwaysCompareGear",
+				["cliCommands"] = { "compare", "alwayscompare", "alwayscomparegear" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["cvar"] = "alwaysCompareItems",
+				["label"] = "Always compare gear",
+				["description"] = "Always show gear comparison tooltips when viewing gear tooltips.  If this is disabled, you can still show gear comparison tooltips while holding the Shift key.",
+				["toggleDescriptionTrue"] = "Always showing gear comparison tooltips when viewing gear tooltips is now enabled.",
+				["toggleDescriptionFalse"] = "Always showing gear comparison tooltips when viewing gear tooltips is now disabled.  You can still show gear comparison tooltips while holding the Shift key."
+			},
+			{
+				["option"] = "UsePawn",
+				["cliCommands"] = { "pawn" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Use Pawn to evaluate upgrades",
+				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.\n\nTip: If AutoGear's not using the scale you want it to use, to guarantee that AutoGear will use that Pawn scale, hide all scales in Pawn except that one.  Alternatively, name it \"[class]: [spec]\"; example \"Paladin: Retribution\".",
+				["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
+				["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
+			},
+			{
+				["option"] = "AutoSellGreys",
+				["cliCommands"] = { "sell", "sellgreys", "greys" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically sell greys",
+				["description"] = "Automatically sell all grey items when interacting with a vendor.",
+				["toggleDescriptionTrue"] = "Automatic selling of grey items is now enabled.",
+				["toggleDescriptionFalse"] = "Automatic selling of grey items is now disabled."
+			},
+			{
+				["option"] = "AutoRepair",
+				["cliCommands"] = { "repair" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically repair",
+				["description"] = "Automatically repair all gear when interacting with a repair-enabled vendor.  If you have a guild bank and guild bank repair funds, this will use guild bank repair funds first.",
+				["toggleDescriptionTrue"] = "Automatic repairing is now enabled.",
+				["toggleDescriptionFalse"] = "Automatic repairing is now disabled."
+			}
+		}
+
+		if AutoGearDB.OverrideSpec == nil then
+			AutoGearDB.OverrideSpec = AutoGearGetDefaultOverrideSpec()
+		end
 		OptionsSetup(optionsMenu)
+
         optionsMenu:UnregisterAllEvents()
         optionsMenu:SetScript("OnEvent", nil)
     end
