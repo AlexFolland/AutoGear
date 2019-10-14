@@ -36,11 +36,54 @@ local maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
 --check whether it's WoW classic, for automatic compatibility
 local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 
+-- We run the IsClassic check before function definition to prevent poorer performance
+if (IsClassic) then
+	function AutoGearGetSpec()
+		-- GetSpecialization() doesn't exist on Classic.
+		-- Instead, this finds the talent tree where the most points are allocated.
+		local highestSpec = nil
+		local highestPointsSpent = nil
+		for i = 1, GetNumTalentTabs() do
+			local spec, _, pointsSpent = GetTalentTabInfo(i)
+			if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
+				highestPointsSpent = pointsSpent
+				highestSpec = spec
+			end
+		end
+		if (highestPointsSpent == 0) then
+			return "None"
+		end
+
+		-- If they're feral, determine if they're a tank and call it Guardian.
+		if (highestSpec == "Feral") then
+			local tankiness = 0
+			tankiness = tankiness + select(5, GetTalentInfo(2, 3)) * 1.0 --Feral Instinct
+			tankiness = tankiness + select(5, GetTalentInfo(2, 7)) * 5 --Feral Charge
+			tankiness = tankiness + select(5, GetTalentInfo(2, 5)) * 0.5 --Thick Hide
+			tankiness = tankiness + select(5, GetTalentInfo(2, 9)) * -100 --Improved Shred
+			tankiness = tankiness + select(5, GetTalentInfo(2, 12)) * 100 --Primal Fury
+			if (tankiness >= 5) then return "Guardian" end
+		end
+
+		return highestSpec
+	end
+else
+	function AutoGearGetSpec()
+		local currentSpec = GetSpecialization()
+		local currentSpecName = currentSpec and select(2, GetSpecializationInfo(currentSpec)) or "None"
+		return currentSpecName
+	end
+end
+
 --default values for variables saved between sessions
 AutoGearDBDefaults = {
     Enabled = true,
 	Override = false,
-	OverrideSpec = "Druid: None",
+	OverrideSpec = (function()
+		className = UnitClass("player")
+		spec = AutoGearGetSpec()
+		return className..": "..spec
+	end)(),
 	AutoLootRoll = true,
 	RollOnNonGearLoot = true,
 	AutoConfirmBinding = true,
@@ -69,7 +112,7 @@ local function InitializeAutoGearDB(defaults, reset)
 end
 
 --printing function to check allowed verbosity level
-local function AutoGearPrint(text, verbosity)
+function AutoGearPrint(text, verbosity)
     if verbosity == nil then verbosity = 0 end
     if verbosity <= AutoGearDB.AllowedVerbosity then
         print(text)
@@ -100,691 +143,6 @@ AutoGearFrame:SetWidth(1); AutoGearFrame:SetHeight(1)
 AutoGearFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
 AutoGearFrame:SetScript("OnUpdate", function()
     AutoGearMain()
-end)
-
-local options = {
-	{
-		["option"] = "Enabled",
-		["cliCommands"] = { "toggle", "gear", "equip" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically equip gear",
-		["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the AutoGearDefaultWeights table in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
-		["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\"."
-	},
-	{
-		["option"] = "Override",
-		["cliCommands"] = { "override" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Override spec",
-		["description"] = "Override spec with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen spec instead of the spec detected automatically.",
-		["toggleDescriptionTrue"] = "Spec overriding is now enabled.  AutoGear will use the spec selected in the dropdown for evaluating gear.",
-		["toggleDescriptionFalse"] = "Spec overriding is now disabled.  AutoGear will use your class and its detected spec for evaluating gear.  Type \"/ag spec\" to check what spec AutoGear detects for your character.",
-		["child"] = {
-			["option"] = "OverrideSpec",
-			["options"] = --[[AutoGearGetSpecsForOverride()]]{
-				{
-					["label"] = "Death Knight",
-					["subLabels"] = {"None", "Blood", "Frost", "Unholy"}
-				},
-				{
-					["label"] = "Demon Hunter",
-					["subLabels"] = {"None", "Havoc", "Vengeance"}
-				},
-				{
-					["label"] = "Druid",
-					["subLabels"] = {"None", "Balance", "Feral", "Guardian", "Restoration"}
-				},
-				{
-					["label"] = "Hunter",
-					["subLabels"] = {"None", "Beast Mastery", "Marksmanship", "Survival"}
-				},
-				{
-					["label"] = "Mage",
-					["subLabels"] = {"None", "Arcane", "Fire", "Frost"}
-				},
-				{
-					["label"] = "Monk",
-					["subLabels"] = {"None", "Brewmaster", "Mistweaver", "Windwalker"}
-				},
-				{
-					["label"] = "Paladin",
-					["subLabels"] = {"None", "Holy", "Protection", "Retribution"}
-				},
-				{
-					["label"] = "Priest",
-					["subLabels"] = {"None", "Discipline", "Holy", "Shadow"}
-				},
-				{
-					["label"] = "Rogue",
-					["subLabels"] = {"None", "Assassination", "Combat", "Outlaw", "Subtlety"}
-				},
-				{
-					["label"] = "Shaman",
-					["subLabels"] = {"None", "Enhancement", "Elemental", "Restoration"}
-				},
-				{
-					["label"] = "Warlock",
-					["subLabels"] = {"None", "Affliction", "Demonology", "Destruction"}
-				},
-				{
-					["label"] = "Warrior",
-					["subLabels"] = {"None", "Arms", "Fury", "Protection"}
-				}
-			},
-			["label"] = "Override spec",
-			["description"] = "Override spec with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen spec instead of the spec detected automatically."
-		}
-	},
-	{
-		["option"] = "AutoLootRoll",
-		["cliCommands"] = { "roll", "loot", "rolling" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically roll on loot",
-		["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..GetAllowedVerbosityName(1)..") or higher.",
-		["toggleDescriptionTrue"] = "Automatically rolling on loot is now enabled.",
-		["toggleDescriptionFalse"] = "Automatically rolling on loot is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on loot manually."
-	},
-	{
-		["option"] = "RollOnNonGearLoot",
-		["cliCommands"] = { "nongear", "nongearloot", "allloot" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Roll on non-gear loot",
-		["description"] = "Roll on all group loot, including loot that is not gear.  If this is enabled, AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
-		["toggleDescriptionTrue"] = "Rolling on non-gear loot is now enabled.  AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
-		["toggleDescriptionFalse"] = "Rolling on non-gear loot is now disabled."
-	},
-	{
-		["option"] = "AutoConfirmBinding",
-		["cliCommands"] = { "bind", "boe", "soulbinding" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically confirm soul-binding",
-		["description"] = "Automatically confirm soul-binding when equipping new gear, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually.",
-		["toggleDescriptionTrue"] = "Automatically confirming soul-binding is now enabled.",
-		["toggleDescriptionFalse"] = "Automatically confirming soul-binding is now disabled.  AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually."
-	},
-	{
-		["option"] = "AutoAcceptQuests",
-		["cliCommands"] = { "quest", "quests" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically handle quests",
-		["description"] = "Automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  If this is disabled, AutoGear will not interact with quest-givers in any way, but you can still view the total AutoGear score in item tooltips.",
-		["toggleDescriptionTrue"] = "Automatic quest handling is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic quest handling is now disabled."
-	},
-	{
-		["option"] = "AutoAcceptPartyInvitations",
-		["cliCommands"] = { "party" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically accept party invitations",
-		["description"] = "Automatically accept party invitations from any player.",
-		["toggleDescriptionTrue"] = "Automatic acceptance of party invitations is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic acceptance of party invitations is now disabled."
-	},
-	{
-		["option"] = "ScoreInTooltips",
-		["cliCommands"] = { "score", "tooltip", "tooltips" },
-		["cliTrue"] = { "show", "enable", "on", "start" },
-		["cliFalse"] = { "hide", "disable", "off", "stop" },
-		["label"] = "Show AutoGear score in item tooltips",
-		["description"] = "Show total AutoGear item score from internal AutoGear stat weights in item tooltips.",
-		["toggleDescriptionTrue"] = "Showing score in item tooltips is now enabled.",
-		["toggleDescriptionFalse"] = "Showing score in item tooltips is now disabled."
-	},
-	{
-		["option"] = "ReasonsInTooltips",
-		["cliCommands"] = { "reason", "reasons" },
-		["cliTrue"] = { "show", "enable", "on", "start" },
-		["cliFalse"] = { "hide", "disable", "off", "stop" },
-		["label"] = "Show won't-equip reasons in item tooltips",
-		["description"] = "Show reasons AutoGear won't automatically equip items in item tooltips, except when the score is lower than the equipped item's score.",
-		["toggleDescriptionTrue"] = "Showing won't-auto-equip reasons reasons in item tooltips is now enabled.",
-		["toggleDescriptionFalse"] = "Showing won't-auto-equip reasons in item tooltips is now disabled."
-	},
-	{
-		["option"] = "AlwaysCompareGear",
-		["cliCommands"] = { "compare", "alwayscompare", "alwayscomparegear" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["cvar"] = "alwaysCompareItems",
-		["label"] = "Always compare gear",
-		["description"] = "Always show gear comparison tooltips when viewing gear tooltips.  If this is disabled, you can still show gear comparison tooltips while holding the Shift key.",
-		["toggleDescriptionTrue"] = "Always showing gear comparison tooltips when viewing gear tooltips is now enabled.",
-		["toggleDescriptionFalse"] = "Always showing gear comparison tooltips when viewing gear tooltips is now disabled.  You can still show gear comparison tooltips while holding the Shift key."
-	},
-	{
-		["option"] = "UsePawn",
-		["cliCommands"] = { "pawn" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Use Pawn to evaluate upgrades",
-		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.\n\nTip: If AutoGear's not using the scale you want it to use, to guarantee that AutoGear will use that Pawn scale, hide all scales in Pawn except that one.  Alternatively, name it \"[class]: [spec]\"; example \"Paladin: Retribution\".",
-		["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
-		["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
-	},
-	{
-		["option"] = "AutoSellGreys",
-		["cliCommands"] = { "sell", "sellgreys", "greys" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically sell greys",
-		["description"] = "Automatically sell all grey items when interacting with a vendor.",
-		["toggleDescriptionTrue"] = "Automatic selling of grey items is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic selling of grey items is now disabled."
-	},
-	{
-		["option"] = "AutoRepair",
-		["cliCommands"] = { "repair" },
-		["cliTrue"] = { "enable", "on", "start" },
-		["cliFalse"] = { "disable", "off", "stop" },
-		["label"] = "Automatically repair",
-		["description"] = "Automatically repair all gear when interacting with a repair-enabled vendor.  If you have a guild bank and guild bank repair funds, this will use guild bank repair funds first.",
-		["toggleDescriptionTrue"] = "Automatic repairing is now enabled.",
-		["toggleDescriptionFalse"] = "Automatic repairing is now disabled."
-	}
-}
-
-function AutoGearGetSpecsForOverride()
-	local overrideSpecs = {}
-	for class, specs in pairs(AutoGearDefaultWeights) do
-		overrideSpecs[class]["label"] = class
-		for spec, weights in pairs(AutoGearDefaultWeights[class]) do
-			overrideSpecs[class]["subLabels"][spec] = spec
-		end
-	end
-	return overrideSpecs
-end
-
-local function newCheckbox(dbname, label, description, onClick, optionsMenu)
-	local check = CreateFrame("CheckButton", "AutoGear" .. dbname .. "CheckButton", optionsMenu, "InterfaceOptionsCheckButtonTemplate")
-	check:SetScript("OnClick", function(self)
-		local tick = self:GetChecked()
-		onClick(self, tick and true or false)
-		if tick then
-			PlaySound(856) -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
-		else
-			PlaySound(857) -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF
-		end
-	end)
-	check.label = _G[check:GetName() .. "Text"]
-	check.label:SetText(label)
-	check.tooltipText = label
-	check.tooltipRequirement = description
-	return check
-end
-
-local function OptionsSetup(optionsMenu)
-	InitializeAutoGearDB(AutoGearDBDefaults)
-	local i = 0
-	local frame = {}
-	frame[i] = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-	frame[i]:SetPoint("TOPLEFT", 8, -8)
-	frame[i]:SetText("AutoGear")
-
-	--loop through options table to build our options menu programmatically
-	for _, v in ipairs(options) do
-		
-		--manual iterator to be able to start from 0 and add another one outside the loop
-		i = i + 1
-
-		--function to run when toggling this option by clicking the checkbox
-		_G["AutoGearSimpleToggle"..v["option"]] = function(self, value)
-			if v["cvar"] then
-				SetCVar(v["cvar"], value and 1 or 0)
-			end
-			AutoGearDB[v["option"]] = value
-		end
-
-		--set description, and if this option is a cvar shortcut, add explanation of cvars to description
-		local description = v["description"]..(v["cvar"] and "\n\nThis is a shortcut for the \""..v["cvar"].."\" CVar provided by Blizzard.  Toggling this will toggle that CVar." or "")
-
-		--make a checkbox for this option
-		frame[i] = newCheckbox(v["option"], v["label"], description, _G["AutoGearSimpleToggle"..v["option"]], optionsMenu)
-		frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, 0) --attach to previous element
-		frame[i]:SetHitRectInsets(0, -280, 0, 0) --change click region to not be super wide
-		frame[i]:SetChecked(AutoGearDB[v["option"]]) --set initial checked state based on db
-
-		--function to run when toggling this option via command-line interface
-		_G["AutoGearToggle"..v["option"]] = function(force)
-			if AutoGearDB[v["option"]] == nil then return end
-			AutoGearDB[v["option"]] = force or (not AutoGearDB[v["option"]])
-			if v["cvar"] then SetCVar(v["cvar"], force or (GetCVarBool(v["cvar"]) and 0 or 1)) end
-			AutoGearPrint("AutoGear: "..(AutoGearDB[v["option"]] and v["toggleDescriptionTrue"] or v["toggleDescriptionFalse"]), 0)
-			if _G["AutoGear"..v["option"].."CheckButton"] == nil then return end
-			_G["AutoGear"..v["option"].."CheckButton"]:SetChecked(v["cvar"] and GetCVarBool(v["cvar"]) or AutoGearDB[v["option"]])
-		end
-		
-		--if this has a child defined, build its child
-		if v["child"] then
-			
-			--if the child is a dropdown, build it that way
-			if v["child"]["options"] then
-
-				frame[i].dropDown = CreateFrame("FRAME", "AutoGear"..v["child"]["option"].."Dropdown", optionsMenu, "UIDropDownMenuTemplate")
-				--newDropdown(v["child"]["option"], v["child"]["label"], v["child"]["description"], _G["AutoGearSelectFrom"..v["child"]["option"].."Dropdown"], v["child"]["options"], optionsMenu)
-				local width = 150
-				frame[i].dropDown:SetPoint("TOPLEFT", frame[i], "TOPRIGHT", width, 0) --attach to parent
-				UIDropDownMenu_SetWidth(frame[i].dropDown, width)
-				--frame[i].dropDown:SetHitRectInsets(0, -280, 0, 0) --change click region to not be super wide
-				UIDropDownMenu_SetText(frame[i].dropDown, AutoGearDB[v["child"]["option"]])
-
-				--function to run when using this dropdown
-				_G["AutoGear"..v["child"]["option"].."Dropdown"].SetValue = function(self, value)
-					AutoGearDB[v["child"]["option"]] = value
-					UIDropDownMenu_SetText(_G["AutoGear"..v["child"]["option"].."Dropdown"], AutoGearDB[v["child"]["option"]])
-					CloseDropDownMenus()
-				end
-
-				UIDropDownMenu_Initialize(_G["AutoGear"..v["child"]["option"].."Dropdown"], function(self, level, menuList)
-					local info = UIDropDownMenu_CreateInfo()
-					if (level or 1) == 1 then
-						--display the labels
-						for _, j in ipairs(v["child"]["options"]) do
-							info.text = j["label"]
-							info.checked = (string.find(AutoGearDB[v["child"]["option"]], j["label"], 1, true) and true or false)
-							info.menuList = j
-							info.hasArrow = (j["subLabels"] and true or false)
-							UIDropDownMenu_AddButton(info)
-						end
-					else
-						--display the subLabels
-						info.func = self.SetValue
-						for _, z in ipairs(menuList["subLabels"]) do
-							info.text = z
-							info.arg1 = menuList["label"]..": "..z
-							info.checked = (AutoGearDB[v["child"]["option"]] == info.arg1)
-							UIDropDownMenu_AddButton(info, level)
-						end
-					end
-				end)
-			end
-		end
-
-		--if this is a cvar, hook Blizzard's SetCVar function to update our checkbox
-		if v["cvar"] then
-			hooksecurefunc("SetCVar",function(CVar, ...)
-				if ((_G["AutoGear"..v["option"].."CheckButton"] ~= nil) and (CVar == v["cvar"])) then
-					_G["AutoGear"..v["option"].."CheckButton"]:SetChecked(GetCVarBool(v["cvar"]))
-				end
-			end)
-		end
-
-		--if command-line interface commands are defined, add handling of those to the end of our cli command handling function
-		if v["cliCommands"] then
-			hooksecurefunc(SlashCmdList, "AutoGear", function(msg, ...)
-				local command = nil
-				local force = nil
-				for _, w in ipairs(v["cliCommands"]) do
-					if param1 == w then
-						command = v["option"]
-						shouldPrintHelp = false
-						if not v["cliTrue"] then break end
-						for _, x in ipairs(v["cliTrue"]) do
-							if param2 == x then
-								force = true
-								break
-							end
-						end
-						if force or (not v["cliFalse"]) then break end
-						for _, x in ipairs(v["cliFalse"]) do
-							if param2 == x then
-								force = false
-								break
-							end
-						end
-						break
-					end
-				end
-				if command then _G["AutoGearToggle"..command](force) end
-			end)
-		end
-	end
-	hooksecurefunc(SlashCmdList, "AutoGear", function(msg, ...)
-		if shouldPrintHelp then
-			AutoGearPrintHelp()
-			shouldPrintHelp = false
-		end
-	end)
-	i = i + 1
-	frame[i] = CreateFrame("Button", nil, optionsMenu, "UIPanelButtonTemplate")
-	frame[i]:SetWidth(100)
-	frame[i]:SetHeight(30)
-	frame[i]:SetScript("OnClick", function() AutoGearScan() end)
-	frame[i]:SetText("Scan")
-	frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, 0)
-	frame[i]:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_NONE")
-		GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
-		GameTooltip:AddLine("Click this button to force a scan, the same way that AutoGear scans for gear upgrades in your bags whenever new gear is looted.\n\nTip: By equipping your old item, you can use this to help determine how AutoGear decided an item was an upgrade.",nil,nil,nil,false)
-		GameTooltip:Show()
-	end)
-	frame[i]:SetScript("OnLeave", function() GameTooltip:Hide() end)
-end
-
-local optionsMenu = CreateFrame("Frame", "AutoGearOptionsPanel", InterfaceOptionsFramePanelContainer)
-optionsMenu.name = "AutoGear"
-InterfaceOptions_AddCategory(optionsMenu)
-
---handle PLAYER_ENTERING_WORLD events for initializing GUI options menu widget states at the right time
---UI reload doesn't seem to fire ADDON_LOADED
-optionsMenu:RegisterEvent("PLAYER_ENTERING_WORLD")
-optionsMenu:RegisterEvent("ADDON_LOADED")
-optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
-    if event == "PLAYER_ENTERING_WORLD" or arg1 == "AutoGear" then
-		OptionsSetup(optionsMenu)
-        optionsMenu:UnregisterAllEvents()
-        optionsMenu:SetScript("OnEvent", nil)
-    end
-end)
-
-_G["SLASH_AutoGear1"] = "/AutoGear"
-_G["SLASH_AutoGear2"] = "/autogear"
-_G["SLASH_AutoGear3"] = "/ag"
-SlashCmdList["AutoGear"] = function(msg)
-    param1, param2, param3 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
-    if (not param1) then param1 = "(nil)" end
-    if (not param2) then param2 = "(nil)" end
-    if (not param3) then param3 = "(nil)" end
-    if (param1 == "enable" or param1 == "on" or param1 == "start") then
-    	AutoGearToggleEnabled(true)
-    elseif (param1 == "disable" or param1 == "off" or param1 == "stop") then
-    	AutoGearToggleEnabled(false)
-    elseif (param1 == "scan") then
-        AutoGearScan()
-    elseif (param1 == "spec") then
-        AutoGearPrint("AutoGear: Looks like you are "..AutoGearGetSpec()..".", 0)
-    elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
-        SetAllowedVerbosity(param2)
-    elseif (param1 == "") then
-        InterfaceOptionsFrame_OpenToCategory(optionsMenu)
-	else
-		shouldPrintHelp = true
-    end
-end
-
-function AutoGearPrintHelp()
-	AutoGearPrint("AutoGear: "..((param1 == "help") and "" or "Unrecognized command.  ").."Recognized commands:", 0)
-	AutoGearPrint("AutoGear:    '/ag': options menu", 0)
-	AutoGearPrint("AutoGear:    '/ag help': command line help", 0)
-	AutoGearPrint("AutoGear:    '/ag scan': scan all bags for gear upgrades", 0)
-	AutoGearPrint("AutoGear:    '/ag spec': get name of current talent specialization", 0)
-	AutoGearPrint("AutoGear:    '/ag toggle/[enable/on/start]/[disable/off/stop]': toggle automatic gearing", 0)
-	AutoGearPrint("AutoGear:    '/ag roll [enable/on/start]/[disable/off/stop]': toggle automatic loot rolling", 0)
-	AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
-	AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
-	AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
-	AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
-	AutoGearPrint("AutoGear:    '/ag reasons [toggle/show/hide]': toggle showing won't-auto-equip reasons in item tooltips", 0)
-	AutoGearPrint("AutoGear:    '/ag compare [enable/on/start]/[disable/off/stop]': toggle always comparing gear", 0)
-	AutoGearPrint("AutoGear:    '/ag pawn [enable/on/start]/[disable/off/stop]': toggle using Pawn scales", 0)
-	AutoGearPrint("AutoGear:    '/ag sell [enable/on/start]/[disable/off/stop]': toggle automatic selling of grey items", 0)
-	AutoGearPrint("AutoGear:    '/ag repair [enable/on/start]/[disable/off/stop]': toggle automatic repairing", 0)
-	AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
-end
-
-function SetAllowedVerbosity(allowedverbosity)
-    allowedverbosity = tonumber(allowedverbosity)
-    if type(allowedverbosity) ~= "number" then
-        AutoGearPrint("AutoGear: The current allowed verbosity level is "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity).."). Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
-        return
-    end
-
-    if allowedverbosity < 0 or allowedverbosity > 3 then
-        AutoGearPrint("AutoGear: That is an invalid allowed verbosity level. Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
-        return
-    else
-        AutoGearDB.AllowedVerbosity = allowedverbosity
-        AutoGearPrint("AutoGear: Allowed verbosity level is now: "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity)..").", 0)
-    end
-end
-
-if (not IsClassic) then 
-	--These are events that don't exist in WoW classic
-	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
-	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")             --This event is not yet documented
-end
-AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
-AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
-AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
-AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
-AutoGearFrame:RegisterEvent("ITEM_PUSH")
-AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
-AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when the player tries to equip a soulbound item that can still be traded to eligible players
-AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
-AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")               --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
-AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")         --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
-AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")           --Fires when a quest is automatically completed (remote handin available)
-AutoGearFrame:RegisterEvent("QUEST_COMPLETE")               --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
-AutoGearFrame:RegisterEvent("QUEST_DETAIL")                 --Fires when details of an available quest are presented by a questgiver
-AutoGearFrame:RegisterEvent("QUEST_FINISHED")               --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
-AutoGearFrame:RegisterEvent("QUEST_GREETING")               --Fires when a questgiver presents a greeting along with a list of active or available quests
-AutoGearFrame:RegisterEvent("QUEST_ITEM_UPDATE")            --Fires when information about items in a questgiver dialog is updated
-AutoGearFrame:RegisterEvent("QUEST_LOG_UPDATE")             --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
-AutoGearFrame:RegisterEvent("QUEST_PROGRESS")               --Fires when interacting with a questgiver about an active quest
---AutoGearFrame:RegisterEvent("QUEST_QUERY_COMPLETE")       --Fires when quest completion information is available from the server; deprecated and registering returns an error as of 8.x
-AutoGearFrame:RegisterEvent("QUEST_WATCH_UPDATE")           --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
-AutoGearFrame:RegisterEvent("GOSSIP_CLOSED")                --Fires when an NPC gossip interaction ends
-AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM")               --Fires when the player is requested to confirm a gossip choice
-AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")        --Fires when an attempt to confirm a gossip choice is canceled
-AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the player attempts a gossip choice which requires entering a code
-AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
-AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
-AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
-    --AutoGearPrint("AutoGear: "..event..(arg1 and " "..tostring(arg1) or "")..(arg2 and " "..tostring(arg2) or "")..(arg3 and " "..tostring(arg3) or "")..(arg4 and " "..tostring(arg4) or ""), 0)
-
-    if (AutoGearDB.AutoAcceptQuests) then
-        if (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
-            ConfirmAcceptQuest()
-        elseif (event == "QUEST_DETAIL") then
-            QuestDetailAcceptButton_OnClick()
-        elseif (event == "GOSSIP_SHOW") then
-            --active quests
-            local quests = GetNumGossipActiveQuests()
-            local info = {GetGossipActiveQuests()}
-            for i = 1, quests do
-                local name, level, isTrivial, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5]
-                if (isComplete) then
-                    SelectGossipActiveQuest(i)
-                end
-            end
-            --available quests
-            quests = GetNumGossipAvailableQuests()
-            info = {GetGossipAvailableQuests()}
-            for i = 1, quests do
-                local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
-                if (not isTrivial) then
-                    SelectGossipAvailableQuest(i)
-                end
-            end
-        elseif (event == "QUEST_GREETING") then
-            --active quests
-            local quests = GetNumActiveQuests()
-            for i = 1, quests do
-                local title, isComplete = GetActiveTitle(i)
-                if (isComplete) then
-                    SelectActiveQuest(i)
-                end
-            end
-            --available quests
-            quests = GetNumAvailableQuests()
-			if (not IsClassic) then 
-				for i = 1, quests do
-					local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
-					if (not isTrivial) then
-						SelectAvailableQuest(i)
-					end
-				end
-			else
-				for i = 1, quests do
-					SelectAvailableQuest(i)
-				end
-			end
-        elseif (event == "QUEST_PROGRESS") then
-            if (IsQuestCompletable()) then
-                CompleteQuest()
-            end
-        elseif (event == "QUEST_COMPLETE") then
-            local rewards = GetNumQuestChoices()
-            if (not rewards or rewards == 0) then
-                GetQuestReward()
-            else
-                --choose a quest reward
-                questRewardID = {}
-                for i = 1, rewards do
-                    local itemLink = GetQuestItemLink("choice", i)
-                    if (not itemLink) then AutoGearPrint("AutoGear: No item link received from the server.", 0) end
-                    local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-                    questRewardID[i] = id
-                end
-                local choice = AutoGearScanBags(nil, nil, questRewardID)
-                GetQuestReward(choice)
-            end
-        end
-    end
-
-    if (AutoGearDB.AutoAcceptPartyInvitations) then
-        if (event == "PARTY_INVITE_REQUEST") then
-            AutoGearPrint("AutoGear: Automatically accepting party invite.", 1)
-            AcceptGroup()
-            AutoGearFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
-        elseif (event == "GROUP_ROSTER_UPDATE") then --for closing the invite window once I have joined the group
-            StaticPopup_Hide("PARTY_INVITE")
-            AutoGearFrame:UnregisterEvent("GROUP_ROSTER_UPDATE")
-        end
-    end
-
-    if (event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player") then
-		--make sure this doesn't happen as part of logon
-        if (dataAvailable ~= nil) then
-            --AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
-            AutoGearPrint("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.", 2)
-            AutoGearScanBags()
-        end
-    elseif (event == "START_LOOT_ROLL") then
-        AutoGearSetStatWeights()
-        if (weighting) then
-            local roll = nil
-            reason = "(no reason set)"
-            link = GetLootRollItemLink(arg1)
-            local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-			local wouldNeed = AutoGearScanBags(lootRollItemID, arg1)
-            local rollItemInfo = ReadItemInfo(nil, arg1)
-            local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
-			if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
-				AutoGearPrint("AutoGear: This loot is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
-				--local roll is nil, so no roll
-            elseif (wouldNeed and canNeed) then
-				roll = 1 --need
-			else
-				roll = 2 --greed
-				if (wouldNeed and not canNeed) then
-					AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for this item.", 1)
-				end
-			end
-            if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: This item cannot be worn.  "..reason, 1) end
-            if (roll) then
-                local newAction = {}
-                newAction.action = "roll"
-                newAction.t = GetTime() --roll right away
-                newAction.rollID = arg1
-                newAction.rollType = roll
-                newAction.info = rollItemInfo
-                table.insert(futureAction, newAction)
-            end
-        else
-            AutoGearPrint("AutoGear: No weighting set for this class.", 0)
-        end
-    elseif (event == "CONFIRM_LOOT_ROLL") then
-        ConfirmLootRoll(arg1, arg2)
-    elseif (event == "CONFIRM_DISENCHANT_ROLL") then
-        ConfirmLootRoll(arg1, arg2)
-    elseif (event == "ITEM_PUSH") then
-        --AutoGearPrint("AutoGear: Received an item.  Checking for gear upgrades.")
-        --make sure a fishing pole isn't replaced while fishing
-        if (GetMainHandType() ~= "Fishing Pole") then
-            --check if there's already a scan action in queue
-            local scanFound = nil
-            for i, curAction in ipairs(futureAction) do
-                if (curAction.action == "scan") then
-                    --push the time ahead until all the items have arrived
-                    curAction.t = GetTime() + 1.0
-                    scanFound = 1
-                end
-            end
-            if (not scanFound) then
-                --no scan found, so create a new one
-                local newAction = {}
-                newAction.action = "scan"
-                --give the item some time to arrive
-                newAction.t = GetTime() + 0.5
-                table.insert(futureAction, newAction)
-            end
-        end
-    elseif (event == "EQUIP_BIND_CONFIRM") then
-		if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
-    elseif (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
-        if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
-    elseif (event == "MERCHANT_SHOW") then
-		if (AutoGearDB.AutoSellGreys == true) then
-			-- sell all grey items
-			local soldSomething = nil
-			local totalSellValue = 0
-			for i = 0, NUM_BAG_SLOTS do
-				slotMax = GetContainerNumSlots(i)
-				for j = 0, slotMax do
-					_, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
-					if (link) then
-						local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
-						if (string.find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
-							totalSellValue = totalSellValue + select(11, GetItemInfo(link)) * count
-							PickupContainerItem(i, j)
-							PickupMerchantItem()
-							soldSomething = 1
-						end
-					end
-				end
-			end
-			if (soldSomething) then
-				AutoGearPrint("AutoGear: Sold all grey items for "..CashToString(totalSellValue)..".", 1)
-			end
-		end
-		if (AutoGearDB.AutoRepair == true) then
-			-- repair all gear
-			local cashString = CashToString(GetRepairAllCost())
-			if (not IsClassic) then
-				if (GetRepairAllCost() > 0) then
-					if (CanGuildBankRepair()) then
-						RepairAllItems(1) --guild repair
-						--fix this.  it doesn't see 0 yet, even if it repaired
-						if (GetRepairAllCost() == 0) then
-							AutoGearPrint("AutoGear: Repaired all items for "..cashString.." using guild funds.", 1)
-						end
-					end
-				end
-			end
-			if (GetRepairAllCost() > 0) then
-				if (GetRepairAllCost() <= GetMoney()) then
-					AutoGearPrint("AutoGear: Repaired all items for "..cashString..".", 1)
-					RepairAllItems()
-				elseif (GetRepairAllCost() > GetMoney()) then
-					AutoGearPrint("AutoGear: Not enough money to repair all items ("..cashString..").", 0)
-				end
-			end
-		end
-    elseif (event == "GET_ITEM_INFO_RECEIVED") then
-        dataAvailable = 1
-        AutoGearFrame:UnregisterEvent(event)
-    elseif (event ~= "ADDON_LOADED") then
-        AutoGearPrint("AutoGear: event fired: "..event, 3)
-    end
 end)
 
 -- supported stats are:
@@ -1876,10 +1234,93 @@ else
 	}
 end
 
-function AutoGearSetStatWeights()
-    local class, spec = AutoGearGetClassAndSpec()
-	weighting = AutoGearDefaultWeights[class][spec] or nil
-	weapons = weighting.weapons or "any"
+AutoGearOverrideSpecs = {
+	{
+		["label"] = "Death Knight",
+		["subLabels"] = {"None", "Blood", "Frost", "Unholy"}
+	},
+	{
+		["label"] = "Demon Hunter",
+		["subLabels"] = {"None", "Havoc", "Vengeance"}
+	},
+	{
+		["label"] = "Druid",
+		["subLabels"] = {"None", "Balance", "Feral", "Guardian", "Restoration"}
+	},
+	{
+		["label"] = "Hunter",
+		["subLabels"] = {"None", "Beast Mastery", "Marksmanship", "Survival"}
+	},
+	{
+		["label"] = "Mage",
+		["subLabels"] = {"None", "Arcane", "Fire", "Frost"}
+	},
+	{
+		["label"] = "Monk",
+		["subLabels"] = {"None", "Brewmaster", "Mistweaver", "Windwalker"}
+	},
+	{
+		["label"] = "Paladin",
+		["subLabels"] = {"None", "Holy", "Protection", "Retribution"}
+	},
+	{
+		["label"] = "Priest",
+		["subLabels"] = {"None", "Discipline", "Holy", "Shadow"}
+	},
+	{
+		["label"] = "Rogue",
+		["subLabels"] = {"None", "Assassination", "Combat", "Outlaw", "Subtlety"}
+	},
+	{
+		["label"] = "Shaman",
+		["subLabels"] = {"None", "Enhancement", "Elemental", "Restoration"}
+	},
+	{
+		["label"] = "Warlock",
+		["subLabels"] = {"None", "Affliction", "Demonology", "Destruction"}
+	},
+	{
+		["label"] = "Warrior",
+		["subLabels"] = {"None", "Arms", "Fury", "Protection"}
+	}
+}
+
+function AutoGearGetOverrideSpecs()
+	local classList = {}
+	FillLocalizedClassList(classList)
+	local classOrder = {}
+	for k in pairs(AutoGearDefaultWeights) do
+		table.insert(classOrder, k)
+	end
+	table.sort(classOrder)
+
+	for i = 1, #classOrder do (function()
+		local className = classOrder[i]
+		local localizedClassName = classList[className]
+		if localizedClassName == nil then return end
+		AutoGearOverrideSpecs[i] = {
+			["label"] = localizedClassName,
+			["subLabels"] = AutoGearOverrideSpecs[i]["subLabels"]
+		}
+		local specOrder = {}
+		for l in pairs(AutoGearDefaultWeights[className]) do
+			table.insert(specOrder, l)
+		end
+		table.sort(specOrder, function(a, b)
+			if a == 'None' then
+				return true
+			elseif b == 'None' then
+				return false
+			else
+				return a < b
+			end
+		end)
+		for j = 1, #specOrder do
+			local specName = specOrder[j]
+			AutoGearOverrideSpecs[i]["subLabels"][j] = specName
+		end
+	end)() end
+	return AutoGearOverrideSpecs
 end
 
 function AutoGearGetClassAndSpec()
@@ -1894,6 +1335,651 @@ function AutoGearGetClassAndSpec()
 	end
 	return class, spec
 end
+
+function AutoGearSetStatWeights()
+    local class, spec = AutoGearGetClassAndSpec()
+	weighting = AutoGearDefaultWeights[class][spec] or nil
+	weapons = weighting.weapons or "any"
+	AutoGearPrint("AutoGear: stat weights set for "..class..": "..spec, 3)
+end
+
+local options = {
+	{
+		["option"] = "Enabled",
+		["cliCommands"] = { "toggle", "gear", "equip" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Automatically equip gear",
+		["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the AutoGearDefaultWeights table in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
+		["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
+		["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\"."
+	},
+	{
+		["option"] = "Override",
+		["cliCommands"] = { "override" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Override specialization",
+		["description"] = "Override specialization with the specialization chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the spec detected automatically.",
+		["toggleDescriptionTrue"] = "Specialization overriding is now enabled.  AutoGear will use the specialization selected in the dropdown for evaluating gear.",
+		["toggleDescriptionFalse"] = "Specialization overriding is now disabled.  AutoGear will use your class and its detected specialization for evaluating gear.  Type \"/ag spec\" to check what specialization AutoGear detects for your character.",
+		["togglePostHook"] = function() AutoGearSetStatWeights() end,
+		["child"] = {
+			["option"] = "OverrideSpec",
+			["options"] = AutoGearGetOverrideSpecs(),
+			["label"] = "Override specialization",
+			["description"] = "Override specialization with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the specialization detected automatically.",
+			["dropdownPostHook"] = function() AutoGearSetStatWeights() end
+		}
+	},
+	{
+		["option"] = "AutoLootRoll",
+		["cliCommands"] = { "roll", "loot", "rolling" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Automatically roll on loot",
+		["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..GetAllowedVerbosityName(1)..") or higher.",
+		["toggleDescriptionTrue"] = "Automatically rolling on loot is now enabled.",
+		["toggleDescriptionFalse"] = "Automatically rolling on loot is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on loot manually."
+	},
+	{
+		["option"] = "RollOnNonGearLoot",
+		["cliCommands"] = { "nongear", "nongearloot", "allloot" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Roll on non-gear loot",
+		["description"] = "Roll on all group loot, including loot that is not gear.  If this is enabled, AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
+		["toggleDescriptionTrue"] = "Rolling on non-gear loot is now enabled.  AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
+		["toggleDescriptionFalse"] = "Rolling on non-gear loot is now disabled."
+	},
+	{
+		["option"] = "AutoConfirmBinding",
+		["cliCommands"] = { "bind", "boe", "soulbinding" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Automatically confirm soul-binding",
+		["description"] = "Automatically confirm soul-binding when equipping new gear, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually.",
+		["toggleDescriptionTrue"] = "Automatically confirming soul-binding is now enabled.",
+		["toggleDescriptionFalse"] = "Automatically confirming soul-binding is now disabled.  AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually."
+	},
+	{
+		["option"] = "AutoAcceptQuests",
+		["cliCommands"] = { "quest", "quests" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Automatically handle quests",
+		["description"] = "Automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  If this is disabled, AutoGear will not interact with quest-givers in any way, but you can still view the total AutoGear score in item tooltips.",
+		["toggleDescriptionTrue"] = "Automatic quest handling is now enabled.",
+		["toggleDescriptionFalse"] = "Automatic quest handling is now disabled."
+	},
+	{
+		["option"] = "AutoAcceptPartyInvitations",
+		["cliCommands"] = { "party" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Automatically accept party invitations",
+		["description"] = "Automatically accept party invitations from any player.",
+		["toggleDescriptionTrue"] = "Automatic acceptance of party invitations is now enabled.",
+		["toggleDescriptionFalse"] = "Automatic acceptance of party invitations is now disabled."
+	},
+	{
+		["option"] = "ScoreInTooltips",
+		["cliCommands"] = { "score", "tooltip", "tooltips" },
+		["cliTrue"] = { "show", "enable", "on", "start" },
+		["cliFalse"] = { "hide", "disable", "off", "stop" },
+		["label"] = "Show AutoGear score in item tooltips",
+		["description"] = "Show total AutoGear item score from internal AutoGear stat weights in item tooltips.",
+		["toggleDescriptionTrue"] = "Showing score in item tooltips is now enabled.",
+		["toggleDescriptionFalse"] = "Showing score in item tooltips is now disabled."
+	},
+	{
+		["option"] = "ReasonsInTooltips",
+		["cliCommands"] = { "reason", "reasons" },
+		["cliTrue"] = { "show", "enable", "on", "start" },
+		["cliFalse"] = { "hide", "disable", "off", "stop" },
+		["label"] = "Show won't-equip reasons in item tooltips",
+		["description"] = "Show reasons AutoGear won't automatically equip items in item tooltips, except when the score is lower than the equipped item's score.",
+		["toggleDescriptionTrue"] = "Showing won't-auto-equip reasons in item tooltips is now enabled.",
+		["toggleDescriptionFalse"] = "Showing won't-auto-equip reasons in item tooltips is now disabled."
+	},
+	{
+		["option"] = "AlwaysCompareGear",
+		["cliCommands"] = { "compare", "alwayscompare", "alwayscomparegear" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["cvar"] = "alwaysCompareItems",
+		["label"] = "Always compare gear",
+		["description"] = "Always show gear comparison tooltips when viewing gear tooltips.  If this is disabled, you can still show gear comparison tooltips while holding the Shift key.",
+		["toggleDescriptionTrue"] = "Always showing gear comparison tooltips when viewing gear tooltips is now enabled.",
+		["toggleDescriptionFalse"] = "Always showing gear comparison tooltips when viewing gear tooltips is now disabled.  You can still show gear comparison tooltips while holding the Shift key."
+	},
+	{
+		["option"] = "UsePawn",
+		["cliCommands"] = { "pawn" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Use Pawn to evaluate upgrades",
+		["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.\n\nTip: If AutoGear's not using the scale you want it to use, to guarantee that AutoGear will use that Pawn scale, hide all scales in Pawn except that one.  Alternatively, name it \"[class]: [spec]\"; example \"Paladin: Retribution\".",
+		["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
+		["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
+	},
+	{
+		["option"] = "AutoSellGreys",
+		["cliCommands"] = { "sell", "sellgreys", "greys" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Automatically sell greys",
+		["description"] = "Automatically sell all grey items when interacting with a vendor.",
+		["toggleDescriptionTrue"] = "Automatic selling of grey items is now enabled.",
+		["toggleDescriptionFalse"] = "Automatic selling of grey items is now disabled."
+	},
+	{
+		["option"] = "AutoRepair",
+		["cliCommands"] = { "repair" },
+		["cliTrue"] = { "enable", "on", "start" },
+		["cliFalse"] = { "disable", "off", "stop" },
+		["label"] = "Automatically repair",
+		["description"] = "Automatically repair all gear when interacting with a repair-enabled vendor.  If you have a guild bank and guild bank repair funds, this will use guild bank repair funds first.",
+		["toggleDescriptionTrue"] = "Automatic repairing is now enabled.",
+		["toggleDescriptionFalse"] = "Automatic repairing is now disabled."
+	}
+}
+
+local function newCheckbox(dbname, label, description, onClick, optionsMenu)
+	local check = CreateFrame("CheckButton", "AutoGear" .. dbname .. "CheckButton", optionsMenu, "InterfaceOptionsCheckButtonTemplate")
+	check:SetScript("OnClick", function(self)
+		local tick = self:GetChecked()
+		onClick(self, tick and true or false)
+		if tick then
+			PlaySound(856) -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
+		else
+			PlaySound(857) -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF
+		end
+	end)
+	check.label = _G[check:GetName() .. "Text"]
+	check.label:SetText(label)
+	check.tooltipText = label
+	check.tooltipRequirement = description
+	return check
+end
+
+local function OptionsSetup(optionsMenu)
+	InitializeAutoGearDB(AutoGearDBDefaults)
+	local i = 0
+	local frame = {}
+	frame[i] = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+	frame[i]:SetPoint("TOPLEFT", 8, -8)
+	frame[i]:SetText("AutoGear")
+
+	--loop through options table to build our options menu programmatically
+	for _, v in ipairs(options) do (function()
+		if not v["option"] then return end
+		--manual iterator to be able to start from 0 and add another one outside the loop
+		i = i + 1
+
+		--function to run when toggling this option by clicking the checkbox
+		_G["AutoGearSimpleToggle"..v["option"]] = function(self, value)
+			if v["cvar"] then
+				SetCVar(v["cvar"], value and 1 or 0)
+			end
+			AutoGearDB[v["option"]] = value
+			AutoGearPrint("AutoGear: "..(AutoGearDB[v["option"]] and v["toggleDescriptionTrue"] or v["toggleDescriptionFalse"]), 3)
+		end
+		
+		--function to run when toggling this option via command-line interface
+		_G["AutoGearToggle"..v["option"]] = function(force)
+			if AutoGearDB[v["option"]] == nil then return end
+			AutoGearDB[v["option"]] = force or (not AutoGearDB[v["option"]])
+			if v["cvar"] then SetCVar(v["cvar"], force or (GetCVarBool(v["cvar"]) and 0 or 1)) end
+			AutoGearPrint("AutoGear: "..(AutoGearDB[v["option"]] and v["toggleDescriptionTrue"] or v["toggleDescriptionFalse"]), 0)
+			if _G["AutoGear"..v["option"].."CheckButton"] == nil then return end
+			_G["AutoGear"..v["option"].."CheckButton"]:SetChecked(v["cvar"] and GetCVarBool(v["cvar"]) or AutoGearDB[v["option"]])
+		end
+		
+		if v["togglePostHook"] then
+			hooksecurefunc("AutoGearSimpleToggle"..v["option"], v["togglePostHook"])
+			hooksecurefunc("AutoGearToggle"..v["option"], v["togglePostHook"])
+		end
+
+		--set description, and if this option is a cvar shortcut, add explanation of cvars to description
+		local description = v["description"]..(v["cvar"] and "\n\nThis is a shortcut for the \""..v["cvar"].."\" CVar provided by Blizzard.  Toggling this will toggle that CVar." or "")
+
+		--make a checkbox for this option
+		frame[i] = newCheckbox(v["option"], v["label"], description, _G["AutoGearSimpleToggle"..v["option"]], optionsMenu)
+		frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, 0) --attach to previous element
+		frame[i]:SetHitRectInsets(0, -280, 0, 0) --change click region to not be super wide
+		frame[i]:SetChecked(AutoGearDB[v["option"]]) --set initial checked state based on db
+		
+		--if this has a child defined, build its child
+		if v["child"] then
+			
+			--if the child is a dropdown, build it that way
+			if v["child"]["options"] then
+
+				frame[i].dropDown = CreateFrame("FRAME", "AutoGear"..v["child"]["option"].."Dropdown", optionsMenu, "UIDropDownMenuTemplate")
+				--newDropdown(v["child"]["option"], v["child"]["label"], v["child"]["description"], _G["AutoGearSelectFrom"..v["child"]["option"].."Dropdown"], v["child"]["options"], optionsMenu)
+				local width = 200
+				frame[i].dropDown:SetPoint("TOPLEFT", frame[i], "TOPRIGHT", width, 0) --attach to parent
+				UIDropDownMenu_SetWidth(frame[i].dropDown, width)
+				--frame[i].dropDown:SetHitRectInsets(0, -280, 0, 0) --change click region to not be super wide
+				UIDropDownMenu_SetText(frame[i].dropDown, AutoGearDB[v["child"]["option"]])
+
+				--function to run when using this dropdown
+				_G["AutoGear"..v["child"]["option"].."Dropdown"].SetValue = function(self, value)
+					AutoGearDB[v["child"]["option"]] = value
+					UIDropDownMenu_SetText(_G["AutoGear"..v["child"]["option"].."Dropdown"], AutoGearDB[v["child"]["option"]])
+					CloseDropDownMenus()
+				end
+				
+				if v["child"]["dropdownPostHook"] then
+					hooksecurefunc(_G["AutoGear"..v["child"]["option"].."Dropdown"], "SetValue", v["child"]["dropdownPostHook"])
+				end
+
+				UIDropDownMenu_Initialize(_G["AutoGear"..v["child"]["option"].."Dropdown"], function(self, level, menuList)
+					local info = UIDropDownMenu_CreateInfo()
+					if (level or 1) == 1 then
+						--display the labels
+						for _, j in ipairs(v["child"]["options"]) do
+							info.text = j["label"]
+							info.checked = (string.match(AutoGearDB[v["child"]["option"]], "^"..j["label"]..":") and true or false)
+							info.menuList = j
+							info.hasArrow = (j["subLabels"] and true or false)
+							UIDropDownMenu_AddButton(info)
+						end
+					else
+						--display the subLabels
+						info.func = self.SetValue
+						for _, z in ipairs(menuList["subLabels"]) do
+							info.text = z
+							info.arg1 = menuList["label"]..": "..z
+							info.checked = (AutoGearDB[v["child"]["option"]] == info.arg1)
+							UIDropDownMenu_AddButton(info, level)
+						end
+					end
+				end)
+			end
+		end
+
+		--if this is a cvar, hook Blizzard's SetCVar function to update our checkbox
+		if v["cvar"] then
+			hooksecurefunc("SetCVar",function(CVar, ...)
+				if ((_G["AutoGear"..v["option"].."CheckButton"] ~= nil) and (CVar == v["cvar"])) then
+					_G["AutoGear"..v["option"].."CheckButton"]:SetChecked(GetCVarBool(v["cvar"]))
+				end
+			end)
+		end
+
+		--if command-line interface commands are defined, add handling of those to the end of our cli command handling function
+		if v["cliCommands"] then
+			hooksecurefunc(SlashCmdList, "AutoGear", function(msg, ...)
+				local command = nil
+				local force = nil
+				for _, w in ipairs(v["cliCommands"]) do
+					if param1 == w then
+						command = v["option"]
+						shouldPrintHelp = false
+						if not v["cliTrue"] then break end
+						for _, x in ipairs(v["cliTrue"]) do
+							if param2 == x then
+								force = true
+								break
+							end
+						end
+						if force or (not v["cliFalse"]) then break end
+						for _, x in ipairs(v["cliFalse"]) do
+							if param2 == x then
+								force = false
+								break
+							end
+						end
+						break
+					end
+				end
+				if command then _G["AutoGearToggle"..command](force) end
+			end)
+		end
+	end)() end
+	hooksecurefunc(SlashCmdList, "AutoGear", function(msg, ...)
+		if shouldPrintHelp then
+			AutoGearPrintHelp()
+			shouldPrintHelp = false
+		end
+	end)
+	i = i + 1
+	frame[i] = CreateFrame("Button", nil, optionsMenu, "UIPanelButtonTemplate")
+	frame[i]:SetWidth(100)
+	frame[i]:SetHeight(30)
+	frame[i]:SetScript("OnClick", function() AutoGearScan() end)
+	frame[i]:SetText("Scan")
+	frame[i]:SetPoint("TOPLEFT", frame[i-1], "BOTTOMLEFT", 0, 0)
+	frame[i]:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_NONE")
+		GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+		GameTooltip:AddLine("Click this button to force a scan, the same way that AutoGear scans for gear upgrades in your bags whenever new gear is looted.\n\nTip: By equipping your old item, you can use this to help determine how AutoGear decided an item was an upgrade.",nil,nil,nil,false)
+		GameTooltip:Show()
+	end)
+	frame[i]:SetScript("OnLeave", function() GameTooltip:Hide() end)
+end
+
+local optionsMenu = CreateFrame("Frame", "AutoGearOptionsPanel", InterfaceOptionsFramePanelContainer)
+optionsMenu.name = "AutoGear"
+InterfaceOptions_AddCategory(optionsMenu)
+
+--handle PLAYER_ENTERING_WORLD events for initializing GUI options menu widget states at the right time
+--UI reload doesn't seem to fire ADDON_LOADED
+optionsMenu:RegisterEvent("PLAYER_ENTERING_WORLD")
+optionsMenu:RegisterEvent("ADDON_LOADED")
+optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
+    if event == "PLAYER_ENTERING_WORLD" or arg1 == "AutoGear" then
+		OptionsSetup(optionsMenu)
+        optionsMenu:UnregisterAllEvents()
+        optionsMenu:SetScript("OnEvent", nil)
+    end
+end)
+
+_G["SLASH_AutoGear1"] = "/AutoGear"
+_G["SLASH_AutoGear2"] = "/autogear"
+_G["SLASH_AutoGear3"] = "/ag"
+SlashCmdList["AutoGear"] = function(msg)
+    param1, param2, param3 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
+    if (not param1) then param1 = "(nil)" end
+    if (not param2) then param2 = "(nil)" end
+    if (not param3) then param3 = "(nil)" end
+    if (param1 == "enable" or param1 == "on" or param1 == "start") then
+    	AutoGearToggleEnabled(true)
+    elseif (param1 == "disable" or param1 == "off" or param1 == "stop") then
+    	AutoGearToggleEnabled(false)
+    elseif (param1 == "scan") then
+        AutoGearScan()
+    elseif (param1 == "spec") then
+        AutoGearPrint("AutoGear: Looks like you are "..AutoGearGetSpec().."."..((AutoGearDB.UsePawn or AutoGearDB.Override) and ("  However, AutoGear is using "..(AutoGearDB.UsePawn and "Pawn" or "\""..AutoGearDB.OverrideSpec.."\"").." for gear evaluation due to the \""..(AutoGearDB.UsePawn and "use Pawn to evaluate upgrades" or "override specialization").."\" option.") or ""), 0)
+    elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
+        SetAllowedVerbosity(param2)
+    elseif (param1 == "") then
+        InterfaceOptionsFrame_OpenToCategory(optionsMenu)
+	else
+		shouldPrintHelp = true
+    end
+end
+
+function AutoGearPrintHelp()
+	AutoGearPrint("AutoGear: "..((param1 == "help") and "" or "Unrecognized command.  ").."Recognized commands:", 0)
+	AutoGearPrint("AutoGear:    '/ag': options menu", 0)
+	AutoGearPrint("AutoGear:    '/ag help': command line help", 0)
+	AutoGearPrint("AutoGear:    '/ag scan': scan all bags for gear upgrades", 0)
+	AutoGearPrint("AutoGear:    '/ag spec': get name of current talent specialization", 0)
+	AutoGearPrint("AutoGear:    '/ag [gear/toggle]/[enable/on/start]/[disable/off/stop]': toggle automatic gearing", 0)
+	AutoGearPrint("AutoGear:    '/ag override [enable/on/start]/[disable/off/stop]': toggle specialization override", 0)
+	AutoGearPrint("AutoGear:    '/ag roll [enable/on/start]/[disable/off/stop]': toggle automatic loot rolling", 0)
+	AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
+	AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
+	AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
+	AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
+	AutoGearPrint("AutoGear:    '/ag reasons [toggle/show/hide]': toggle showing won't-auto-equip reasons in item tooltips", 0)
+	AutoGearPrint("AutoGear:    '/ag compare [enable/on/start]/[disable/off/stop]': toggle always comparing gear", 0)
+	AutoGearPrint("AutoGear:    '/ag pawn [enable/on/start]/[disable/off/stop]': toggle using Pawn scales", 0)
+	AutoGearPrint("AutoGear:    '/ag sell [enable/on/start]/[disable/off/stop]': toggle automatic selling of grey items", 0)
+	AutoGearPrint("AutoGear:    '/ag repair [enable/on/start]/[disable/off/stop]': toggle automatic repairing", 0)
+	AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
+end
+
+function SetAllowedVerbosity(allowedverbosity)
+    allowedverbosity = tonumber(allowedverbosity)
+    if type(allowedverbosity) ~= "number" then
+        AutoGearPrint("AutoGear: The current allowed verbosity level is "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity).."). Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
+        return
+    end
+
+    if allowedverbosity < 0 or allowedverbosity > 3 then
+        AutoGearPrint("AutoGear: That is an invalid allowed verbosity level. Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
+        return
+    else
+        AutoGearDB.AllowedVerbosity = allowedverbosity
+        AutoGearPrint("AutoGear: Allowed verbosity level is now: "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity)..").", 0)
+    end
+end
+
+if (not IsClassic) then 
+	--These are events that don't exist in WoW classic
+	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
+	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")             --This event is not yet documented
+end
+AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
+AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
+AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
+AutoGearFrame:RegisterEvent("ITEM_PUSH")
+AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
+AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when the player tries to equip a soulbound item that can still be traded to eligible players
+AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
+AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")               --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
+AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")         --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
+AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")           --Fires when a quest is automatically completed (remote handin available)
+AutoGearFrame:RegisterEvent("QUEST_COMPLETE")               --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
+AutoGearFrame:RegisterEvent("QUEST_DETAIL")                 --Fires when details of an available quest are presented by a questgiver
+AutoGearFrame:RegisterEvent("QUEST_FINISHED")               --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
+AutoGearFrame:RegisterEvent("QUEST_GREETING")               --Fires when a questgiver presents a greeting along with a list of active or available quests
+AutoGearFrame:RegisterEvent("QUEST_ITEM_UPDATE")            --Fires when information about items in a questgiver dialog is updated
+AutoGearFrame:RegisterEvent("QUEST_LOG_UPDATE")             --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
+AutoGearFrame:RegisterEvent("QUEST_PROGRESS")               --Fires when interacting with a questgiver about an active quest
+--AutoGearFrame:RegisterEvent("QUEST_QUERY_COMPLETE")       --Fires when quest completion information is available from the server; deprecated and registering returns an error as of 8.x
+AutoGearFrame:RegisterEvent("QUEST_WATCH_UPDATE")           --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
+AutoGearFrame:RegisterEvent("GOSSIP_CLOSED")                --Fires when an NPC gossip interaction ends
+AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM")               --Fires when the player is requested to confirm a gossip choice
+AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")        --Fires when an attempt to confirm a gossip choice is canceled
+AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the player attempts a gossip choice which requires entering a code
+AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
+AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
+AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
+    --AutoGearPrint("AutoGear: "..event..(arg1 and " "..tostring(arg1) or "")..(arg2 and " "..tostring(arg2) or "")..(arg3 and " "..tostring(arg3) or "")..(arg4 and " "..tostring(arg4) or ""), 0)
+
+    if (AutoGearDB.AutoAcceptQuests) then
+        if (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
+            ConfirmAcceptQuest()
+        elseif (event == "QUEST_DETAIL") then
+            QuestDetailAcceptButton_OnClick()
+        elseif (event == "GOSSIP_SHOW") then
+            --active quests
+            local quests = GetNumGossipActiveQuests()
+            local info = {GetGossipActiveQuests()}
+            for i = 1, quests do
+                local name, level, isTrivial, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5]
+                if (isComplete) then
+                    SelectGossipActiveQuest(i)
+                end
+            end
+            --available quests
+            quests = GetNumGossipAvailableQuests()
+            info = {GetGossipAvailableQuests()}
+            for i = 1, quests do
+                local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
+                if (not isTrivial) then
+                    SelectGossipAvailableQuest(i)
+                end
+            end
+        elseif (event == "QUEST_GREETING") then
+            --active quests
+            local quests = GetNumActiveQuests()
+            for i = 1, quests do
+                local title, isComplete = GetActiveTitle(i)
+                if (isComplete) then
+                    SelectActiveQuest(i)
+                end
+            end
+            --available quests
+            quests = GetNumAvailableQuests()
+			if (not IsClassic) then 
+				for i = 1, quests do
+					local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
+					if (not isTrivial) then
+						SelectAvailableQuest(i)
+					end
+				end
+			else
+				for i = 1, quests do
+					SelectAvailableQuest(i)
+				end
+			end
+        elseif (event == "QUEST_PROGRESS") then
+            if (IsQuestCompletable()) then
+                CompleteQuest()
+            end
+        elseif (event == "QUEST_COMPLETE") then
+            local rewards = GetNumQuestChoices()
+            if (not rewards or rewards == 0) then
+                GetQuestReward()
+            else
+                --choose a quest reward
+                questRewardID = {}
+                for i = 1, rewards do
+                    local itemLink = GetQuestItemLink("choice", i)
+                    if (not itemLink) then AutoGearPrint("AutoGear: No item link received from the server.", 0) end
+                    local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+                    questRewardID[i] = id
+                end
+                local choice = AutoGearScanBags(nil, nil, questRewardID)
+                GetQuestReward(choice)
+            end
+        end
+    end
+
+    if (AutoGearDB.AutoAcceptPartyInvitations) then
+        if (event == "PARTY_INVITE_REQUEST") then
+            AutoGearPrint("AutoGear: Automatically accepting party invite.", 1)
+            AcceptGroup()
+            AutoGearFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        elseif (event == "GROUP_ROSTER_UPDATE") then --for closing the invite window once I have joined the group
+            StaticPopup_Hide("PARTY_INVITE")
+            AutoGearFrame:UnregisterEvent("GROUP_ROSTER_UPDATE")
+        end
+    end
+
+    if (event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player") then
+		--make sure this doesn't happen as part of logon
+        if (dataAvailable ~= nil) then
+            --AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
+            AutoGearPrint("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.", 2)
+            AutoGearScanBags()
+        end
+    elseif (event == "START_LOOT_ROLL") then
+        AutoGearSetStatWeights()
+        if (weighting) then
+            local roll = nil
+            reason = "(no reason set)"
+            link = GetLootRollItemLink(arg1)
+            local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+			local wouldNeed = AutoGearScanBags(lootRollItemID, arg1)
+            local rollItemInfo = ReadItemInfo(nil, arg1)
+            local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
+			if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
+				AutoGearPrint("AutoGear: This loot is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
+				--local roll is nil, so no roll
+            elseif (wouldNeed and canNeed) then
+				roll = 1 --need
+			else
+				roll = 2 --greed
+				if (wouldNeed and not canNeed) then
+					AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for this item.", 1)
+				end
+			end
+            if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: This item cannot be worn.  "..reason, 1) end
+            if (roll) then
+                local newAction = {}
+                newAction.action = "roll"
+                newAction.t = GetTime() --roll right away
+                newAction.rollID = arg1
+                newAction.rollType = roll
+                newAction.info = rollItemInfo
+                table.insert(futureAction, newAction)
+            end
+        else
+            AutoGearPrint("AutoGear: No weighting set for this class.", 0)
+        end
+    elseif (event == "CONFIRM_LOOT_ROLL") then
+        ConfirmLootRoll(arg1, arg2)
+    elseif (event == "CONFIRM_DISENCHANT_ROLL") then
+        ConfirmLootRoll(arg1, arg2)
+    elseif (event == "ITEM_PUSH") then
+        --AutoGearPrint("AutoGear: Received an item.  Checking for gear upgrades.")
+        --make sure a fishing pole isn't replaced while fishing
+        if (GetMainHandType() ~= "Fishing Pole") then
+            --check if there's already a scan action in queue
+            local scanFound = nil
+            for i, curAction in ipairs(futureAction) do
+                if (curAction.action == "scan") then
+                    --push the time ahead until all the items have arrived
+                    curAction.t = GetTime() + 1.0
+                    scanFound = 1
+                end
+            end
+            if (not scanFound) then
+                --no scan found, so create a new one
+                local newAction = {}
+                newAction.action = "scan"
+                --give the item some time to arrive
+                newAction.t = GetTime() + 0.5
+                table.insert(futureAction, newAction)
+            end
+        end
+    elseif (event == "EQUIP_BIND_CONFIRM") then
+		if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
+    elseif (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
+        if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
+    elseif (event == "MERCHANT_SHOW") then
+		if (AutoGearDB.AutoSellGreys == true) then
+			-- sell all grey items
+			local soldSomething = nil
+			local totalSellValue = 0
+			for i = 0, NUM_BAG_SLOTS do
+				slotMax = GetContainerNumSlots(i)
+				for j = 0, slotMax do
+					_, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
+					if (link) then
+						local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
+						if (string.find(link,"|cff9d9d9d") and not locked and not IsQuestItem(i,j)) then
+							totalSellValue = totalSellValue + select(11, GetItemInfo(link)) * count
+							PickupContainerItem(i, j)
+							PickupMerchantItem()
+							soldSomething = 1
+						end
+					end
+				end
+			end
+			if (soldSomething) then
+				AutoGearPrint("AutoGear: Sold all grey items for "..CashToString(totalSellValue)..".", 1)
+			end
+		end
+		if (AutoGearDB.AutoRepair == true) then
+			-- repair all gear
+			local cashString = CashToString(GetRepairAllCost())
+			if (not IsClassic) then
+				if (GetRepairAllCost() > 0) then
+					if (CanGuildBankRepair()) then
+						RepairAllItems(1) --guild repair
+						--fix this.  it doesn't see 0 yet, even if it repaired
+						if (GetRepairAllCost() == 0) then
+							AutoGearPrint("AutoGear: Repaired all items for "..cashString.." using guild funds.", 1)
+						end
+					end
+				end
+			end
+			if (GetRepairAllCost() > 0) then
+				if (GetRepairAllCost() <= GetMoney()) then
+					AutoGearPrint("AutoGear: Repaired all items for "..cashString..".", 1)
+					RepairAllItems()
+				elseif (GetRepairAllCost() > GetMoney()) then
+					AutoGearPrint("AutoGear: Not enough money to repair all items ("..cashString..").", 0)
+				end
+			end
+		end
+    elseif (event == "GET_ITEM_INFO_RECEIVED") then
+        dataAvailable = 1
+        AutoGearFrame:UnregisterEvent(event)
+    elseif (event ~= "ADDON_LOADED") then
+        AutoGearPrint("AutoGear: event fired: "..event, 3)
+    end
+end)
 
 -- from Attrition addon
 function CashToString(cash)
@@ -2465,7 +2551,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 		reason = "(info.Slot was nil)"
 	end
 
-	if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
+	--if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
 	info.reason = reason
 	return info
 end
@@ -2560,45 +2646,6 @@ function GetAllBagsNumFreeSlots()
         end
     end
     return slotCount
-end
-
--- We run the IsClassic check before function definition to prevent poorer performance
-if (IsClassic) then
-	function AutoGearGetSpec()
-		-- GetSpecialization() doesn't exist on Classic.
-		-- Instead, this finds the talent tree where the most points are allocated.
-		local highestSpec = nil
-		local highestPointsSpent = nil
-		for i = 1, GetNumTalentTabs() do
-			local spec, _, pointsSpent = GetTalentTabInfo(i)
-			if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
-				highestPointsSpent = pointsSpent
-				highestSpec = spec
-			end
-		end
-		if (highestPointsSpent == 0) then
-			return "None"
-		end
-
-		-- If they're feral, determine if they're a tank and call it Guardian.
-		if (highestSpec == "Feral") then
-			local tankiness = 0
-			tankiness = tankiness + select(5, GetTalentInfo(2, 3)) * 1.0 --Feral Instinct
-			tankiness = tankiness + select(5, GetTalentInfo(2, 7)) * 5 --Feral Charge
-			tankiness = tankiness + select(5, GetTalentInfo(2, 5)) * 0.5 --Thick Hide
-			tankiness = tankiness + select(5, GetTalentInfo(2, 9)) * -100 --Improved Shred
-			tankiness = tankiness + select(5, GetTalentInfo(2, 12)) * 100 --Primal Fury
-			if (tankiness >= 5) then return "Guardian" end
-		end
-
-		return highestSpec
-	end
-else
-	function AutoGearGetSpec()
-		local currentSpec = GetSpecialization()
-		local currentSpecName = currentSpec and select(2, GetSpecializationInfo(currentSpec)) or "None"
-		return currentSpecName
-	end
 end
 
 function PutItemInEmptyBagSlot()
