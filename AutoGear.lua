@@ -1710,6 +1710,8 @@ SlashCmdList["AutoGear"] = function(msg)
         AutoGearPrint("AutoGear: Looks like you are "..AutoGearGetSpec().."."..((AutoGearDB.UsePawn or AutoGearDB.Override) and ("  However, AutoGear is using "..(AutoGearDB.UsePawn and "Pawn" or "\""..AutoGearDB.OverrideSpec.."\"").." for gear evaluation due to the \""..(AutoGearDB.UsePawn and "use Pawn to evaluate upgrades" or "override specialization").."\" option.") or ""), 0)
     elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
         SetAllowedVerbosity(param2)
+    elseif (param1 == "setspec") then
+        AutoGearDB.OverrideSpec = param2.." "..param3
     elseif (param1 == "") then
         InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 	else
@@ -2574,8 +2576,16 @@ end
 function AutoGearGetPawnScaleName()
 	local _, _, ClassID = UnitClass("player")
 
-	local spec = AutoGearGetSpec()
+	-- Get spec inc overeide if enabled
+	local class, spec = AutoGearGetClassAndSpec()
 
+	-- Try to find the exact match for spec name in Pawn
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if spec == ScaleName then
+			return ScaleName
+		end
+	end
+	
 	-- Try to find the matching class
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if PawnIsScaleVisible(ScaleName) and Scale.ClassID == ClassID and Scale.Provider ~= nil then
