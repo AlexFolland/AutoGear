@@ -293,9 +293,9 @@ if (IsClassic) then
 				DPS = 0.8
 			},
 			["Restoration"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1.2,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
+				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
@@ -1709,10 +1709,7 @@ SlashCmdList["AutoGear"] = function(msg)
     elseif (param1 == "spec") then
         AutoGearPrint("AutoGear: Looks like you are "..AutoGearGetSpec().."."..((AutoGearDB.UsePawn or AutoGearDB.Override) and ("  However, AutoGear is using "..(AutoGearDB.UsePawn and "Pawn" or "\""..AutoGearDB.OverrideSpec.."\"").." for gear evaluation due to the \""..(AutoGearDB.UsePawn and "use Pawn to evaluate upgrades" or "override specialization").."\" option.") or ""), 0)
     elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
-		SetAllowedVerbosity(param2)
-	elseif (param1 == "setspec") then
-		AutoGearDB.OverrideSpec = param2.." "..param3
-		AutoGearPrint("AutoGear: Override spec set to "..AutoGearDB.OverrideSpec)
+        SetAllowedVerbosity(param2)
     elseif (param1 == "") then
         InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 	else
@@ -2577,14 +2574,7 @@ end
 function AutoGearGetPawnScaleName()
 	local _, _, ClassID = UnitClass("player")
 
-	local class, spec = AutoGearGetClassAndSpec()
-
-	-- Try to find the exact match
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if spec == ScaleName then
-			return ScaleName
-		end
-	end
+	local spec = AutoGearGetSpec()
 
 	-- Try to find the matching class
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
@@ -2604,7 +2594,6 @@ function AutoGearGetPawnScaleName()
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		return ScaleName
 	end
-
 end
 
 function GetWeaponType()
