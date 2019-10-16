@@ -42,35 +42,35 @@ local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
 
 --initialize missing saved variables with default values
 function InitializeAutoGearDB(defaults, reset)
-    if AutoGearDB == nil or reset ~= nil then AutoGearDB = {} end
-    for k,v in pairs(defaults) do
-        if AutoGearDB[k] == nil then
-            AutoGearDB[k] = defaults[k]
-        end
-    end
+	if AutoGearDB == nil or reset ~= nil then AutoGearDB = {} end
+	for k,v in pairs(defaults) do
+		if AutoGearDB[k] == nil then
+			AutoGearDB[k] = defaults[k]
+		end
+	end
 end
 
 --printing function to check allowed verbosity level
 function AutoGearPrint(text, verbosity)
-    if verbosity == nil then verbosity = 0 end
-    if (AutoGearDB.AllowedVerbosity == nil) or (verbosity <= AutoGearDB.AllowedVerbosity) then
-        print(text)
-    end
+	if verbosity == nil then verbosity = 0 end
+	if (AutoGearDB.AllowedVerbosity == nil) or (verbosity <= AutoGearDB.AllowedVerbosity) then
+		print(text)
+	end
 end
 
 --names of verbosity levels
 local function GetAllowedVerbosityName(allowedverbosity)
-    if allowedverbosity == 0 then
-        return "errors"
-    elseif allowedverbosity == 1 then
-        return "info"
-    elseif allowedverbosity == 2 then
-        return "details"
-    elseif allowedverbosity == 3 then
-    	return "debug"
-    else
-        return "funky"
-    end
+	if allowedverbosity == 0 then
+		return "errors"
+	elseif allowedverbosity == 1 then
+		return "info"
+	elseif allowedverbosity == 2 then
+		return "details"
+	elseif allowedverbosity == 3 then
+		return "debug"
+	else
+		return "funky"
+	end
 end
 
 -- We run the IsClassic check before function definition to prevent poorer performance
@@ -153,12 +153,12 @@ AutoGearFrame = CreateFrame("Frame", nil, UIParent)
 AutoGearFrame:SetWidth(1); AutoGearFrame:SetHeight(1)
 AutoGearFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
 AutoGearFrame:SetScript("OnUpdate", function()
-    AutoGearMain()
+	AutoGearMain()
 end)
 
 -- supported stats are:
 --[[
-    weighting = {
+	weighting = {
 		Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
 		Armor = 0, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 		SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
@@ -1346,7 +1346,7 @@ function AutoGearGetClassAndSpec()
 end
 
 function AutoGearSetStatWeights()
-    local class, spec = AutoGearGetClassAndSpec()
+	local class, spec = AutoGearGetClassAndSpec()
 	weighting = AutoGearDefaultWeights[class][spec] or nil
 	weapons = weighting.weapons or "any"
 	AutoGearPrint("AutoGear: Stat weights set for \""..class..": "..spec.."\". Weapons: "..weapons, 3)
@@ -1540,7 +1540,7 @@ InterfaceOptions_AddCategory(optionsMenu)
 optionsMenu:RegisterEvent("PLAYER_ENTERING_WORLD")
 optionsMenu:RegisterEvent("ADDON_LOADED")
 optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
-    if event == "PLAYER_ENTERING_WORLD" then
+	if event == "PLAYER_ENTERING_WORLD" then
 
 		--fill class lists for lookups later
 		AutoGearClassList = {}
@@ -1701,31 +1701,31 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 		end
 		OptionsSetup(optionsMenu)
 
-        optionsMenu:UnregisterAllEvents()
-        optionsMenu:SetScript("OnEvent", nil)
-    end
+		optionsMenu:UnregisterAllEvents()
+		optionsMenu:SetScript("OnEvent", nil)
+	end
 end)
 
 _G["SLASH_AutoGear1"] = "/AutoGear"
 _G["SLASH_AutoGear2"] = "/autogear"
 _G["SLASH_AutoGear3"] = "/ag"
 SlashCmdList["AutoGear"] = function(msg)
-    param1, param2, param3, param4, param5 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
-    if (not param1) then param1 = "" end
-    if (not param2) then param2 = "" end
-    if (not param3) then param3 = "" end
+	param1, param2, param3, param4, param5 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
+	if (not param1) then param1 = "" end
+	if (not param2) then param2 = "" end
+	if (not param3) then param3 = "" end
 	if (not param4) then param4 = "" end
 	if (not param5) then param5 = "" end
-    if (param1 == "enable" or param1 == "on" or param1 == "start") then
-    	AutoGearToggleEnabled(true)
-    elseif (param1 == "disable" or param1 == "off" or param1 == "stop") then
-    	AutoGearToggleEnabled(false)
-    elseif (param1 == "scan") then
-        AutoGearScan()
-    elseif (param1 == "spec") then
-        AutoGearPrint("AutoGear: Looks like you are "..AutoGearGetSpec().."."..((AutoGearDB.UsePawn or AutoGearDB.Override) and ("  However, AutoGear is using "..(AutoGearDB.UsePawn and "Pawn" or "\""..AutoGearDB.OverrideSpec.."\"").." for gear evaluation due to the \""..(AutoGearDB.UsePawn and "use Pawn to evaluate upgrades" or "override specialization").."\" option.") or ""), 0)
-    elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
-        SetAllowedVerbosity(param2)
+	if (param1 == "enable" or param1 == "on" or param1 == "start") then
+		AutoGearToggleEnabled(true)
+	elseif (param1 == "disable" or param1 == "off" or param1 == "stop") then
+		AutoGearToggleEnabled(false)
+	elseif (param1 == "scan") then
+		AutoGearScan()
+	elseif (param1 == "spec") then
+		AutoGearPrint("AutoGear: Looks like you are "..AutoGearGetSpec().."."..((AutoGearDB.UsePawn or AutoGearDB.Override) and ("  However, AutoGear is using "..(AutoGearDB.UsePawn and "Pawn" or "\""..AutoGearDB.OverrideSpec.."\"").." for gear evaluation due to the \""..(AutoGearDB.UsePawn and "use Pawn to evaluate upgrades" or "override specialization").."\" option.") or ""), 0)
+	elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
+		SetAllowedVerbosity(param2)
 	elseif ((param1 == "setspec") or
 	(param1 == "overridespec") or
 	(param1 == "overridespecialization") or
@@ -1749,11 +1749,11 @@ SlashCmdList["AutoGear"] = function(msg)
 		else
 			AutoGearPrint("AutoGear: Unrecognized command. Usage: \"/ag overridespec [class]: [spec]\" (example: \"/ag overridespec Paladin: Protection\")",0)
 		end
-    elseif (param1 == "") then
-        InterfaceOptionsFrame_OpenToCategory(optionsMenu)
+	elseif (param1 == "") then
+		InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 	else
 		shouldPrintHelp = true
-    end
+	end
 end
 
 function AutoGearPrintHelp()
@@ -1779,19 +1779,19 @@ function AutoGearPrintHelp()
 end
 
 function SetAllowedVerbosity(allowedverbosity)
-    allowedverbosity = tonumber(allowedverbosity)
-    if type(allowedverbosity) ~= "number" then
-        AutoGearPrint("AutoGear: The current allowed verbosity level is "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity).."). Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
-        return
-    end
+	allowedverbosity = tonumber(allowedverbosity)
+	if type(allowedverbosity) ~= "number" then
+		AutoGearPrint("AutoGear: The current allowed verbosity level is "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity).."). Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
+		return
+	end
 
-    if allowedverbosity < 0 or allowedverbosity > 3 then
-        AutoGearPrint("AutoGear: That is an invalid allowed verbosity level. Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
-        return
-    else
-        AutoGearDB.AllowedVerbosity = allowedverbosity
-        AutoGearPrint("AutoGear: Allowed verbosity level is now: "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity)..").", 0)
-    end
+	if allowedverbosity < 0 or allowedverbosity > 3 then
+		AutoGearPrint("AutoGear: That is an invalid allowed verbosity level. Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
+		return
+	else
+		AutoGearDB.AllowedVerbosity = allowedverbosity
+		AutoGearPrint("AutoGear: Allowed verbosity level is now: "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity)..").", 0)
+	end
 end
 
 if (not IsClassic) then 
@@ -1827,43 +1827,43 @@ AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the pla
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
-    --AutoGearPrint("AutoGear: "..event..(arg1 and " "..tostring(arg1) or "")..(arg2 and " "..tostring(arg2) or "")..(arg3 and " "..tostring(arg3) or "")..(arg4 and " "..tostring(arg4) or ""), 0)
+	--AutoGearPrint("AutoGear: "..event..(arg1 and " "..tostring(arg1) or "")..(arg2 and " "..tostring(arg2) or "")..(arg3 and " "..tostring(arg3) or "")..(arg4 and " "..tostring(arg4) or ""), 0)
 
-    if (AutoGearDB.AutoAcceptQuests) then
-        if (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
-            ConfirmAcceptQuest()
-        elseif (event == "QUEST_DETAIL") then
-            QuestDetailAcceptButton_OnClick()
-        elseif (event == "GOSSIP_SHOW") then
-            --active quests
-            local quests = GetNumGossipActiveQuests()
-            local info = {GetGossipActiveQuests()}
-            for i = 1, quests do
-                local name, level, isTrivial, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5]
-                if (isComplete) then
-                    SelectGossipActiveQuest(i)
-                end
-            end
-            --available quests
-            quests = GetNumGossipAvailableQuests()
-            info = {GetGossipAvailableQuests()}
-            for i = 1, quests do
-                local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
-                if (not isTrivial) then
-                    SelectGossipAvailableQuest(i)
-                end
-            end
-        elseif (event == "QUEST_GREETING") then
-            --active quests
-            local quests = GetNumActiveQuests()
-            for i = 1, quests do
-                local title, isComplete = GetActiveTitle(i)
-                if (isComplete) then
-                    SelectActiveQuest(i)
-                end
-            end
-            --available quests
-            quests = GetNumAvailableQuests()
+	if (AutoGearDB.AutoAcceptQuests) then
+		if (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
+			ConfirmAcceptQuest()
+		elseif (event == "QUEST_DETAIL") then
+			QuestDetailAcceptButton_OnClick()
+		elseif (event == "GOSSIP_SHOW") then
+			--active quests
+			local quests = GetNumGossipActiveQuests()
+			local info = {GetGossipActiveQuests()}
+			for i = 1, quests do
+				local name, level, isTrivial, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5]
+				if (isComplete) then
+					SelectGossipActiveQuest(i)
+				end
+			end
+			--available quests
+			quests = GetNumGossipAvailableQuests()
+			info = {GetGossipAvailableQuests()}
+			for i = 1, quests do
+				local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
+				if (not isTrivial) then
+					SelectGossipAvailableQuest(i)
+				end
+			end
+		elseif (event == "QUEST_GREETING") then
+			--active quests
+			local quests = GetNumActiveQuests()
+			for i = 1, quests do
+				local title, isComplete = GetActiveTitle(i)
+				if (isComplete) then
+					SelectActiveQuest(i)
+				end
+			end
+			--available quests
+			quests = GetNumAvailableQuests()
 			if (not IsClassic) then 
 				for i = 1, quests do
 					local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
@@ -1876,61 +1876,61 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					SelectAvailableQuest(i)
 				end
 			end
-        elseif (event == "QUEST_PROGRESS") then
-            if (IsQuestCompletable()) then
-                CompleteQuest()
-            end
-        elseif (event == "QUEST_COMPLETE") then
-            local rewards = GetNumQuestChoices()
-            if (not rewards or rewards == 0) then
-                GetQuestReward()
-            else
-                --choose a quest reward
-                questRewardID = {}
-                for i = 1, rewards do
-                    local itemLink = GetQuestItemLink("choice", i)
-                    if (not itemLink) then AutoGearPrint("AutoGear: No item link received from the server.", 0) end
-                    local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-                    questRewardID[i] = id
-                end
-                local choice = AutoGearScanBags(nil, nil, questRewardID)
-                GetQuestReward(choice)
-            end
-        end
-    end
+		elseif (event == "QUEST_PROGRESS") then
+			if (IsQuestCompletable()) then
+				CompleteQuest()
+			end
+		elseif (event == "QUEST_COMPLETE") then
+			local rewards = GetNumQuestChoices()
+			if (not rewards or rewards == 0) then
+				GetQuestReward()
+			else
+				--choose a quest reward
+				questRewardID = {}
+				for i = 1, rewards do
+					local itemLink = GetQuestItemLink("choice", i)
+					if (not itemLink) then AutoGearPrint("AutoGear: No item link received from the server.", 0) end
+					local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+					questRewardID[i] = id
+				end
+				local choice = AutoGearScanBags(nil, nil, questRewardID)
+				GetQuestReward(choice)
+			end
+		end
+	end
 
-    if (AutoGearDB.AutoAcceptPartyInvitations) then
-        if (event == "PARTY_INVITE_REQUEST") then
-            AutoGearPrint("AutoGear: Automatically accepting party invite.", 1)
-            AcceptGroup()
-            AutoGearFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
-        elseif (event == "GROUP_ROSTER_UPDATE") then --for closing the invite window once I have joined the group
-            StaticPopup_Hide("PARTY_INVITE")
-            AutoGearFrame:UnregisterEvent("GROUP_ROSTER_UPDATE")
-        end
-    end
+	if (AutoGearDB.AutoAcceptPartyInvitations) then
+		if (event == "PARTY_INVITE_REQUEST") then
+			AutoGearPrint("AutoGear: Automatically accepting party invite.", 1)
+			AcceptGroup()
+			AutoGearFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+		elseif (event == "GROUP_ROSTER_UPDATE") then --for closing the invite window once I have joined the group
+			StaticPopup_Hide("PARTY_INVITE")
+			AutoGearFrame:UnregisterEvent("GROUP_ROSTER_UPDATE")
+		end
+	end
 
-    if (event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player") then
+	if (event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player") then
 		--make sure this doesn't happen as part of logon
-        if (dataAvailable ~= nil) then
-            --AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
-            AutoGearPrint("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.", 2)
-            AutoGearScanBags()
-        end
-    elseif (event == "START_LOOT_ROLL") then
-        AutoGearSetStatWeights()
-        if (weighting) then
-            local roll = nil
-            reason = "(no reason set)"
-            link = GetLootRollItemLink(arg1)
-            local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+		if (dataAvailable ~= nil) then
+			--AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
+			AutoGearPrint("AutoGear: Talent specialization changed.  Scanning bags for gear that's better suited for this spec.", 2)
+			AutoGearScanBags()
+		end
+	elseif (event == "START_LOOT_ROLL") then
+		AutoGearSetStatWeights()
+		if (weighting) then
+			local roll = nil
+			reason = "(no reason set)"
+			link = GetLootRollItemLink(arg1)
+			local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
 			local wouldNeed = AutoGearScanBags(lootRollItemID, arg1)
-            local rollItemInfo = ReadItemInfo(nil, arg1)
-            local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
+			local rollItemInfo = ReadItemInfo(nil, arg1)
+			local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
 			if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
 				AutoGearPrint("AutoGear: This loot is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 				--local roll is nil, so no roll
-            elseif (wouldNeed and canNeed) then
+			elseif (wouldNeed and canNeed) then
 				roll = 1 --need
 			else
 				roll = 2 --greed
@@ -1938,50 +1938,50 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for this item.", 1)
 				end
 			end
-            if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: This item cannot be worn.  "..reason, 1) end
-            if (roll) then
-                local newAction = {}
-                newAction.action = "roll"
-                newAction.t = GetTime() --roll right away
-                newAction.rollID = arg1
-                newAction.rollType = roll
-                newAction.info = rollItemInfo
-                table.insert(futureAction, newAction)
-            end
-        else
-            AutoGearPrint("AutoGear: No weighting set for this class.", 0)
-        end
-    elseif (event == "CONFIRM_LOOT_ROLL") then
-        ConfirmLootRoll(arg1, arg2)
-    elseif (event == "CONFIRM_DISENCHANT_ROLL") then
-        ConfirmLootRoll(arg1, arg2)
-    elseif (event == "ITEM_PUSH") then
-        --AutoGearPrint("AutoGear: Received an item.  Checking for gear upgrades.")
-        --make sure a fishing pole isn't replaced while fishing
-        if (GetMainHandType() ~= "Fishing Pole") then
-            --check if there's already a scan action in queue
-            local scanFound = nil
-            for i, curAction in ipairs(futureAction) do
-                if (curAction.action == "scan") then
-                    --push the time ahead until all the items have arrived
-                    curAction.t = GetTime() + 1.0
-                    scanFound = 1
-                end
-            end
-            if (not scanFound) then
-                --no scan found, so create a new one
-                local newAction = {}
-                newAction.action = "scan"
-                --give the item some time to arrive
-                newAction.t = GetTime() + 0.5
-                table.insert(futureAction, newAction)
-            end
-        end
-    elseif (event == "EQUIP_BIND_CONFIRM") then
+			if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: This item cannot be worn.  "..reason, 1) end
+			if (roll) then
+				local newAction = {}
+				newAction.action = "roll"
+				newAction.t = GetTime() --roll right away
+				newAction.rollID = arg1
+				newAction.rollType = roll
+				newAction.info = rollItemInfo
+				table.insert(futureAction, newAction)
+			end
+		else
+			AutoGearPrint("AutoGear: No weighting set for this class.", 0)
+		end
+	elseif (event == "CONFIRM_LOOT_ROLL") then
+		ConfirmLootRoll(arg1, arg2)
+	elseif (event == "CONFIRM_DISENCHANT_ROLL") then
+		ConfirmLootRoll(arg1, arg2)
+	elseif (event == "ITEM_PUSH") then
+		--AutoGearPrint("AutoGear: Received an item.  Checking for gear upgrades.")
+		--make sure a fishing pole isn't replaced while fishing
+		if (GetMainHandType() ~= "Fishing Pole") then
+			--check if there's already a scan action in queue
+			local scanFound = nil
+			for i, curAction in ipairs(futureAction) do
+				if (curAction.action == "scan") then
+					--push the time ahead until all the items have arrived
+					curAction.t = GetTime() + 1.0
+					scanFound = 1
+				end
+			end
+			if (not scanFound) then
+				--no scan found, so create a new one
+				local newAction = {}
+				newAction.action = "scan"
+				--give the item some time to arrive
+				newAction.t = GetTime() + 0.5
+				table.insert(futureAction, newAction)
+			end
+		end
+	elseif (event == "EQUIP_BIND_CONFIRM") then
 		if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
-    elseif (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
-        if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
-    elseif (event == "MERCHANT_SHOW") then
+	elseif (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
+		if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
+	elseif (event == "MERCHANT_SHOW") then
 		if (AutoGearDB.AutoSellGreys == true) then
 			-- sell all grey items
 			local soldSomething = nil
@@ -2028,317 +2028,317 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 		end
-    elseif (event == "GET_ITEM_INFO_RECEIVED") then
-        dataAvailable = 1
-        AutoGearFrame:UnregisterEvent(event)
-    elseif (event ~= "ADDON_LOADED") then
-        AutoGearPrint("AutoGear: event fired: "..event, 3)
-    end
+	elseif (event == "GET_ITEM_INFO_RECEIVED") then
+		dataAvailable = 1
+		AutoGearFrame:UnregisterEvent(event)
+	elseif (event ~= "ADDON_LOADED") then
+		AutoGearPrint("AutoGear: event fired: "..event, 3)
+	end
 end)
 
 -- from Attrition addon
 function CashToString(cash)
-    if not cash then return "" end
+	if not cash then return "" end
 
-    local gold   = floor(cash / (100 * 100))
-    local silver = math.fmod(floor(cash / 100), 100)
-    local copper = math.fmod(floor(cash), 100)
-    gold         = gold   > 0 and "|cffeeeeee"..gold  .."|r|cffffd700g|r" or ""
-    silver       = silver > 0 and "|cffeeeeee"..silver.."|r|cffc7c7cfs|r" or ""
-    copper       = copper > 0 and "|cffeeeeee"..copper.."|r|cffeda55fc|r" or ""
-    copper       = (silver ~= "" and copper ~= "") and " "..copper or copper
-    silver       = (gold   ~= "" and silver ~= "") and " "..silver or silver
+	local gold   = floor(cash / (100 * 100))
+	local silver = math.fmod(floor(cash / 100), 100)
+	local copper = math.fmod(floor(cash), 100)
+	gold         = gold   > 0 and "|cffeeeeee"..gold  .."|r|cffffd700g|r" or ""
+	silver       = silver > 0 and "|cffeeeeee"..silver.."|r|cffc7c7cfs|r" or ""
+	copper       = copper > 0 and "|cffeeeeee"..copper.."|r|cffeda55fc|r" or ""
+	copper       = (silver ~= "" and copper ~= "") and " "..copper or copper
+	silver       = (gold   ~= "" and silver ~= "") and " "..silver or silver
 
-    return gold..silver..copper
+	return gold..silver..copper
 end
 
 function IsQuestItem(container, slot)
-    return ItemContainsText(container, slot, "Quest Item")
+	return ItemContainsText(container, slot, "Quest Item")
 end
 
 function ItemContainsText(container, slot, search)
-    AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE");
-    AutoGearTooltip:ClearLines()
-    AutoGearTooltip:SetBagItem(container, slot)
-    for i=1, AutoGearTooltip:NumLines() do
-        local mytext = getglobal("AutoGearTooltipTextLeft" .. i)
-        if (mytext) then
-            local text = mytext:GetText()
-            if (text == search) then
-                return 1
-            end
-        end
-    end
-    return nil
+	AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE");
+	AutoGearTooltip:ClearLines()
+	AutoGearTooltip:SetBagItem(container, slot)
+	for i=1, AutoGearTooltip:NumLines() do
+		local mytext = getglobal("AutoGearTooltipTextLeft" .. i)
+		if (mytext) then
+			local text = mytext:GetText()
+			if (text == search) then
+				return 1
+			end
+		end
+	end
+	return nil
 end
 
 function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
-    AutoGearSetStatWeights()
-    if (not weighting) then
-        return nil
-    end
-    local anythingBetter = nil
-    --create the table for best items
-    best = {}
-    local info, score, i, bag, slot
-    --look at all equipped items and set starting best scores
-    for i = 1, 18 do
-        info = ReadItemInfo(i)
-        score = DetermineItemScore(info, weighting)
-        best[i] = {}
-        best[i].info = info
-        best[i].score = score
-        best[i].equippedScore = score
-        best[i].equipped = 1
-    end
-    --pretend slot 19 is a separate slot for 2-handers
-    best[19] = {}
-    if (IsTwoHandEquipped() and spec ~= "Fury") then
-        best[19].info = best[16].info
-        best[19].score = best[16].score
-        best[19].equippedScore = best[16].equippedScore
-        best[19].equipped = 1
-        best[16].info = {Name = "nothing"}
-        best[16].score = 0
-        best[16].equipped = nil
-    else
-        best[19].info = {Name = "nothing"}
-        best[19].score = 0
-        best[19].equippedScore = best[16].equippedScore + best[17].equippedScore
-        best[19].equipped = nil
-    end
-    --look at all items in bags
-    for bag = 0, NUM_BAG_SLOTS do
-        local slotMax = GetContainerNumSlots(bag)
-        for slot = 0, slotMax do
-            local _,_,_,_,_,_, link = GetContainerItemInfo(bag, slot)
-            if (link) then
-                info = ReadItemInfo(nil, nil, bag, slot)
-                LookAtItem(best, info, bag, slot, nil, GetContainerItemID(bag, slot))
-            end
-        end
-    end
-    --look at item being rolled on (if any)
-    if (lootRollItemID) then
-        info = ReadItemInfo(nil, lootRollID)
-        LookAtItem(best, info, nil, nil, 1, lootRollItemID)
-    end
-    --look at quest rewards (if any)
-    if (questRewardID) then
-        for i = 1, GetNumQuestChoices() do
-            info = ReadItemInfo(nil, nil, nil, nil, i)
-            LookAtItem(best, info, nil, nil, nil, questRewardID[i], i)
-        end
-    end
-    --create all future equip actions required (only if not rolling currently)
-    if (not lootRollItemID and not questRewardID) then
-        for i = 1, 18 do
-            if i == 16 or i == 17 then
-                --skip for now
-            else
-                equippedInfo = ReadItemInfo(i)
-                equippedScore = DetermineItemScore(equippedInfo, weighting)
-                if ((not best[i].equipped) and best[i].score > equippedScore) then
-                    AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-                    PrintItem(best[i].info)
-                    PrintItem(equippedInfo)
-                    anythingBetter = 1
-                    local newAction = {}
-                    newAction.action = "equip"
-                    newAction.t = GetTime()
-                    newAction.container = best[i].bag
-                    newAction.slot = best[i].slot
-                    newAction.replaceSlot = i
-                    newAction.info = best[i].info
-                    table.insert(futureAction, newAction)
-                end
-            end
-        end
-        --handle main and off-hand
-        if (best[16].score + best[17].score > best[19].score) then
-            local extraDelay = 0
-            local mainSwap, offSwap
-            --main hand
-            if (not best[16].equipped and best[16].info.Name ~= "nothing") then
-                mainSwap = 1
-                local newAction = {}
-                newAction.action = "equip"
-                newAction.t = GetTime()
-                newAction.container = best[16].bag
-                newAction.slot = best[16].slot
-                newAction.replaceSlot = 16
-                newAction.info = best[16].info
-                table.insert(futureAction, newAction)
-                extraDelay = 0.5
-            end
-            --off-hand
-            if (not best[17].equipped) then
-                offSwap = 1
-                local newAction = {}
-                newAction.action = "equip"
-                newAction.t = GetTime() + extraDelay --do it after a longer delay
-                newAction.container = best[17].bag
-                newAction.slot = best[17].slot
-                newAction.replaceSlot = 17
-                newAction.info = best[17].info
-                table.insert(futureAction, newAction)
-            end
-            if (mainSwap or offSwap) then
-                anythingBetter = 1
-                if (mainSwap and offSwap) then
-                    if (IsTwoHandEquipped()) then
-                        local equippedMain = ReadItemInfo(16)
-                        local mainScore = DetermineItemScore(equippedMain, weighting)
-                        AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-                        PrintItem(best[16].info)
-                        PrintItem(best[17].info)
-                        PrintItem(equippedMain)
-                    else
-                        local equippedMain = ReadItemInfo(16)
-                        local mainScore = DetermineItemScore(equippedMain, weighting)
-                        local equippedOff = ReadItemInfo(17)
-                        local offScore = DetermineItemScore(equippedOff, weighting)
-                        AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-                        PrintItem(best[16].info)
-                        PrintItem(best[17].info)
-                        PrintItem(equippedMain)
-                        PrintItem(equippedOff)
-                    end
-                else
-                    local i = 16
-                    if (offSwap) then i = 17 end
-                    local equippedInfo = ReadItemInfo(i)
-                    local equippedScore = DetermineItemScore(equippedInfo, weighting)
-                    AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-                    PrintItem(best[i].info)
-                    PrintItem(equippedInfo)
-                end
-            end
-        elseif (best[19].score > best[16].score + best[17].score) then
-            if (not best[19].equipped) then
-                local equippedMain = ReadItemInfo(16)
-                local mainScore = DetermineItemScore(equippedMain, weighting)
-                local equippedOff = ReadItemInfo(17)
-                local offScore = DetermineItemScore(equippedOff, weighting)
-                AutoGearPrint("AutoGear: "..(best[19].info.Name or "nothing").." ("..string.format("%.2f", best[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-                PrintItem(best[19].info)
-                PrintItem(equippedMain)
-                PrintItem(equippedOff)
-                anythingBetter = 1
-                local newAction = {}
-                newAction.action = "equip"
-                newAction.t = GetTime() + 0.5 --do it after a short delay
-                newAction.container = best[19].bag
-                newAction.slot = best[19].slot
-                newAction.replaceSlot = 16
-                newAction.info = best[19].info
-                table.insert(futureAction, newAction)
-            end
-        end
-    elseif (lootRollItemID) then
-        --decide whether to roll on the item or not
-        if info.isMount then return 1 end
-        for i = 1, 19 do
-            if (best[i].rollOn) then
-                return 1
-            end
-        end
-        return nil
-    else
-        --choose a quest reward
-        --pick the reward with the biggest score improvement
-        local bestRewardIndex
-        local bestRewardScoreDelta
-        for i = 1, 19 do
-            if (best[i].chooseReward) then
-                local delta = best[i].score - best[i].equippedScore
-                if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
-                    bestRewardScoreDelta = delta
-                    bestRewardIndex = best[i].chooseReward
-                end
-            end
-        end
-        if (not bestRewardIndex) then
-            --no gear upgrades, so choose the one with the highest sell value
-            local bestRewardVendorPrice
-            for i = 1, GetNumQuestChoices() do
-                local name, link, quality, iLevel, reqLevel, class, subclass, maxStack, equipSlot, texture, vendorPrice = GetItemInfo(questRewardID[i])
-                if (not bestRewardVendorPrice or vendorPrice > bestRewardVendorPrice) then
-                    bestRewardIndex = i
-                    bestRewardVendorPrice = vendorPrice
-                end
-            end
-        end
-        return bestRewardIndex
-    end
-    return anythingBetter
+	AutoGearSetStatWeights()
+	if (not weighting) then
+		return nil
+	end
+	local anythingBetter = nil
+	--create the table for best items
+	best = {}
+	local info, score, i, bag, slot
+	--look at all equipped items and set starting best scores
+	for i = 1, 18 do
+		info = ReadItemInfo(i)
+		score = DetermineItemScore(info, weighting)
+		best[i] = {}
+		best[i].info = info
+		best[i].score = score
+		best[i].equippedScore = score
+		best[i].equipped = 1
+	end
+	--pretend slot 19 is a separate slot for 2-handers
+	best[19] = {}
+	if (IsTwoHandEquipped() and spec ~= "Fury") then
+		best[19].info = best[16].info
+		best[19].score = best[16].score
+		best[19].equippedScore = best[16].equippedScore
+		best[19].equipped = 1
+		best[16].info = {Name = "nothing"}
+		best[16].score = 0
+		best[16].equipped = nil
+	else
+		best[19].info = {Name = "nothing"}
+		best[19].score = 0
+		best[19].equippedScore = best[16].equippedScore + best[17].equippedScore
+		best[19].equipped = nil
+	end
+	--look at all items in bags
+	for bag = 0, NUM_BAG_SLOTS do
+		local slotMax = GetContainerNumSlots(bag)
+		for slot = 0, slotMax do
+			local _,_,_,_,_,_, link = GetContainerItemInfo(bag, slot)
+			if (link) then
+				info = ReadItemInfo(nil, nil, bag, slot)
+				LookAtItem(best, info, bag, slot, nil, GetContainerItemID(bag, slot))
+			end
+		end
+	end
+	--look at item being rolled on (if any)
+	if (lootRollItemID) then
+		info = ReadItemInfo(nil, lootRollID)
+		LookAtItem(best, info, nil, nil, 1, lootRollItemID)
+	end
+	--look at quest rewards (if any)
+	if (questRewardID) then
+		for i = 1, GetNumQuestChoices() do
+			info = ReadItemInfo(nil, nil, nil, nil, i)
+			LookAtItem(best, info, nil, nil, nil, questRewardID[i], i)
+		end
+	end
+	--create all future equip actions required (only if not rolling currently)
+	if (not lootRollItemID and not questRewardID) then
+		for i = 1, 18 do
+			if i == 16 or i == 17 then
+				--skip for now
+			else
+				equippedInfo = ReadItemInfo(i)
+				equippedScore = DetermineItemScore(equippedInfo, weighting)
+				if ((not best[i].equipped) and best[i].score > equippedScore) then
+					AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+					PrintItem(best[i].info)
+					PrintItem(equippedInfo)
+					anythingBetter = 1
+					local newAction = {}
+					newAction.action = "equip"
+					newAction.t = GetTime()
+					newAction.container = best[i].bag
+					newAction.slot = best[i].slot
+					newAction.replaceSlot = i
+					newAction.info = best[i].info
+					table.insert(futureAction, newAction)
+				end
+			end
+		end
+		--handle main and off-hand
+		if (best[16].score + best[17].score > best[19].score) then
+			local extraDelay = 0
+			local mainSwap, offSwap
+			--main hand
+			if (not best[16].equipped and best[16].info.Name ~= "nothing") then
+				mainSwap = 1
+				local newAction = {}
+				newAction.action = "equip"
+				newAction.t = GetTime()
+				newAction.container = best[16].bag
+				newAction.slot = best[16].slot
+				newAction.replaceSlot = 16
+				newAction.info = best[16].info
+				table.insert(futureAction, newAction)
+				extraDelay = 0.5
+			end
+			--off-hand
+			if (not best[17].equipped) then
+				offSwap = 1
+				local newAction = {}
+				newAction.action = "equip"
+				newAction.t = GetTime() + extraDelay --do it after a longer delay
+				newAction.container = best[17].bag
+				newAction.slot = best[17].slot
+				newAction.replaceSlot = 17
+				newAction.info = best[17].info
+				table.insert(futureAction, newAction)
+			end
+			if (mainSwap or offSwap) then
+				anythingBetter = 1
+				if (mainSwap and offSwap) then
+					if (IsTwoHandEquipped()) then
+						local equippedMain = ReadItemInfo(16)
+						local mainScore = DetermineItemScore(equippedMain, weighting)
+						AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						PrintItem(best[16].info)
+						PrintItem(best[17].info)
+						PrintItem(equippedMain)
+					else
+						local equippedMain = ReadItemInfo(16)
+						local mainScore = DetermineItemScore(equippedMain, weighting)
+						local equippedOff = ReadItemInfo(17)
+						local offScore = DetermineItemScore(equippedOff, weighting)
+						AutoGearPrint("AutoGear: "..(best[16].info.Name or "nothing").." ("..string.format("%.2f", best[16].score)..") combined with "..(best[17].info.Name or "nothing").." ("..string.format("%.2f", best[17].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						PrintItem(best[16].info)
+						PrintItem(best[17].info)
+						PrintItem(equippedMain)
+						PrintItem(equippedOff)
+					end
+				else
+					local i = 16
+					if (offSwap) then i = 17 end
+					local equippedInfo = ReadItemInfo(i)
+					local equippedScore = DetermineItemScore(equippedInfo, weighting)
+					AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+					PrintItem(best[i].info)
+					PrintItem(equippedInfo)
+				end
+			end
+		elseif (best[19].score > best[16].score + best[17].score) then
+			if (not best[19].equipped) then
+				local equippedMain = ReadItemInfo(16)
+				local mainScore = DetermineItemScore(equippedMain, weighting)
+				local equippedOff = ReadItemInfo(17)
+				local offScore = DetermineItemScore(equippedOff, weighting)
+				AutoGearPrint("AutoGear: "..(best[19].info.Name or "nothing").." ("..string.format("%.2f", best[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+				PrintItem(best[19].info)
+				PrintItem(equippedMain)
+				PrintItem(equippedOff)
+				anythingBetter = 1
+				local newAction = {}
+				newAction.action = "equip"
+				newAction.t = GetTime() + 0.5 --do it after a short delay
+				newAction.container = best[19].bag
+				newAction.slot = best[19].slot
+				newAction.replaceSlot = 16
+				newAction.info = best[19].info
+				table.insert(futureAction, newAction)
+			end
+		end
+	elseif (lootRollItemID) then
+		--decide whether to roll on the item or not
+		if info.isMount then return 1 end
+		for i = 1, 19 do
+			if (best[i].rollOn) then
+				return 1
+			end
+		end
+		return nil
+	else
+		--choose a quest reward
+		--pick the reward with the biggest score improvement
+		local bestRewardIndex
+		local bestRewardScoreDelta
+		for i = 1, 19 do
+			if (best[i].chooseReward) then
+				local delta = best[i].score - best[i].equippedScore
+				if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
+					bestRewardScoreDelta = delta
+					bestRewardIndex = best[i].chooseReward
+				end
+			end
+		end
+		if (not bestRewardIndex) then
+			--no gear upgrades, so choose the one with the highest sell value
+			local bestRewardVendorPrice
+			for i = 1, GetNumQuestChoices() do
+				local name, link, quality, iLevel, reqLevel, class, subclass, maxStack, equipSlot, texture, vendorPrice = GetItemInfo(questRewardID[i])
+				if (not bestRewardVendorPrice or vendorPrice > bestRewardVendorPrice) then
+					bestRewardIndex = i
+					bestRewardVendorPrice = vendorPrice
+				end
+			end
+		end
+		return bestRewardIndex
+	end
+	return anythingBetter
 end
 
 --companion function to AutoGearScanBags
 function LookAtItem(best, info, bag, slot, rollOn, itemID, chooseReward)
-    local score, i, i2
-    if (info.Usable or (rollOn and info.Within5levels)) then
-        score = DetermineItemScore(info, weighting)
-        if info.Slot then
-            i = GetInventorySlotInfo(info.Slot)
-            if (info.Slot2) then i2 = GetInventorySlotInfo(info.Slot2) end
-            --ignore it if it's a tabard
-            if (i == 19) then return end
-            --compare to the lowest score ring, trinket, or dual wield weapon
-            if (i == 11 and best[12].score < best[11].score) then i = 12 end
-            if (i == 13 and best[14].score < best[13].score) then i = 14 end
-            if (i2 and i == 16 and i2 == 17 and best[17].score < best[16].score) then i = 17 end
-            if (i == 16 and IsItemTwoHanded(itemID)) then i = 19 end
-            if (score > best[i].score) then
-                best[i].info = info
-                best[i].score = score
-                best[i].equipped = nil
-                best[i].bag = bag
-                best[i].slot = slot
-                best[i].rollOn = rollOn
-                best[i].chooseReward = chooseReward
-            end
-        end
-    end
+	local score, i, i2
+	if (info.Usable or (rollOn and info.Within5levels)) then
+		score = DetermineItemScore(info, weighting)
+		if info.Slot then
+			i = GetInventorySlotInfo(info.Slot)
+			if (info.Slot2) then i2 = GetInventorySlotInfo(info.Slot2) end
+			--ignore it if it's a tabard
+			if (i == 19) then return end
+			--compare to the lowest score ring, trinket, or dual wield weapon
+			if (i == 11 and best[12].score < best[11].score) then i = 12 end
+			if (i == 13 and best[14].score < best[13].score) then i = 14 end
+			if (i2 and i == 16 and i2 == 17 and best[17].score < best[16].score) then i = 17 end
+			if (i == 16 and IsItemTwoHanded(itemID)) then i = 19 end
+			if (score > best[i].score) then
+				best[i].info = info
+				best[i].score = score
+				best[i].equipped = nil
+				best[i].bag = bag
+				best[i].slot = slot
+				best[i].rollOn = rollOn
+				best[i].chooseReward = chooseReward
+			end
+		end
+	end
 end
 
 function IsItemTwoHanded(itemID)
-    if (not itemID) then return nil end
-    local mainHandType = select(7, GetItemInfo(itemID))
-    return mainHandType and 
-        (string.find(mainHandType, "Two") or
-        string.find(mainHandType, "Staves") or
-        string.find(mainHandType, "Fishing Pole") or
-        string.find(mainHandType, "Polearms") or
-        string.find(mainHandType, "Guns") or
-        string.find(mainHandType, "Bows") or
-        string.find(mainHandType, "Crossbows"))
+	if (not itemID) then return nil end
+	local mainHandType = select(7, GetItemInfo(itemID))
+	return mainHandType and 
+		(string.find(mainHandType, "Two") or
+		string.find(mainHandType, "Staves") or
+		string.find(mainHandType, "Fishing Pole") or
+		string.find(mainHandType, "Polearms") or
+		string.find(mainHandType, "Guns") or
+		string.find(mainHandType, "Bows") or
+		string.find(mainHandType, "Crossbows"))
 end
 
 function IsTwoHandEquipped()
-    return IsItemTwoHanded(GetInventoryItemID("player", 16)) --16 = main hand
+	return IsItemTwoHanded(GetInventoryItemID("player", 16)) --16 = main hand
 end
 
 function GetMainHandType()
-    local id = GetInventoryItemID("player", GetInventorySlotInfo("MainHandSlot"))
-    local mainHandType, _
-    if (id) then
-        _, _, _, _, _, _, mainHandType = GetItemInfo(id)
-    end
-    if mainHandType then
-        return mainHandType
-    else
-        return ""
-    end
+	local id = GetInventoryItemID("player", GetInventorySlotInfo("MainHandSlot"))
+	local mainHandType, _
+	if (id) then
+		_, _, _, _, _, _, mainHandType = GetItemInfo(id)
+	end
+	if mainHandType then
+		return mainHandType
+	else
+		return ""
+	end
 end
 
 function PrintItem(info)
-    if (info and info.Name) then AutoGearPrint("AutoGear:     "..info.Name..":", 2) end
-    for k,v in pairs(info) do
-        if (k ~= "Name" and weighting[k]) then
-            AutoGearPrint("AutoGear:         "..k..": "..string.format("%.2f", v).." * "..weighting[k].." = "..string.format("%.2f", v * weighting[k]), 2)
-        end
-    end
+	if (info and info.Name) then AutoGearPrint("AutoGear:     "..info.Name..":", 2) end
+	for k,v in pairs(info) do
+		if (k ~= "Name" and weighting[k]) then
+			AutoGearPrint("AutoGear:         "..k..": "..string.format("%.2f", v).." * "..weighting[k].." = "..string.format("%.2f", v * weighting[k]), 2)
+		end
+	end
 end
 
 function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex, link)
@@ -2740,14 +2740,14 @@ end
 
 --used for unique
 function PlayerIsWearingItem(name)
-    --search all worn items and the 4 top-level bag slots
-    for i = 0, 23 do
-        local id = GetInventoryItemID("player", i)
-        if (id) then
-            if GetItemInfo(id) == name then return 1 end
-        end
-    end
-    return nil
+	--search all worn items and the 4 top-level bag slots
+	for i = 0, 23 do
+		local id = GetInventoryItemID("player", i)
+		if (id) then
+			if GetItemInfo(id) == name then return 1 end
+		end
+	end
+	return nil
 end
 
 function DetermineItemScore(itemInfo, weighting)
@@ -2783,39 +2783,39 @@ function DetermineItemScore(itemInfo, weighting)
 end
 
 function GetAllBagsNumFreeSlots()
-    local slotCount = 0
-    for i = 0, NUM_BAG_SLOTS do
-        local freeSlots, bagType = GetContainerNumFreeSlots(i)
-        if (bagType == 0) then
-            slotCount = slotCount + freeSlots
-        end
-    end
-    return slotCount
+	local slotCount = 0
+	for i = 0, NUM_BAG_SLOTS do
+		local freeSlots, bagType = GetContainerNumFreeSlots(i)
+		if (bagType == 0) then
+			slotCount = slotCount + freeSlots
+		end
+	end
+	return slotCount
 end
 
 function PutItemInEmptyBagSlot()
-    for i = 0, NUM_BAG_SLOTS do
-        local freeSlots, bagType = GetContainerNumFreeSlots(i)
-        if (bagType == 0 and freeSlots > 0) then
-            if (i == 0) then
-                PutItemInBackpack()
-            else
-                PutItemInBag(23-i)
-            end
-        end
-    end
+	for i = 0, NUM_BAG_SLOTS do
+		local freeSlots, bagType = GetContainerNumFreeSlots(i)
+		if (bagType == 0 and freeSlots > 0) then
+			if (i == 0) then
+				PutItemInBackpack()
+			else
+				PutItemInBag(23-i)
+			end
+		end
+	end
 end
 
 function AutoGearScan()
-    if (not weighting) then AutoGearSetStatWeights() end
-    if (not weighting) then
-        AutoGearPrint("AutoGear: No weighting set for this class.", 0)
-        return
-    end
-    AutoGearPrint("AutoGear: Scanning bags for upgrades.", 2)
-    if (not AutoGearScanBags()) then
-        AutoGearPrint("AutoGear: Nothing better was found", 1)
-    end
+	if (not weighting) then AutoGearSetStatWeights() end
+	if (not weighting) then
+		AutoGearPrint("AutoGear: No weighting set for this class.", 0)
+		return
+	end
+	AutoGearPrint("AutoGear: Scanning bags for upgrades.", 2)
+	if (not AutoGearScanBags()) then
+		AutoGearPrint("AutoGear: Nothing better was found", 1)
+	end
 end
 
 --[[ AutoGearRecursivePrint(struct, [limit], [indent])   Recursively print arbitrary data. 
@@ -2890,12 +2890,12 @@ ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 
 function AutoGearMain()
-    if (GetTime() - tUpdate > 0.05) then
-        tUpdate = GetTime()
-        --future actions
-        for i, curAction in ipairs(futureAction) do
-            if (curAction.action == "roll") then
-                if (GetTime() > curAction.t) then
+	if (GetTime() - tUpdate > 0.05) then
+		tUpdate = GetTime()
+		--future actions
+		for i, curAction in ipairs(futureAction) do
+			if (curAction.action == "roll") then
+				if (GetTime() > curAction.t) then
 					if (curAction.rollType == 1) then
 						AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ").."NEED on "..curAction.info.Name..".", 1)
 					elseif (curAction.rollType == 2) then
@@ -2905,10 +2905,10 @@ function AutoGearMain()
 						RollOnLoot(curAction.rollID, curAction.rollType)
 					end
 					table.remove(futureAction, i)
-                end
-            elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
+				end
+			elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
 				if (GetTime() > curAction.t) then
-                    if ((AutoGearDB.Enabled ~= nil) and (AutoGearDB.Enabled == true)) then
+					if ((AutoGearDB.Enabled ~= nil) and (AutoGearDB.Enabled == true)) then
 						if (not curAction.messageAlready) then
 							AutoGearPrint("AutoGear: Equipping "..curAction.info.Name..".", 2)
 							curAction.messageAlready = 1
@@ -2941,13 +2941,13 @@ function AutoGearMain()
 					else
 						table.remove(futureAction, i)
 					end
-                end
-            elseif (curAction.action == "scan") then
-                if (GetTime() > curAction.t) then
-                    AutoGearScanBags()
-                    table.remove(futureAction, i)
-                end
-            end
-        end
-    end
+				end
+			elseif (curAction.action == "scan") then
+				if (GetTime() > curAction.t) then
+					AutoGearScanBags()
+					table.remove(futureAction, i)
+				end
+			end
+		end
+	end
 end
