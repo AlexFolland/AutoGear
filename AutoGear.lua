@@ -1395,7 +1395,11 @@ local function OptionsSetup(optionsMenu)
 		--function to run when toggling this option via command-line interface
 		_G["AutoGearToggle"..v["option"]] = function(force)
 			if AutoGearDB[v["option"]] == nil then return end
-			AutoGearDB[v["option"]] = force or (not AutoGearDB[v["option"]])
+			if force ~= nil then
+				AutoGearDB[v["option"]] = force
+			else
+				AutoGearDB[v["option"]] = (not AutoGearDB[v["option"]])
+			end
 			if v["cvar"] then SetCVar(v["cvar"], force or (GetCVarBool(v["cvar"]) and 0 or 1)) end
 			AutoGearPrint("AutoGear: "..(AutoGearDB[v["option"]] and v["toggleDescriptionTrue"] or v["toggleDescriptionFalse"]), 0)
 			if _G["AutoGear"..v["option"].."CheckButton"] == nil then return end
@@ -1662,11 +1666,11 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 			},
 			{
 				["option"] = "UsePawn",
-				["cliCommands"] = { "pawn" },
+				["cliCommands"] = { "pawn", "usepawn" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
 				["label"] = "Use Pawn to evaluate upgrades",
-				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use Pawn's current scale instead of AutoGear's internal stat weights for evaluating gear upgrades.\n\nTip: If AutoGear's not using the scale you want it to use, to guarantee that AutoGear will use that Pawn scale, hide all scales in Pawn except that one.  Alternatively, name it \"[class]: [spec]\"; example \"Paladin: Retribution\".",
+				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use a Pawn scale instead of AutoGear's internal stat weights for evaluating gear upgrades.  AutoGear will use the Pawn scale with a name matching the \"[class]: [spec]\" format; example \"Paladin: Retribution\". If \"Override specialization\" is also enabled, that class and spec will be used for detecting which Pawn scale name to use instead. Visible scales (not hidden in Pawn's settings) will be prioritized when detecting which scale to use.",
 				["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
 				["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
 			},
@@ -2608,9 +2612,100 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 end
 
 function AutoGearGetPawnScaleName()
-	local _, _, ClassID = UnitClass("player")
+	local realClass, _, ClassID = UnitClass("player")
 
-	local spec = AutoGearGetSpec()
+	local realSpec = AutoGearGetSpec()
+	local overrideClass, overrideSpec = AutoGearGetClassAndSpec()
+	
+	if AutoGearDB.Override then
+
+		-- Try to find a visible scale matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if PawnIsScaleVisible(ScaleName) and AutoGearDB.OverrideSpec and AutoGearDB.OverrideSpec == ScaleName then
+				return ScaleName
+			end
+		end
+	
+		-- Try to find a visible scale matching just the override spec name (example: "Protection")
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if PawnIsScaleVisible(ScaleName) and overrideSpec == ScaleName then
+				return ScaleName
+			end
+		end
+		
+		-- Try to find a visible scale matching just the override class name (example: "Paladin")
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if PawnIsScaleVisible(ScaleName) and overrideClass == ScaleName then
+				return ScaleName
+			end
+		end
+		
+		-- Try to find any scale matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if AutoGearDB.OverrideSpec and AutoGearDB.OverrideSpec == ScaleName then
+				return ScaleName
+			end
+		end
+		
+		-- Try to find any scale matching just the override spec name (example: "Protection")
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if overrideSpec == ScaleName then
+				return ScaleName
+			end
+		end
+		
+		-- Try to find any scale matching just the override class name (example: "Paladin")
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if overrideClass == ScaleName then
+				return ScaleName
+			end
+		end
+		
+	end
+	
+	local realClassAndSpec = realClass..": "..realSpec
+	
+	-- Try to find a visible scale matching the real class and spec string (example: "Warrior: Arms")
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(ScaleName) and realClassAndSpec == ScaleName then
+			return ScaleName
+		end
+	end
+
+	-- Try to find a visible scale matching just the real spec name (example: "Arms")
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(ScaleName) and realSpec == ScaleName then
+			return ScaleName
+		end
+	end
+
+	-- Try to find a visible scale matching just the real class name (example: "Warrior")
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(ScaleName) and realClass == ScaleName then
+			return ScaleName
+		end
+	end
+	
+	-- Try to find any scale matching the real class and spec string (example: "Warrior: Arms")
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if realClassAndSpec == ScaleName then
+			return ScaleName
+		end
+	end
+	
+	-- Try to find any scale matching just the real spec name (example: "Arms")
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if realSpec == ScaleName then
+			return ScaleName
+		end
+	end
+	
+	-- Try to find any scale matching just the real class name (example: "Warrior")
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if realClass == ScaleName then
+			return ScaleName
+		end
+	end
 
 	-- Try to find the matching class
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
