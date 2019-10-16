@@ -294,9 +294,9 @@ if (IsClassic) then
 				DPS = 0.8
 			},
 			["Restoration"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1.2,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 4,
+				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
@@ -1297,8 +1297,6 @@ AutoGearOverrideSpecs = {
 }
 
 function AutoGearGetOverrideSpecs()
-	local classList = {}
-	FillLocalizedClassList(classList)
 	local classOrder = {}
 	for k in pairs(AutoGearDefaultWeights) do
 		table.insert(classOrder, k)
@@ -1307,7 +1305,7 @@ function AutoGearGetOverrideSpecs()
 
 	for i = 1, #classOrder do (function()
 		local className = classOrder[i]
-		local localizedClassName = classList[className]
+		local localizedClassName = AutoGearClassList[className]
 		if localizedClassName == nil then return end
 		AutoGearOverrideSpecs[i] = {
 			["label"] = localizedClassName,
@@ -1539,6 +1537,17 @@ optionsMenu:RegisterEvent("PLAYER_ENTERING_WORLD")
 optionsMenu:RegisterEvent("ADDON_LOADED")
 optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
     if event == "PLAYER_ENTERING_WORLD" then
+
+		--fill class lists for lookups later
+		AutoGearClassList = {}
+		FillLocalizedClassList(AutoGearClassList)
+		if not AutoGearClassList["DEATHKNIGHT"] then AutoGearClassList["DEATHKNIGHT"] = "Death Knight" end
+		if not AutoGearClassList["DEMONHUNTER"] then AutoGearClassList["DEMONHUNTER"] = "Demon Hunter" end
+		if not AutoGearClassList["MONK"] then AutoGearClassList["MONK"] = "Monk" end
+		AutoGearReverseClassList = {}
+		for k, v in pairs(AutoGearClassList) do
+			AutoGearReverseClassList[v] = k
+		end
 		
 		--initialize options menu variables
 		AutoGearOptions = {
@@ -1697,10 +1706,12 @@ _G["SLASH_AutoGear1"] = "/AutoGear"
 _G["SLASH_AutoGear2"] = "/autogear"
 _G["SLASH_AutoGear3"] = "/ag"
 SlashCmdList["AutoGear"] = function(msg)
-    param1, param2, param3 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
-    if (not param1) then param1 = "(nil)" end
-    if (not param2) then param2 = "(nil)" end
-    if (not param3) then param3 = "(nil)" end
+    param1, param2, param3, param4, param5 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
+    if (not param1) then param1 = "" end
+    if (not param2) then param2 = "" end
+    if (not param3) then param3 = "" end
+	if (not param4) then param4 = "" end
+	if (not param5) then param5 = "" end
     if (param1 == "enable" or param1 == "on" or param1 == "start") then
     	AutoGearToggleEnabled(true)
     elseif (param1 == "disable" or param1 == "off" or param1 == "stop") then
@@ -1711,6 +1722,29 @@ SlashCmdList["AutoGear"] = function(msg)
         AutoGearPrint("AutoGear: Looks like you are "..AutoGearGetSpec().."."..((AutoGearDB.UsePawn or AutoGearDB.Override) and ("  However, AutoGear is using "..(AutoGearDB.UsePawn and "Pawn" or "\""..AutoGearDB.OverrideSpec.."\"").." for gear evaluation due to the \""..(AutoGearDB.UsePawn and "use Pawn to evaluate upgrades" or "override specialization").."\" option.") or ""), 0)
     elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
         SetAllowedVerbosity(param2)
+	elseif ((param1 == "setspec") or
+	(param1 == "overridespec") or
+	(param1 == "overridespecialization") or
+	(param1 == "specoverride")) then
+		local params = param2..(string.len(param3)>0 and " "..param3 or "")..(string.len(param4)>0 and " "..param4 or "")..(string.len(param5)>0 and " "..param5 or "")
+		local localizedClassName, spec = string.match(params, "^\"?([^:\"]-): ([^:\"]+)\"?$")
+		AutoGearPrint("AutoGear: param2 == \""..tostring(param2).."\"",3)
+		AutoGearPrint("AutoGear: param3 == \""..tostring(param3).."\"",3)
+		AutoGearPrint("AutoGear: param4 == \""..tostring(param4).."\"",3)
+		AutoGearPrint("AutoGear: params == \""..tostring(params).."\"",3)
+		AutoGearPrint("AutoGear: localizedClassName == \""..tostring(localizedClassName).."\"",3)
+		AutoGearPrint("AutoGear: spec == \""..tostring(spec).."\"",3)
+		local class = AutoGearReverseClassList[localizedClassName]
+		if class and AutoGearDefaultWeights[class][spec] then
+			local overridespec = localizedClassName..": "..spec
+			AutoGearDB.OverrideSpec = overridespec
+			if AutoGearOverrideSpecDropdown then
+				AutoGearOverrideSpecDropdown:SetValue(overridespec)
+			end
+			AutoGearPrint("AutoGear: "..(AutoGearDB.Override and "" or "While \"Override specialization\" is enabled, ").."AutoGear will now use "..overridespec.." weights to evaluate gear.",0)
+		else
+			AutoGearPrint("AutoGear: Unrecognized command. Usage: \"/ag overridespec [class]: [spec]\" (example: \"/ag overridespec Paladin: Protection\")",0)
+		end
     elseif (param1 == "") then
         InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 	else
@@ -1726,6 +1760,7 @@ function AutoGearPrintHelp()
 	AutoGearPrint("AutoGear:    '/ag spec': get name of current talent specialization", 0)
 	AutoGearPrint("AutoGear:    '/ag [gear/toggle]/[enable/on/start]/[disable/off/stop]': toggle automatic gearing", 0)
 	AutoGearPrint("AutoGear:    '/ag override [enable/on/start]/[disable/off/stop]': toggle specialization override", 0)
+	AutoGearPrint("AutoGear:    '/ag overridespec [class]: [spec]\': set override spec to \"[class]: [spec]\"",0)
 	AutoGearPrint("AutoGear:    '/ag roll [enable/on/start]/[disable/off/stop]': toggle automatic loot rolling", 0)
 	AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
 	AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
