@@ -294,9 +294,9 @@ if (IsClassic) then
 				DPS = 0.8
 			},
 			["Restoration"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1.2,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
+				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
