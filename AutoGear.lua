@@ -1349,7 +1349,7 @@ function AutoGearSetStatWeights()
     local class, spec = AutoGearGetClassAndSpec()
 	weighting = AutoGearDefaultWeights[class][spec] or nil
 	weapons = weighting.weapons or "any"
-	AutoGearPrint("AutoGear: stat weights set for "..class..": "..spec, 3)
+	AutoGearPrint("AutoGear: Stat weights set for \""..class..": "..spec.."\". Weapons: "..weapons, 3)
 end
 
 local function newCheckbox(dbname, label, description, onClick, optionsMenu)
@@ -2588,15 +2588,14 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	if (info.MetaSockets == 0) then info.MetaSockets = nil end
 	
 	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
-        if (not link) then _, link = AutoGearTooltip:GetItem() end
-        local PawnItemData = PawnGetItemData(link)
-        if PawnItemData then
+		if (not link) then _, link = AutoGearTooltip:GetItem() end
+		local PawnItemData = PawnGetItemData(link)
+		if PawnItemData then
 			info.PawnScaleName = AutoGearGetPawnScaleName()
-            info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, info.PawnScaleName)
-	    else
-            AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
-        end
-    end
+			info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, info.PawnScaleName)
+		--else AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
+		end
+	end
 	
 	if (info.Slot or info.isMount) then info.shouldShowScoreInTooltip = 1 end
 	if (not cannotUse and (info.Slot or info.isMount)) then
