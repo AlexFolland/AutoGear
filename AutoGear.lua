@@ -2671,11 +2671,12 @@ function AutoGearGetPawnScales()
 			["subLabels"] = {}
 		}
 	}
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName) then
-			table.insert(AutoGearPawnScales[1]["subLabels"], ScaleName)
+	AutoGearPawnScalesFromPawn = PawnGetAllScalesEx()
+	for _, v in ipairs(AutoGearPawnScalesFromPawn) do
+		if v["IsVisible"] then
+			table.insert(AutoGearPawnScales[1]["subLabels"], v["Name"])
 		else
-			table.insert(AutoGearPawnScales[2]["subLabels"], ScaleName)
+			table.insert(AutoGearPawnScales[2]["subLabels"], v["Name"])
 		end
 	end
 	return AutoGearPawnScales
