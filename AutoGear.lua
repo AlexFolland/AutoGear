@@ -24,6 +24,9 @@
 -- factor in racial weapon bonuses
 -- eye of arachnida slot nil error
 
+--check whether it's WoW classic, for automatic compatibility
+local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
+
 local _ --prevent taint when using throwaway variable
 local reason
 local futureAction = {}
@@ -37,8 +40,16 @@ local maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
 --initialize table for storing saved variables
 if (not AutoGearDB) then AutoGearDB = {} end
 
---check whether it's WoW classic, for automatic compatibility
-local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
+--fill class lists for lookups later
+AutoGearClassList = {}
+FillLocalizedClassList(AutoGearClassList)
+if not AutoGearClassList["DEATHKNIGHT"] then AutoGearClassList["DEATHKNIGHT"] = "Death Knight" end
+if not AutoGearClassList["DEMONHUNTER"] then AutoGearClassList["DEMONHUNTER"] = "Demon Hunter" end
+if not AutoGearClassList["MONK"] then AutoGearClassList["MONK"] = "Monk" end
+AutoGearReverseClassList = {}
+for k, v in pairs(AutoGearClassList) do
+	AutoGearReverseClassList[v] = k
+end
 
 --initialize missing saved variables with default values
 function InitializeAutoGearDB(defaults, reset)
@@ -138,6 +149,8 @@ AutoGearDBDefaults = {
 	ReasonsInTooltips = false,
 	AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
 	UsePawn = false,
+	OverridePawnScale = true,
+	PawnScale = "",
 	AutoSellGreys = true,
 	AutoRepair = true,
 	AllowedVerbosity = 2
@@ -1451,7 +1464,7 @@ local function OptionsSetup(optionsMenu)
 						--display the labels
 						for _, j in ipairs(v["child"]["options"]) do
 							info.text = j["label"]
-							info.checked = (string.match(AutoGearDB[v["child"]["option"]], "^"..j["label"]..":") and true or false)
+							info.checked = (AutoGearDB[v["child"]["option"]] and (string.match(AutoGearDB[v["child"]["option"]], "^"..j["label"]..":") and true or false) or false)
 							info.menuList = j
 							info.hasArrow = (j["subLabels"] and true or false)
 							UIDropDownMenu_AddButton(info)
@@ -1459,11 +1472,13 @@ local function OptionsSetup(optionsMenu)
 					else
 						--display the subLabels
 						info.func = self.SetValue
-						for _, z in ipairs(menuList["subLabels"]) do
-							info.text = z
-							info.arg1 = menuList["label"]..": "..z
-							info.checked = (AutoGearDB[v["child"]["option"]] == info.arg1)
-							UIDropDownMenu_AddButton(info, level)
+						if menuList["subLabels"] then
+							for _, z in ipairs(menuList["subLabels"]) do
+								info.text = z
+								info.arg1 = menuList["label"]..": "..z
+								info.checked = ((AutoGearDB[v["child"]["option"]] == info.arg1) or (AutoGearDB[v["child"]["option"]] == z))
+								UIDropDownMenu_AddButton(info, level)
+							end
 						end
 					end
 				end)
@@ -1542,17 +1557,6 @@ optionsMenu:RegisterEvent("ADDON_LOADED")
 optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 	if event == "PLAYER_ENTERING_WORLD" then
 
-		--fill class lists for lookups later
-		AutoGearClassList = {}
-		FillLocalizedClassList(AutoGearClassList)
-		if not AutoGearClassList["DEATHKNIGHT"] then AutoGearClassList["DEATHKNIGHT"] = "Death Knight" end
-		if not AutoGearClassList["DEMONHUNTER"] then AutoGearClassList["DEMONHUNTER"] = "Demon Hunter" end
-		if not AutoGearClassList["MONK"] then AutoGearClassList["MONK"] = "Monk" end
-		AutoGearReverseClassList = {}
-		for k, v in pairs(AutoGearClassList) do
-			AutoGearReverseClassList[v] = k
-		end
-		
 		--initialize options menu variables
 		AutoGearOptions = {
 			{
@@ -1564,24 +1568,6 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the AutoGearDefaultWeights table in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
 				["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
 				["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\"."
-			},
-			{
-				["option"] = "Override",
-				["cliCommands"] = { "override" },
-				["cliTrue"] = { "enable", "on", "start" },
-				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Override specialization",
-				["description"] = "Override specialization with the specialization chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the spec detected automatically.",
-				["toggleDescriptionTrue"] = "Specialization overriding is now enabled.  AutoGear will use the specialization selected in the dropdown for evaluating gear.",
-				["toggleDescriptionFalse"] = "Specialization overriding is now disabled.  AutoGear will use your class and its detected specialization for evaluating gear.  Type \"/ag spec\" to check what specialization AutoGear detects for your character.",
-				["togglePostHook"] = function() AutoGearSetStatWeights() end,
-				["child"] = {
-					["option"] = "OverrideSpec",
-					["options"] = AutoGearGetOverrideSpecs(),
-					["label"] = "Override specialization",
-					["description"] = "Override specialization with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the specialization detected automatically.",
-					["dropdownPostHook"] = function() AutoGearSetStatWeights() end
-				}
 			},
 			{
 				["option"] = "AutoLootRoll",
@@ -1659,20 +1645,10 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
 				["cvar"] = "alwaysCompareItems",
-				["label"] = "Always compare gear",
-				["description"] = "Always show gear comparison tooltips when viewing gear tooltips.  If this is disabled, you can still show gear comparison tooltips while holding the Shift key.",
+				["label"] = "Always show equipped gear comparison tooltips",
+				["description"] = "Always show equipped gear comparison tooltips when viewing tooltips for gear that's not equipped.  If this is disabled, you can still show gear comparison tooltips while holding the Shift key.",
 				["toggleDescriptionTrue"] = "Always showing gear comparison tooltips when viewing gear tooltips is now enabled.",
 				["toggleDescriptionFalse"] = "Always showing gear comparison tooltips when viewing gear tooltips is now disabled.  You can still show gear comparison tooltips while holding the Shift key."
-			},
-			{
-				["option"] = "UsePawn",
-				["cliCommands"] = { "pawn", "usepawn" },
-				["cliTrue"] = { "enable", "on", "start" },
-				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Use Pawn to evaluate upgrades",
-				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use a Pawn scale instead of AutoGear's internal stat weights for evaluating gear upgrades.  AutoGear will use the Pawn scale with a name matching the \"[class]: [spec]\" format; example \"Paladin: Retribution\". If \"Override specialization\" is also enabled, that class and spec will be used for detecting which Pawn scale name to use instead. Visible scales (not hidden in Pawn's settings) will be prioritized when detecting which scale to use.",
-				["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
-				["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
 			},
 			{
 				["option"] = "AutoSellGreys",
@@ -1693,6 +1669,59 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Automatically repair all gear when interacting with a repair-enabled vendor.  If you have a guild bank and guild bank repair funds, this will use guild bank repair funds first.",
 				["toggleDescriptionTrue"] = "Automatic repairing is now enabled.",
 				["toggleDescriptionFalse"] = "Automatic repairing is now disabled."
+			},
+			{
+				["option"] = "Override",
+				["cliCommands"] = { "override" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Override specialization",
+				["description"] = "Override specialization with the specialization chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the spec detected automatically.",
+				["toggleDescriptionTrue"] = "Specialization overriding is now enabled.  AutoGear will use the specialization selected in the dropdown for evaluating gear.",
+				["toggleDescriptionFalse"] = "Specialization overriding is now disabled.  AutoGear will use your class and its detected specialization for evaluating gear.  Type \"/ag spec\" to check what specialization AutoGear detects for your character.",
+				["togglePostHook"] = function() AutoGearSetStatWeights() end,
+				["child"] = {
+					["option"] = "OverrideSpec",
+					["options"] = AutoGearGetOverrideSpecs(),
+					["label"] = "Override specialization",
+					["description"] = "Override specialization with the spec chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the specialization detected automatically.",
+					["dropdownPostHook"] = function() AutoGearSetStatWeights() end
+				}
+			},
+			{
+				["option"] = "UsePawn",
+				["cliCommands"] = { "pawn", "usepawn" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Use Pawn to evaluate upgrades",
+				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use a Pawn scale instead of AutoGear's internal stat weights for evaluating gear upgrades.  AutoGear will use the Pawn scale with a name matching the \"[class]: [spec]\" format; example \"Paladin: Retribution\". If \"Override specialization\" is also enabled, that class and spec will be used for detecting which Pawn scale name to use instead. Visible scales (not hidden in Pawn's settings) will be prioritized when detecting which scale to use.",
+				["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
+				["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
+			},
+			{
+				["option"] = "OverridePawnScale",
+				["cliCommands"] = { "scale", "overridepawn", "overridepawnscale" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Override Pawn scale",
+				["description"] = "Override the Pawn scale that would normally be automatically detected in \"[class]: [spec]\" format with the Pawn scale chosen in this dropdown.\n\nThis override does nothing unless \"Use Pawn to evaluate upgrades\" is enabled.",
+				["toggleDescriptionTrue"] = "Overriding Pawn scale with the selected scale is now enabled.",
+				["toggleDescriptionFalse"] = "Overriding Pawn scale with the selected scale is now disabled.",
+				["child"] = {
+					["option"] = "PawnScale",
+					["options"] = AutoGearGetPawnScales(),
+					["label"] = "Pawn scale to use",
+					["description"] = "Override the Pawn scale that would normally be automatically detected in \"[class]: [spec]\" format with the Pawn scale chosen in this dropdown.",
+					["dropdownPostHook"] = function(self, value)
+						if AutoGearDB.PawnScale and string.len(AutoGearDB.PawnScale)>0 then
+							local numMatches
+							AutoGearDB.PawnScale, numMatches = string.gsub(AutoGearDB.PawnScale, "^Visible: ?", "", 1)
+							if numMatches and numMatches == 0 then AutoGearDB.PawnScale = string.gsub(AutoGearDB.PawnScale, "^Hidden: ?", "", 1) end
+							UIDropDownMenu_SetText(AutoGearPawnScaleDropdown, AutoGearDB.PawnScale)
+						end
+						AutoGearSetStatWeights()
+					end
+				}
 			}
 		}
 
@@ -1732,10 +1761,10 @@ SlashCmdList["AutoGear"] = function(msg)
 	(param1 == "specoverride")) then
 		local params = param2..(string.len(param3)>0 and " "..param3 or "")..(string.len(param4)>0 and " "..param4 or "")..(string.len(param5)>0 and " "..param5 or "")
 		local localizedClassName, spec = string.match(params, "^\"?([^:\"]-): ([^:\"]+)\"?$")
-		AutoGearPrint("AutoGear: param2 == \""..tostring(param2).."\"",3)
-		AutoGearPrint("AutoGear: param3 == \""..tostring(param3).."\"",3)
-		AutoGearPrint("AutoGear: param4 == \""..tostring(param4).."\"",3)
-		AutoGearPrint("AutoGear: params == \""..tostring(params).."\"",3)
+		--AutoGearPrint("AutoGear: param2 == \""..tostring(param2).."\"",3)
+		--AutoGearPrint("AutoGear: param3 == \""..tostring(param3).."\"",3)
+		--AutoGearPrint("AutoGear: param4 == \""..tostring(param4).."\"",3)
+		--AutoGearPrint("AutoGear: params == \""..tostring(params).."\"",3)
 		AutoGearPrint("AutoGear: localizedClassName == \""..tostring(localizedClassName).."\"",3)
 		AutoGearPrint("AutoGear: spec == \""..tostring(spec).."\"",3)
 		local class = AutoGearReverseClassList[localizedClassName]
@@ -1747,7 +1776,27 @@ SlashCmdList["AutoGear"] = function(msg)
 			end
 			AutoGearPrint("AutoGear: "..(AutoGearDB.Override and "" or "While \"Override specialization\" is enabled, ").."AutoGear will now use "..overridespec.." weights to evaluate gear.",0)
 		else
-			AutoGearPrint("AutoGear: Unrecognized command. Usage: \"/ag overridespec [class]: [spec]\" (example: \"/ag overridespec Paladin: Protection\")",0)
+			AutoGearPrint("AutoGear: Unrecognized command. Usage: \"/ag overridespec [class]: [spec]\" (example: \"/ag overridespec Hunter: Beast Mastery\")",0)
+		end
+	elseif ((param1 == "pawnscale") or
+	(param1 == "setpawnscale") or
+	(param1 == "setscale") or
+	(param1 == "scaleoverride")) then
+		if PawnIsReady ~= nil and PawnIsReady() then
+			local ScaleName = param2..(string.len(param3)>0 and " "..param3 or "")..(string.len(param4)>0 and " "..param4 or "")..(string.len(param5)>0 and " "..param5 or "")
+			if string.len(ScaleName) == 0 then
+				AutoGearPrint("AutoGear: Usage: \"/ag pawnscale [Pawn scale name]\" (example: \"/ag pawnscale Hunter: Beast Mastery\")",0)
+			elseif PawnDoesScaleExist(ScaleName) then
+				AutoGearDB.PawnScale = ScaleName
+				if AutoGearPawnScaleDropdown then
+					UIDropDownMenu_SetText(AutoGearPawnScaleDropdown, AutoGearDB.PawnScale)
+				end
+				AutoGearPrint("AutoGear: "..(AutoGearDB.UsePawn and "" or "While using Pawn is enabled, ").."AutoGear will now use the \""..PawnGetScaleColor(AutoGearDB.PawnScale)..AutoGearDB.PawnScale..FONT_COLOR_CODE_CLOSE.."\" Pawn scale to evaluate gear.",0)
+			else
+				AutoGearPrint("AutoGear: According to Pawn, a Pawn scale named \""..ScaleName.."\" does not exist.",0)
+			end
+		else
+			AutoGearPrint("AutoGear: Pawn is either not installed or not ready yet.",0)
 		end
 	elseif (param1 == "") then
 		InterfaceOptionsFrame_OpenToCategory(optionsMenu)
@@ -1763,8 +1812,6 @@ function AutoGearPrintHelp()
 	AutoGearPrint("AutoGear:    '/ag scan': scan all bags for gear upgrades", 0)
 	AutoGearPrint("AutoGear:    '/ag spec': get name of current talent specialization", 0)
 	AutoGearPrint("AutoGear:    '/ag [gear/toggle]/[enable/on/start]/[disable/off/stop]': toggle automatic gearing", 0)
-	AutoGearPrint("AutoGear:    '/ag override [enable/on/start]/[disable/off/stop]': toggle specialization override", 0)
-	AutoGearPrint("AutoGear:    '/ag overridespec [class]: [spec]\': set override spec to \"[class]: [spec]\"",0)
 	AutoGearPrint("AutoGear:    '/ag roll [enable/on/start]/[disable/off/stop]': toggle automatic loot rolling", 0)
 	AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
 	AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
@@ -1772,7 +1819,10 @@ function AutoGearPrintHelp()
 	AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
 	AutoGearPrint("AutoGear:    '/ag reasons [toggle/show/hide]': toggle showing won't-auto-equip reasons in item tooltips", 0)
 	AutoGearPrint("AutoGear:    '/ag compare [enable/on/start]/[disable/off/stop]': toggle always comparing gear", 0)
+	AutoGearPrint("AutoGear:    '/ag override [enable/on/start]/[disable/off/stop]': toggle specialization override", 0)
+	AutoGearPrint("AutoGear:    '/ag overridespec [class]: [spec]': set override spec to \"[class]: [spec]\"",0)
 	AutoGearPrint("AutoGear:    '/ag pawn [enable/on/start]/[disable/off/stop]': toggle using Pawn scales", 0)
+	AutoGearPrint("AutoGear:    '/ag pawnscale [Pawn scale name]': set Pawn scale override to the specifed Pawn scale", 0)
 	AutoGearPrint("AutoGear:    '/ag sell [enable/on/start]/[disable/off/stop]': toggle automatic selling of grey items", 0)
 	AutoGearPrint("AutoGear:    '/ag repair [enable/on/start]/[disable/off/stop]': toggle automatic repairing", 0)
 	AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
@@ -2610,11 +2660,43 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	return info
 end
 
+function AutoGearGetPawnScales()
+	AutoGearPawnScales = {
+		{
+			["label"] = "Visible",
+			["subLabels"] = {}
+		},
+		{
+			["label"] = "Hidden",
+			["subLabels"] = {}
+		}
+	}
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(ScaleName) then
+			table.insert(AutoGearPawnScales[1]["subLabels"], ScaleName)
+		else
+			table.insert(AutoGearPawnScales[2]["subLabels"], ScaleName)
+		end
+	end
+	return AutoGearPawnScales
+end
+
 function AutoGearGetPawnScaleName()
 	local realClass, _, ClassID = UnitClass("player")
 
 	local realSpec = AutoGearGetSpec()
 	local overrideClass, overrideSpec = AutoGearGetClassAndSpec()
+
+	-- Try to find the selected Pawn scale
+	if AutoGearDB.OverridePawnScale and AutoGearDB.PawnScale then
+		if not AutoGearPawnScales then AutoGearGetPawnScales() end
+		local scaleNameToFind = AutoGearDB.PawnScale
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if scaleNameToFind == ScaleName then
+				return ScaleName
+			end
+		end
+	end
 	
 	if AutoGearDB.Override then
 
