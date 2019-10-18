@@ -1392,7 +1392,7 @@ local function OptionsSetup(optionsMenu)
 
 	--loop through options table to build our options menu programmatically
 	for _, v in ipairs(AutoGearOptions) do (function()
-		if not v["option"] then return end
+		if (not v["option"]) or ((v["shouldUse"] ~= nil) and (v["shouldUse"] == false)) then return end
 		--manual iterator to be able to start from 0 and add another one outside the loop
 		i = i + 1
 
@@ -1433,8 +1433,8 @@ local function OptionsSetup(optionsMenu)
 		frame[i]:SetHitRectInsets(0, -280, 0, 0) --change click region to not be super wide
 		frame[i]:SetChecked(AutoGearDB[v["option"]]) --set initial checked state based on db
 		
-		--if this has a child defined, build its child
-		if v["child"] then
+		--if this has a child defined and it should be used, build its child
+		if v["child"] and ((v["child"]["shouldUse"] == nil) or (v["child"]["shouldUse"] and (v["child"]["shouldUse"] ~= false))) then
 			
 			--if the child is a dropdown, build it that way
 			if v["child"]["options"] then
@@ -1694,12 +1694,13 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
 				["label"] = "Use Pawn to evaluate upgrades",
-				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use a Pawn scale instead of AutoGear's internal stat weights for evaluating gear upgrades.  AutoGear will use the Pawn scale with a name matching the \"[class]: [spec]\" format; example \"Paladin: Retribution\". If \"Override specialization\" is also enabled, that class and spec will be used for detecting which Pawn scale name to use instead. Visible scales (not hidden in Pawn's settings) will be prioritized when detecting which scale to use.",
+				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use a Pawn scale instead of AutoGear's internal stat weights for evaluating gear upgrades.  AutoGear will use the Pawn scale with a name matching the \"[class]: [spec]\" format; example \"Paladin: Retribution\". If \"Override specialization\" is also enabled, that class and spec will be used for detecting which Pawn scale name to use instead. Visible scales (not hidden in Pawn's settings) will be prioritized when detecting which scale to use."..(((PawnIsReady ~= nil) and PawnIsReady()) and "" or "\n\n"..RED_FONT_COLOR_CODE.."Pawn is not running, so this option will do nothing."..FONT_COLOR_CODE_CLOSE),
 				["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
 				["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
 			},
 			{
 				["option"] = "OverridePawnScale",
+				["shouldUse"] = ((PawnIsReady ~= nil) and PawnIsReady()),
 				["cliCommands"] = { "scale", "overridepawn", "overridepawnscale" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
@@ -1709,9 +1710,10 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["toggleDescriptionFalse"] = "Overriding Pawn scale with the selected scale is now disabled.",
 				["child"] = {
 					["option"] = "PawnScale",
-					["options"] = AutoGearGetPawnScales(),
+					["options"] = (function() if PawnIsReady ~= nil and PawnIsReady() then return AutoGearGetPawnScales() end end)(),
 					["label"] = "Pawn scale to use",
 					["description"] = "Override the Pawn scale that would normally be automatically detected in \"[class]: [spec]\" format with the Pawn scale chosen in this dropdown.",
+					["shouldUse"] = ((PawnIsReady ~= nil) and PawnIsReady()),
 					["dropdownPostHook"] = function(self, value)
 						if AutoGearDB.PawnScale and string.len(AutoGearDB.PawnScale)>0 then
 							local numMatches
