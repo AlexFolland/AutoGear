@@ -128,8 +128,8 @@ else
 end
 
 function AutoGearGetDefaultOverrideSpec()
-	className = UnitClass("player")
-	spec = AutoGearGetSpec()
+	local className = UnitClass("player")
+	local spec = AutoGearGetSpec()
 	if spec then
 		return className..": "..spec
 	end
@@ -2129,6 +2129,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 	if (not weighting) then
 		return nil
 	end
+	local class, spec = AutoGearGetClassAndSpec()
 	local anythingBetter = nil
 	--create the table for best items
 	best = {}
