@@ -267,7 +267,7 @@ if (IsClassic) then
 		},
 		["DRUID"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 0.5,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9, 
@@ -277,7 +277,7 @@ if (IsClassic) then
 				DPS = 1
 			},
 			["Balance"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 0.1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05, 
@@ -307,7 +307,7 @@ if (IsClassic) then
 				DPS = 0.8
 			},
 			["Restoration"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1.2,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 1.2,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
@@ -361,7 +361,7 @@ if (IsClassic) then
 		},
 		["MAGE"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 1.34, Hit = 3.21, 
@@ -371,7 +371,7 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Arcane"] = {
-				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 1, Spirit = 0,
+				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 0.2, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7, 
@@ -381,7 +381,7 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Fire"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0, 
@@ -391,7 +391,7 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Frost"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7, 
@@ -435,7 +435,7 @@ if (IsClassic) then
 				DPS = 3.075
 			},
 			["Mistweaver"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 0.60,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
@@ -447,7 +447,7 @@ if (IsClassic) then
 		},
 		["PALADIN"] = {
 			["None"] = {
-				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
@@ -457,7 +457,7 @@ if (IsClassic) then
 				DPS = 1.33333, Damage = 0.66667
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0, 
@@ -468,7 +468,7 @@ if (IsClassic) then
 			},
 			["Protection"] = {
 				weapons = "weapon and shield",
-				Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = 0,
+				Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.1, Spirit = 0.3,
 				Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, Defense = 3,
 				SpellPower = 0.05, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
 				AttackPower = 0.4, ArmorPenetration = 0.1, Crit = 0.25, Hit = 0,
@@ -479,7 +479,7 @@ if (IsClassic) then
 			},
 			["Retribution"] = {
 				weapons = "2h",
-				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
+				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0.1, Spirit = 0.3,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
@@ -491,7 +491,7 @@ if (IsClassic) then
 		},
 		["PRIEST"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95, 
@@ -501,7 +501,7 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Discipline"] = {
-				Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0, Intellect = 0.2, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
@@ -511,7 +511,7 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1.5,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 1.5,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
@@ -521,7 +521,7 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Shadow"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 3,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
@@ -590,7 +590,7 @@ if (IsClassic) then
 		},
 		["SHAMAN"] = {
 			["None"] = {
-				Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 0,
+				Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 0.2, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7, 
@@ -600,7 +600,7 @@ if (IsClassic) then
 				DPS = 1.2, Damage = 0.8
 			},
 			["Elemental"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0, 
@@ -611,7 +611,7 @@ if (IsClassic) then
 			},
 			["Enhancement"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
+				Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, Hit = 0.8, 
@@ -621,7 +621,7 @@ if (IsClassic) then
 				DPS = 1.2, Damage = 0.8
 			},
 			["Restoration"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.2, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0, 
