@@ -7,6 +7,7 @@
 --	In general, needing on one-handers that are near-worthless.  The plan is to only roll if it passes a minimum threshold.  That threshold should be 3x the highest weight among the 5 main stats.
 -- Don't roll on loot I already have in my bag
 -- Greeded in something within 5 levels that was an upgrade.  Specifically, Gauntlets of Divinity versus equipped Algae Fists.
+-- Auto-equip bags if they're not BOP and you have an empty slot
 
 -- accomodate for "no item link received"
 -- identify bag rolls and roll need when appropriate
@@ -643,7 +644,7 @@ if (IsClassic) then
 		},
 		["WARLOCK"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.1, Spirit = 0.2,
+				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 4, Hit = 7, 
@@ -653,7 +654,7 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Affliction"] = {
-				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.1, Spirit = 0.2,
+				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 1.5,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 4, Hit = 7, 
@@ -663,7 +664,7 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Demonology"] = {
-				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.1, Spirit = 0.2,
+				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 1.5,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 4, Hit = 7, 
@@ -673,7 +674,7 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Destruction"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.1, Spirit = 0.2,
+				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 1.5,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 6, Hit = 7, 
