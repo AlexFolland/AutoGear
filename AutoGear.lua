@@ -2021,7 +2021,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 	elseif (event == "ITEM_PUSH") then
 		--AutoGearPrint("AutoGear: Received an item.  Checking for gear upgrades.")
 		--make sure a fishing pole isn't replaced while fishing
-		if (GetMainHandType() ~= "Fishing Pole") then
+		local mainHandType = GetMainHandType()
+		if ((mainHandType ~= "Fishing Pole") and (mainHandType ~= "Fishing Poles")) then
 			--check if there's already a scan action in queue
 			local scanFound = nil
 			for i, curAction in ipairs(futureAction) do
