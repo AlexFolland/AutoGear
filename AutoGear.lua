@@ -330,7 +330,7 @@ if (IsClassic) then
 		},
 		["HUNTER"] = {
 			["None"] = {
-				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
+				Strength = 0, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
@@ -340,7 +340,7 @@ if (IsClassic) then
 				DPS = 2
 			},
 			["Beast Mastery"] = {
-				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
+				Strength = 0, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4, 
@@ -350,8 +350,8 @@ if (IsClassic) then
 				DPS = 2
 			},
 			["Marksmanship"] = {
-				Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.005, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				Strength = 0, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
@@ -360,8 +360,8 @@ if (IsClassic) then
 				DPS = 2
 			},
 			["Survival"] = {
-				Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.005, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				Strength = 0, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
+				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
