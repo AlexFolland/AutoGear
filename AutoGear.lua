@@ -2484,10 +2484,10 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (string.find(text, "attack power")) and not string.find(text, "when fighting") then info.AttackPower = (info.AttackPower or 0) + value end
 			if (string.find(text, "spell power") or 
 				string.find(text, "damage and healing") or
-				string.find(text, "frost spell damage") and (spec=="Frost" or class=="MAGE" and spec=="None") or
-				string.find(text, "fire spell damage") and (spec=="Fire" or class=="MAGE" and spec=="None") or
-				string.find(text, "arcane spell damage") and (spec=="Arcane" or class=="MAGE" and spec=="None") or
-				string.find(text, "nature spell damage") and spec=="Balance" or
+				(string.find(text, "frost spell damage") or string.find(text, "damage done by frost spells and effects")) and (spec=="Frost" or class=="MAGE" and spec=="None") or
+				(string.find(text, "fire spell damage") or string.find(text, "damage done by fire spells and effects")) and (spec=="Fire" or class=="MAGE" and spec=="None") or
+				(string.find(text, "arcane spell damage") or string.find(text, "damage done by arcane spells and effects")) and (spec=="Arcane" or class=="MAGE" and spec=="None") or
+				(string.find(text, "nature spell damage") or string.find(text, "damage done by nature spells and effects")) and (spec=="Balance" or class=="DRUID" and spec=="None") or
 				string.find(text, "healing spells") or
 				string.find(text, "increases healing done")) then info.SpellPower = (info.SpellPower or 0) + value end
 			if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
