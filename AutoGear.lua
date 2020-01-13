@@ -170,19 +170,6 @@ AutoGearFrame:SetScript("OnUpdate", function()
 	AutoGearMain()
 end)
 
--- supported stats are:
---[[
-	weighting = {
-		Strength = 0, Agility = 0, Stamina = 0, Intellect = 0, Spirit = 0,
-		Armor = 0, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-		SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
-		AttackPower = 0, ArmorPenetration = 0, Crit = 0, Hit = 0, 
-		Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 0,
-		RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-		HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
-		DPS = 0
-	}
-]]
 local E = 0.000001 --epsilon; non-zero value that's insignificantly different from 0, used here for the purpose of valuing gear that has higher stats that give the player "almost no benefit"
 -- regex for finding 0 in this block to replace with E: (?<=[^ ] = )0(?=[^\.0-9])
 if (IsClassic) then
@@ -192,7 +179,7 @@ if (IsClassic) then
 				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
 				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = 0, 
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -203,7 +190,7 @@ if (IsClassic) then
 				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
 				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = 0, 
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -214,7 +201,7 @@ if (IsClassic) then
 				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = 0, 
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -225,7 +212,7 @@ if (IsClassic) then
 				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15, 
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = 0, 
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -237,7 +224,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 0, 
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -248,7 +235,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 0, 
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -259,7 +246,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
 				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 0.3, SpellHit = 0, 
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -271,7 +258,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 0.5,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, SpellCrit = 0.9, Hit = 0.9, SpellHit = 0.9, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
@@ -281,7 +268,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 0.1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.1, SpellCrit = 1, Hit = 0.1, SpellHit = 1, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
@@ -291,7 +278,7 @@ if (IsClassic) then
 				Strength = 0.3, Agility = 1.05, Stamina = 1, Intellect = 0.1, Spirit = 0.2,
 				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0.05,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.3, SpellHit = 0, 
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -301,7 +288,7 @@ if (IsClassic) then
 				Strength = 0.3, Agility = 1.05, Stamina = 1, Intellect = 0.1, Spirit = 0.2,
 				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0.05,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3,
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.3, SpellHit = 0, 
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -311,7 +298,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
 				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 1.33,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.3, SpellHit = 0, 
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -321,7 +308,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1.2,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 4,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.1, Hit = 0, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -330,40 +317,40 @@ if (IsClassic) then
 		},
 		["HUNTER"] = {
 			["None"] = {
-				Strength = 0, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
+				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4, 
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, SpellCrit = 0, Hit = 0.4, SpellHit = 0, 
 				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
 				DPS = 2
 			},
 			["Beast Mastery"] = {
-				Strength = 0, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
+				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4, 
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, SpellCrit = 0, Hit = 0.4, SpellHit = 0, 
 				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
 				DPS = 2
 			},
 			["Marksmanship"] = {
-				Strength = 0, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
+				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, SpellCrit = 0, Hit = 3.49, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
 				DPS = 2
 			},
 			["Survival"] = {
-				Strength = 0, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
+				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, SpellCrit = 0, Hit = 3.19, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -372,40 +359,40 @@ if (IsClassic) then
 		},
 		["MAGE"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.34, Hit = 3.21, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 20, Hit = 0, SpellHit = 10, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
 				DPS = 0.01
 			},
 			["Arcane"] = {
-				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 0.26, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 0.40, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 12, Hit = 0, SpellHit = 10, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
 				DPS = 0.01
 			},
 			["Fire"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 40, Hit = 0, SpellHit = 25, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
 				DPS = 0.01
 			},
 			["Frost"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 12, Hit = 0, SpellHit = 10, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
@@ -417,7 +404,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 1.75, 
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -428,7 +415,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
 				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 0.3, SpellHit = 0.3, 
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -439,7 +426,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 1.75, 
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -449,7 +436,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 0.60,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, SpellCrit = 0.6, Hit = 0, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -461,7 +448,7 @@ if (IsClassic) then
 				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, SpellCrit = 0.98, Hit = 1.77, SpellHit = 0.77, 
 				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -471,7 +458,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.1, Hit = 0, SpellHit = 0.1, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -482,7 +469,7 @@ if (IsClassic) then
 				Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.1, Spirit = 0.3,
 				Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, Defense = 3,
 				SpellPower = 0.05, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0.4, ArmorPenetration = 0.1, Crit = 0.25, Hit = 0,
+				AttackPower = 0.4, ArmorPenetration = 0.1, Crit = 0.25, SpellCrit = 0, Hit = 0,
 				Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
@@ -493,7 +480,7 @@ if (IsClassic) then
 				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0.1, Spirit = 0.3,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, SpellCrit = 0.1, Hit = 1.77, SpellHit = 0.1, 
 				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -505,7 +492,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 4,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.6, Hit = 0, SpellHit = 1.95, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -515,7 +502,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0, Intellect = 0.26, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 4,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.25, Hit = 0, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
@@ -525,7 +512,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1.8,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.47, Hit = 0, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -535,7 +522,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 3,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1, Hit = 0, SpellHit = 1, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0.3, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -548,7 +535,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 1.75, SpellHit = 0, 
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -559,7 +546,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 1.75, SpellHit = 0, 
 				Expertise = 1.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.3, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -570,7 +557,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 1.75, SpellHit = 0, 
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -581,7 +568,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75, 
+				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 1.75, SpellHit = 0, 
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -592,7 +579,7 @@ if (IsClassic) then
 				Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6, 
+				AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.6, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -604,7 +591,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7, 
+				AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, SpellCrit = 1.11, Hit = 2.7, SpellHit = 2.7, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -614,7 +601,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, SpellCrit = 0.9, Hit = 0, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
@@ -625,7 +612,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, Hit = 0.8, 
+				AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, SpellCrit = 1, Hit = 0.8, SpellHit = 0.8, 
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
@@ -635,7 +622,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, SpellCrit = 0.4, Hit = 0, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -647,7 +634,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 4, Hit = 7, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 4, Hit = 0, SpellHit = 7, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -657,7 +644,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 1.5,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 4, Hit = 7, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 4, Hit = 0, SpellHit = 7, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -667,7 +654,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 1.5,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 4, Hit = 7, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 4, Hit = 0, SpellHit = 7, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -677,7 +664,7 @@ if (IsClassic) then
 				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 1.5,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 6, Hit = 7, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 6, Hit = 0, SpellHit = 7, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -689,7 +676,7 @@ if (IsClassic) then
 				Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0.5, Defense = 4,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
+				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, SpellCrit = 0, Hit = 2, SpellHit = 0, 
 				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -700,7 +687,7 @@ if (IsClassic) then
 				Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2, 
+				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, SpellCrit = 0, Hit = 2, SpellHit = 0, 
 				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -711,7 +698,7 @@ if (IsClassic) then
 				Strength = 2.98, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
-				AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, Hit = 2.47, 
+				AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, SpellCrit = 0, Hit = 2.47, SpellHit = 0, 
 				Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -720,9 +707,9 @@ if (IsClassic) then
 			["Protection"] = {
 				weapons = "weapon and shield",
 				Strength = 1.2, Agility = 0.5, Stamina = 1.5, Intellect = 0, Spirit = 0,
-				Armor = 0.16, Dodge = 1, Parry = 1.03, Block = 0.5, Defense = 4,
+				Armor = 0.13, Dodge = 1, Parry = 1.03, Block = 0.5, Defense = 4,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.02, 
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, SpellCrit = 0, Hit = 0.02, SpellHit = 0, 
 				Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -2442,7 +2429,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				end
 			end
 			local multiplier = 1.0
-			if (string.find(text, "chance to")) then multiplier = multiplier/3.0 end
+			if (string.find(text, "chance to") and not string.find(text, "improves")) then multiplier = multiplier/3.0 end
 			if (string.find(text, "use:")) then multiplier = multiplier/6.0 end
 			-- don't count greyed out set bonus lines
 			if (r < 0.8 and g < 0.8 and b < 0.8 and string.find(text, "set:")) then multiplier = 0 end
@@ -2490,7 +2477,14 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				(string.find(text, "nature spell damage") or string.find(text, "damage done by nature spells and effects")) and (spec=="Balance" or class=="DRUID" and spec=="None") or
 				string.find(text, "healing spells") or
 				string.find(text, "increases healing done")) then info.SpellPower = (info.SpellPower or 0) + value end
-			if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
+			if (IsClassic) then
+				if (string.find(text, "critical strike with spells by")) then info.SpellCrit = (info.SpellCrit or 0) + value end
+				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
+				if (string.find(text, "hit with spells by")) then info.SpellHit = (info.SpellHit or 0) + value end
+				if (string.find(text, "hit by")) then info.Hit = (info.Hit or 0) + value end
+			else
+				if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
+			end
 			if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
 			if (string.find(text, "mana per 5") or string.find(text, "mana every 5")) then info.Mp5 = (info.Mp5 or 0) + value end
 			if (string.find(text, "meta socket")) then info.MetaSockets = info.MetaSockets + 1 end
@@ -2868,6 +2862,9 @@ function DetermineItemScore(itemInfo, weighting)
 		(weighting.AttackPower or 0) * (itemInfo.AttackPower or 0) +
 		(weighting.ArmorPenetration or 0) * (itemInfo.ArmorPenetration or 0) +
 		(weighting.Crit or 0) * (itemInfo.Crit or 0) +
+		(weighting.SpellCrit or 0) * (itemInfo.SpellCrit or 0) +
+		(weighting.Hit or 0) * (itemInfo.Hit or 0) +
+		(weighting.SpellHit or 0) * (itemInfo.SpellHit or 0) +
 		(weighting.RedSockets or 0) * (itemInfo.RedSockets or 0) +
 		(weighting.YellowSockets or 0) * (itemInfo.YellowSockets or 0) +
 		(weighting.BlueSockets or 0) * (itemInfo.BlueSockets or 0) +
