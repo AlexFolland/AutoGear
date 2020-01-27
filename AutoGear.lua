@@ -379,9 +379,9 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Fire"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.9,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				SpellPower = 1.1, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 40, Hit = 0, SpellHit = 25, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
