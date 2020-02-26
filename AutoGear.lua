@@ -307,7 +307,7 @@ if (IsClassic) then
 			["Restoration"] = {
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.6, Spirit = 1.0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 4,
+				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 3,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.1, Hit = 0, SpellHit = 0, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
@@ -389,10 +389,10 @@ if (IsClassic) then
 				DPS = 0.01
 			},
 			["Frost"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 0.8,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 12, Hit = 0, SpellHit = 10, 
+				SpellPower = 1, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 23, Hit = 0, SpellHit = 25, 
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
