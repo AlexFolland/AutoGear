@@ -36,7 +36,7 @@ local weapons
 local tUpdate = 0
 local dataAvailable = nil
 local shouldPrintHelp = false
-local maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
+--local maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
 
 --initialize table for storing saved variables
 if (not AutoGearDB) then AutoGearDB = {} end
@@ -124,7 +124,11 @@ else
 	function AutoGearGetSpec()
 		local currentSpec = GetSpecialization()
 		local currentSpecName = currentSpec and select(2, GetSpecializationInfo(currentSpec)) or "None"
-		return currentSpecName
+    		if (currentSpec == 5) then
+			return "None"
+    		else
+			return currentSpecName
+    		end		
 	end
 end
 
@@ -1079,7 +1083,7 @@ else
 				DPS = 3.075
 			},
 			["Assassination"] = {
-				weapons = "dagger and any",
+				weapons = "dagger",
 				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
@@ -1886,42 +1890,75 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			QuestDetailAcceptButton_OnClick()
 		elseif (event == "GOSSIP_SHOW") then
 			--active quests
-			local quests = GetNumGossipActiveQuests()
-			local info = {GetGossipActiveQuests()}
-			for i = 1, quests do
-				local name, level, isTrivial, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5]
-				if (isComplete) then
-					SelectGossipActiveQuest(i)
+			if (not IsClassic) then
+				local quests = C_GossipInfo.GetNumActiveQuests()
+				local info = {C_GossipInfo.GetActiveQuests()}
+				for i = 1, quests do
+					local title, questLevel, isTrivial, frequency, repeatable, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5], info[(i-1)*6+6], info[(i-1)*6+7]
+					if (isComplete) then
+						C_GossipInfo.SelectActiveQuest(i)
+					end
+				end
+			else
+				local quests = GetNumGossipActiveQuests()
+				local info = {GetGossipActiveQuests()}
+				for i = 1, quests do
+					local name, level, isTrivial, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5]
+					if (isComplete) then
+						SelectGossipActiveQuest(i)
+					end
 				end
 			end
 			--available quests
-			quests = GetNumGossipAvailableQuests()
-			info = {GetGossipAvailableQuests()}
-			for i = 1, quests do
+			if (not IsClassic) then
+				quests = C_GossipInfo.GetNumAvailableQuests()
+				info = {C_GossipInfo.GetAvailableQuests()}
+				for i = 1, quests do
+					local title, questLevel, isTrivial, frequency, repeatable, isComplete, isLegendary = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5], info[(i-1)*7+6], info[(i-1)*7+7]
+					if (not isTrivial) then
+						C_GossipInfo.SelectAvailableQuest(i)
+					end
+				end
+			else
+				quests = GetNumGossipAvailableQuests()
+				info = {GetGossipAvailableQuests()}
+				for i = 1, quests do
 				local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
-				if (not isTrivial) then
-					SelectGossipAvailableQuest(i)
+					if (not isTrivial) then
+						SelectGossipAvailableQuest(i)
+					end
 				end
 			end
 		elseif (event == "QUEST_GREETING") then
 			--active quests
-			local quests = GetNumActiveQuests()
-			for i = 1, quests do
-				local title, isComplete = GetActiveTitle(i)
-				if (isComplete) then
-					SelectActiveQuest(i)
-				end
-			end
-			--available quests
-			quests = GetNumAvailableQuests()
-			if (not IsClassic) then 
+			if (not IsClassic) then
+				local quests = C_GossipInfo.GetNumActiveQuests()
 				for i = 1, quests do
-					local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
-					if (not isTrivial) then
-						SelectAvailableQuest(i)
+					local title, isComplete = GetActiveTitle(i)
+					if (isComplete) then
+						C_GossipInfo.SelectActiveQuest(i)
 					end
 				end
 			else
+				local quests = GetNumActiveQuests()
+				for i = 1, quests do
+					local title, isComplete = GetActiveTitle(i)
+					if (isComplete) then
+						SelectActiveQuest(i)
+					end
+				end
+			end
+			--available quests
+			if (not IsClassic) then 
+				quests = C_GossipInfo.GetNumAvailableQuests()
+				for i = 1, quests do
+					local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
+					if (not isTrivial) then
+						C_GossipInfo.SelectAvailableQuest(i)
+					end
+				end
+			else
+				quests = GetNumAvailableQuests()
 				for i = 1, quests do
 					SelectAvailableQuest(i)
 				end
@@ -2500,11 +2537,11 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
 			if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
 			if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
-			if (string.find(text, "experience gained")) then
-				if (UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) then
-					info.ExperienceGained = (info.ExperienceGained or 0) + value
-				end
-			end
+			--if (string.find(text, "experience gained")) then
+				--if (UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) then
+					--info.ExperienceGained = (info.ExperienceGained or 0) + value
+				--end
+			--end
 			
 			if weaponType then
 				if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
@@ -2531,7 +2568,10 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (text=="finger") then info.Slot = "Finger0Slot" end
 			if (text=="trinket") then info.Slot = "Trinket0Slot" end
 			if (text=="main hand") then
-				if (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+                		if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+                    			cannotUse = 1
+                    			reason = "(this spec needs a dagger main hand)"
+				elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
 					reason = "(this spec needs a dagger main hand)"
 				elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then --Alitwin: adding 2hdw
@@ -2570,6 +2610,9 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 				if (weapons == "2h" or weapons == "ranged") then
 					cannotUse = 1
 					reason = "(this spec should use a two-hand weapon)"
+                		elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+                    			cannotUse = 1
+                    			reason = "(this spec needs a dagger in the off-hand)"
 				elseif (weapons == "weapon and shield" and weaponType ~= LE_ITEM_ARMOR_SHIELD) then
 					cannotUse = 1
 					reason = "(this spec needs a shield in the off-hand)"
@@ -2584,12 +2627,15 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 					cannotUse = 1
 					reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
 				end
-				if (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+                		if (weapons == "dagger" and weaponType == LE_ITEM_WEAPON_DAGGER) then
+                    			info.Slot = "MainHandSlot"
+                    			info.Slot2 = "SecondaryHandSlot"
+				elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					info.Slot = "SecondaryHandSlot"
 				elseif (((weapons == "dual wield") and CanDualWield()) or weapons == "dagger and any") then
 					info.Slot = "MainHandSlot"
 					info.Slot2 = "SecondaryHandSlot"
-				else
+		                elseif (weapons ~= LE_ITEM_WEAPON_DAGGER) then
 					info.Slot = "MainHandSlot"
 				end
 			end
