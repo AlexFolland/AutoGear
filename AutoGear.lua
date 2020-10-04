@@ -25,8 +25,10 @@
 -- factor in racial weapon bonuses
 -- eye of arachnida slot nil error
 
---check whether it's WoW classic, for automatic compatibility
-local IsClassic = WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
+--check whether it's WoW Classic, BFA, or Shadowlands for automatic compatibility
+local IsClassic = GetNumExpansions() == 1
+local IsBFA = GetNumExpansions() == 8
+local IsSL = GetNumExpansions() == 9
 
 local _ --prevent taint when using throwaway variable
 local reason
@@ -36,7 +38,7 @@ local weapons
 local tUpdate = 0
 local dataAvailable = nil
 local shouldPrintHelp = false
---local maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
+local maxPlayerLevel = GetMaxLevelForExpansionLevel(GetExpansionLevel())
 
 --initialize table for storing saved variables
 if (not AutoGearDB) then AutoGearDB = {} end
@@ -1889,40 +1891,34 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		elseif (event == "QUEST_DETAIL") then
 			QuestDetailAcceptButton_OnClick()
 		elseif (event == "GOSSIP_SHOW") then
-			--active quests
-			if (not IsClassic) then
-				local quests = C_GossipInfo.GetNumActiveQuests()
-				local info = {C_GossipInfo.GetActiveQuests()}
-				for i = 1, quests do
-					local title, questLevel, isTrivial, frequency, repeatable, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5], info[(i-1)*6+6], info[(i-1)*6+7]
-					if (isComplete) then
+			--active quests			
+			if (IsSL) then
+				for i = 1, C_GossipInfo.GetNumActiveQuests() do
+					local quest = C_GossipInfo.GetActiveQuests()[i]
+					if (quest["isComplete"]==true) then
 						C_GossipInfo.SelectActiveQuest(i)
 					end
 				end
 			else
-				local quests = GetNumGossipActiveQuests()
 				local info = {GetGossipActiveQuests()}
-				for i = 1, quests do
+				for i = 1, GetNumGossipActiveQuests() do
 					local name, level, isTrivial, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5]
 					if (isComplete) then
 						SelectGossipActiveQuest(i)
 					end
 				end
-			end
-			--available quests
-			if (not IsClassic) then
-				quests = C_GossipInfo.GetNumAvailableQuests()
-				info = {C_GossipInfo.GetAvailableQuests()}
-				for i = 1, quests do
-					local title, questLevel, isTrivial, frequency, repeatable, isComplete, isLegendary = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5], info[(i-1)*7+6], info[(i-1)*7+7]
-					if (not isTrivial) then
-						C_GossipInfo.SelectAvailableQuest(i)
+			end			
+			--available quests			
+			if (IsSL) then 
+				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
+					local quest = C_GossipInfo.GetAvailableQuests()[i]
+					if (quest["isTrivial"]==false) then
+	  					C_GossipInfo.SelectAvailableQuest(i)
 					end
 				end
 			else
-				quests = GetNumGossipAvailableQuests()
 				info = {GetGossipAvailableQuests()}
-				for i = 1, quests do
+				for i = 1, GetNumGossipAvailableQuests() do
 				local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
 					if (not isTrivial) then
 						SelectGossipAvailableQuest(i)
@@ -1931,35 +1927,22 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			end
 		elseif (event == "QUEST_GREETING") then
 			--active quests
-			if (not IsClassic) then
-				local quests = C_GossipInfo.GetNumActiveQuests()
-				for i = 1, quests do
-					local title, isComplete = GetActiveTitle(i)
-					if (isComplete) then
-						C_GossipInfo.SelectActiveQuest(i)
-					end
-				end
-			else
-				local quests = GetNumActiveQuests()
-				for i = 1, quests do
-					local title, isComplete = GetActiveTitle(i)
-					if (isComplete) then
-						SelectActiveQuest(i)
-					end
+			for i = 1, GetNumActiveQuests() do
+				local title, isComplete = GetActiveTitle(i)
+				if (isComplete) then
+					SelectActiveQuest(i)
 				end
 			end
 			--available quests
 			if (not IsClassic) then 
-				quests = C_GossipInfo.GetNumAvailableQuests()
-				for i = 1, quests do
-					local isTrivial, isDaily, isRepeatable = GetAvailableQuestInfo(i)
+				for i = 1, GetNumAvailableQuests() do
+                			local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i)
 					if (not isTrivial) then
-						C_GossipInfo.SelectAvailableQuest(i)
+						SelectAvailableQuest(i)
 					end
 				end
 			else
-				quests = GetNumAvailableQuests()
-				for i = 1, quests do
+				for i = 1, GetNumAvailableQuests() do
 					SelectAvailableQuest(i)
 				end
 			end
@@ -2537,12 +2520,11 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
 			if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
 			if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
-			--if (string.find(text, "experience gained")) then
-				--if (UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) then
-					--info.ExperienceGained = (info.ExperienceGained or 0) + value
-				--end
-			--end
-			
+			if (string.find(text, "experience gained")) then
+				if (UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) then
+					info.ExperienceGained = (info.ExperienceGained or 0) + value
+				end
+			end
 			if weaponType then
 				if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
 				local minDamage, maxDamage = string.match(text, "([0-9]+%.?[0-9]*) ?%- ?([0-9]+%.?[0-9]*) damage")
