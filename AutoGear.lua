@@ -38,9 +38,7 @@ local weapons
 local tUpdate = 0
 local dataAvailable = nil
 local shouldPrintHelp = false
-if (not IsSL) then
-	local maxPlayerLevel = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
-end
+local maxPlayerLevel = GetMaxLevelForExpansionLevel(GetExpansionLevel())
 
 --initialize table for storing saved variables
 if (not AutoGearDB) then AutoGearDB = {} end
@@ -2522,7 +2520,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 			if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
 			if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
 			if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
-			if (not IsSL and string.find(text, "experience gained")) then
+			if (string.find(text, "experience gained")) then
 				if (UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) then
 					info.ExperienceGained = (info.ExperienceGained or 0) + value
 				end
