@@ -25,7 +25,7 @@
 -- factor in racial weapon bonuses
 -- eye of arachnida slot nil error
 
---check whether it's WoW Classic, BFA, or Shadowlands for automatic compatibility
+--check whether it's WoW Classic, TBC, BFA, or Shadowlands for automatic compatibility
 local IsClassic = GetNumExpansions() == 1
 local IsTBC = GetNumExpansions() == 2
 local IsBFA = GetNumExpansions() == 8
@@ -88,10 +88,10 @@ local function GetAllowedVerbosityName(allowedverbosity)
 	end
 end
 
--- We run the IsClassic check before function definition to prevent poorer performance
+-- We run the IsClassic and IsTBC check before function definition to prevent poorer performance
 if (IsClassic or IsTBC) then
 	function AutoGearGetSpec()
-		-- GetSpecialization() doesn't exist on Classic.
+		-- GetSpecialization() doesn't exist on Classic or TBC.
 		-- Instead, this finds the talent tree where the most points are allocated.
 		local highestSpec = nil
 		local highestPointsSpent = nil
@@ -1852,7 +1852,7 @@ function SetAllowedVerbosity(allowedverbosity)
 end
 
 if not (IsClassic or IsTBC) then
-	--These are events that don't exist in WoW classic
+	--These are events that don't exist in WoW Classic or TBC
 	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")             --This event is not yet documented
