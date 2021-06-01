@@ -516,7 +516,7 @@ if (IsClassic or IsTBC) then
 				DPS = 0.01
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1.8,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1.2,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.47, Hit = 0, SpellHit = 0,
