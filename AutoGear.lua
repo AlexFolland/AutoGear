@@ -516,7 +516,7 @@ if (IsClassic or IsTBC) then
 				DPS = 0.01
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1.8,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 1.2,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.47, Hit = 0, SpellHit = 0,
@@ -716,8 +716,18 @@ if (IsClassic or IsTBC) then
 				Strength = 1.2, Agility = 0.5, Stamina = 1.5, Intellect = 0, Spirit = 0,
 				Armor = 0.13, Dodge = 1, Parry = 1.03, Block = 0.5, Defense = 4,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
+<<<<<<< Updated upstream
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, SpellCrit = 0, Hit = 0.02, SpellHit = 0,
 				Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+=======
+<<<<<<< HEAD
+				AttackPower = 1, ArmorPenetration = 0, Crit = 0.4, SpellCrit = 0, Hit = 0.02, SpellHit = 0, 
+				Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100, 
+=======
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, SpellCrit = 0, Hit = 0.02, SpellHit = 0,
+				Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+>>>>>>> b4caff6c4e767158aa7fa6aefd5043ebcc63407e
+>>>>>>> Stashed changes
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
 				DPS = 1.33333, Damage = 0.66667
