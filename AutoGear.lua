@@ -2209,8 +2209,8 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 			if i == 16 or i == 17 then
 				--skip for now
 			else
-				equippedInfo = ReadItemInfo(i)
-				equippedScore = DetermineItemScore(equippedInfo, weighting)
+				local equippedInfo = ReadItemInfo(i)
+				local equippedScore = DetermineItemScore(equippedInfo, weighting)
 				if ((not best[i].equipped) and best[i].score > equippedScore) then
 					AutoGearPrint("AutoGear: "..(best[i].info.Name or "nothing").." ("..string.format("%.2f", best[i].score)..") was determined to be better than "..(equippedInfo.Name or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
 					PrintItem(best[i].info)
