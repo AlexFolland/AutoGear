@@ -33,6 +33,7 @@ local IsSL = GetNumExpansions() == 9
 
 local _ --prevent taint when using throwaway variable
 local reason
+local emptyTable = {}
 local futureAction = {}
 local weighting --gear stat weighting
 local weapons
@@ -202,8 +203,8 @@ AutoGearDBDefaults = {
 	PawnScale = "",
 	AutoSellGreys = true,
 	AutoRepair = true,
-	AllowedVerbosity = 2--,
-	--ItemInfoCache = {}  --doesn't initialize; wtf?
+	AllowedVerbosity = 2,
+	ItemInfoCache = emptyTable  --doesn't initialize; wtf?
 }
 
 InitializeAutoGearDB(AutoGearDBDefaults)
@@ -2484,11 +2485,11 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	if link then tooltipitemhash = stringHash(link) else return {} end
 	
 	-- hack; not sure why the cache isn't initializing with the usual defaults
-	if AutoGearDB.ItemInfoCache == nil then AutoGearDB.ItemInfoCache = {} end
+	--if AutoGearDB.ItemInfoCache == nil then AutoGearDB.ItemInfoCache = {} end
 
 	local cachediteminfo = AutoGearDB.ItemInfoCache[tooltipitemhash]
 	if cachediteminfo ~= nil then return cachediteminfo end
-	]]
+	--]]
 
 	info.RedSockets = 0
 	info.YellowSockets = 0
@@ -3032,7 +3033,10 @@ function AutoGearTooltipHook(tooltip)
 		return
 	end
 	local tooltipItemInfo = ReadItemInfo(nil,nil,nil,nil,nil,link)
-	local pawnScaleName = AutoGearGetPawnScaleName()
+	local pawnScaleName
+	if PawnIsReady ~= nil and PawnIsReady() then
+		pawnScaleName = AutoGearGetPawnScaleName()
+	end
 	local score = DetermineItemScore(tooltipItemInfo, weighting)
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
 		local equippedItemInfo = ReadItemInfo(GetInventorySlotInfo(tooltipItemInfo.Slot))
