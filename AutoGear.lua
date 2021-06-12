@@ -203,14 +203,11 @@ AutoGearDBDefaults = {
 	PawnScale = "",
 	AutoSellGreys = true,
 	AutoRepair = true,
-	AllowedVerbosity = 2,
-	ItemInfoCache = emptyTable  --doesn't initialize; wtf?
+	AllowedVerbosity = 2--,
+	--ItemInfoCache = emptyTable --doesn't initialize with the usual {} constructor, so had to assign local emptyTable
 }
 
 InitializeAutoGearDB(AutoGearDBDefaults)
-
--- hack; not sure why this isn't initializing with the above
--- if not AutoGearDB.ItemInfoCache then AutoGearDB.ItemInfoCache = {} end
 
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate")
@@ -2477,16 +2474,11 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 		AutoGearTooltip:SetHyperlink(link)
 	end
 
-
 	--[[ caching did not show a performance benefit, so commented this and the below out
 	local tooltipitemhash
 	if link == nil then link = select(2,AutoGearTooltip:GetItem()) end
 	info.link = link
 	if link then tooltipitemhash = stringHash(link) else return {} end
-	
-	-- hack; not sure why the cache isn't initializing with the usual defaults
-	--if AutoGearDB.ItemInfoCache == nil then AutoGearDB.ItemInfoCache = {} end
-
 	local cachediteminfo = AutoGearDB.ItemInfoCache[tooltipitemhash]
 	if cachediteminfo ~= nil then return cachediteminfo end
 	--]]
