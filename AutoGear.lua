@@ -2479,14 +2479,14 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	info.link = link
 	if link then tooltipitemhash = stringHash(link) else return {} end
 	local cachediteminfo = AutoGearDB.ItemInfoCache[tooltipitemhash]
-	if cachediteminfo ~= nil then AutoGearPrint("cached item found", 3) return cachediteminfo end
+	if cachediteminfo ~= nil then --[[AutoGearPrint("cached item found", 3)]] return cachediteminfo end
 
 	info.RedSockets = 0
 	info.YellowSockets = 0
 	info.BlueSockets = 0
 	info.MetaSockets = 0
 	local class, spec = AutoGearGetClassAndSpec()
-	local weaponType = GetWeaponType()
+	local weaponType = GetWeaponType(info.link)
 	for i = 1, AutoGearTooltip:NumLines() do
 		local mytext = getglobal("AutoGearTooltipTextLeft"..i)
 		if (mytext) then
@@ -2738,7 +2738,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 
 	--if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
 	info.reason = reason
-	--AutoGearDB.ItemInfoCache[tooltipitemhash] = info
+	AutoGearDB.ItemInfoCache[tooltipitemhash] = info
 	return info
 end
 
@@ -2891,10 +2891,8 @@ function AutoGearGetPawnScaleName()
 	end
 end
 
-function GetWeaponType()
-	--this function assumes the tooltip has already been set
+function GetWeaponType(link)
 	--ask WoW what type of weapon it is
-	local name, link = AutoGearTooltip:GetItem()
 	if link then
 		local itemID, itemType, itemSubType, itemEquipLoc, icon, itemClassID, itemSubClassID = GetItemInfoInstant(link)
 		if (itemClassID == LE_ITEM_CLASS_WEAPON) or ((itemClassID == LE_ITEM_CLASS_ARMOR) and (itemSubClassID == LE_ITEM_ARMOR_SHIELD)) then
