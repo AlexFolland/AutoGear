@@ -2476,6 +2476,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 
 	local tooltipitemhash
 	if link == nil then link = select(2,AutoGearTooltip:GetItem()) end
+	info.link = link
 	if link then tooltipitemhash = stringHash(link) else return {} end
 	local cachediteminfo = AutoGearDB.ItemInfoCache[tooltipitemhash]
 	if cachediteminfo ~= nil then AutoGearPrint("cached item found", 3) return cachediteminfo end
@@ -2737,7 +2738,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 
 	--if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
 	info.reason = reason
-	AutoGearDB.ItemInfoCache[tooltipitemhash] = info
+	--AutoGearDB.ItemInfoCache[tooltipitemhash] = info
 	return info
 end
 
@@ -2918,9 +2919,11 @@ function DetermineItemScore(itemInfo, weighting)
 	if itemInfo.isMount then return 999999 end
 
 	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
-		if (not link) then _, link = AutoGearTooltip:GetItem() end
-		local PawnItemData = PawnGetItemData(link)
-		if PawnItemData then return PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName()) end
+		local PawnItemData = PawnGetItemData(itemInfo.link)
+		if PawnItemData then
+			--AutoGearPrint(itemInfo.link.." value from Pawn is "..tostring(PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName())),3)
+			return PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName())
+		end
 		--else AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
 	end
 
@@ -3059,14 +3062,14 @@ function AutoGearTooltipHook(tooltip)
 		]]
 	end
 end
---GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
---ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
---ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
---ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-GameTooltip:HookScript("OnShow", AutoGearTooltipHook)
-ShoppingTooltip1:HookScript("OnShow", AutoGearTooltipHook)
-ShoppingTooltip2:HookScript("OnShow", AutoGearTooltipHook)
-ItemRefTooltip:HookScript("OnShow", AutoGearTooltipHook)
+GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+--GameTooltip:HookScript("OnShow", AutoGearTooltipHook)
+--ShoppingTooltip1:HookScript("OnShow", AutoGearTooltipHook)
+--ShoppingTooltip2:HookScript("OnShow", AutoGearTooltipHook)
+--ItemRefTooltip:HookScript("OnShow", AutoGearTooltipHook)
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
