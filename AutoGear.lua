@@ -161,10 +161,53 @@ AutoGearDBDefaults = {
 	PawnScale = "",
 	AutoSellGreys = true,
 	AutoRepair = true,
-	AllowedVerbosity = 2
+	AllowedVerbosity = 2,
+	ItemInfoCache = {}
 }
 
 InitializeAutoGearDB(AutoGearDBDefaults)
+
+local function serializeTable(val, name, skipnewlines, depth)
+    skipnewlines = skipnewlines or false
+    depth = depth or 0
+
+    local tmp = string.rep(" ", depth)
+
+    if name then tmp = tmp .. name .. " = " end
+
+    if type(val) == "table" then
+        tmp = tmp .. "{" .. (not skipnewlines and "\n" or "")
+
+        for k, v in pairs(val) do
+            tmp =  tmp .. serializeTable(v, k, skipnewlines, depth + 1) .. "," .. (not skipnewlines and "\n" or "")
+        end
+
+        tmp = tmp .. string.rep(" ", depth) .. "}"
+    elseif type(val) == "number" then
+        tmp = tmp .. tostring(val)
+    elseif type(val) == "string" then
+        tmp = tmp .. string.format("%q", val)
+    elseif type(val) == "boolean" then
+        tmp = tmp .. (val and "true" or "false")
+    else
+        tmp = tmp .. "\"[inserializeable datatype:" .. type(val) .. "]\""
+    end
+
+    return tmp
+end
+
+
+local function stringHash(text)
+	local counter = 1
+	local len = string.len(text)
+	for i = 1, len, 3 do 
+	  counter = math.fmod(counter*8161, 4294967279) +  -- 2^32 - 17: Prime!
+		  (string.byte(text,i)*16776193) +
+		  ((string.byte(text,i+1) or (len-i+256))*8372226) +
+		  ((string.byte(text,i+2) or (len-i+256))*3932164)
+	end
+	return math.fmod(counter, 4294967291) -- 2^32 - 5: Prime (and different from the prime in the loop)
+end
 
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate")
@@ -2430,6 +2473,13 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	elseif (link) then
 		AutoGearTooltip:SetHyperlink(link)
 	end
+
+	local tooltipitemhash
+	if link == nil then link = select(2,AutoGearTooltip:GetItem()) end
+	if link then tooltipitemhash = stringHash(link) else return {} end
+	local cachediteminfo = AutoGearDB.ItemInfoCache[tooltipitemhash]
+	if cachediteminfo ~= nil then AutoGearPrint("cached item found", 3) return cachediteminfo end
+
 	info.RedSockets = 0
 	info.YellowSockets = 0
 	info.BlueSockets = 0
@@ -2677,16 +2727,6 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 	if (info.BlueSockets == 0) then info.BlueSockets = nil end
 	if (info.MetaSockets == 0) then info.MetaSockets = nil end
 
-	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
-		if (not link) then _, link = AutoGearTooltip:GetItem() end
-		local PawnItemData = PawnGetItemData(link)
-		if PawnItemData then
-			info.PawnScaleName = AutoGearGetPawnScaleName()
-			info.PawnItemValue = PawnGetSingleValueFromItem(PawnItemData, info.PawnScaleName)
-		--else AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
-		end
-	end
-
 	if (info.Slot or info.isMount) then info.shouldShowScoreInTooltip = 1 end
 	if (not cannotUse and (info.Slot or info.isMount)) then
 		info.Usable = 1
@@ -2697,6 +2737,7 @@ function ReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex
 
 	--if (cannotUse) then AutoGearPrint("Cannot use "..(info.Name or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
 	info.reason = reason
+	AutoGearDB.ItemInfoCache[tooltipitemhash] = info
 	return info
 end
 
@@ -2875,7 +2916,14 @@ end
 
 function DetermineItemScore(itemInfo, weighting)
 	if itemInfo.isMount then return 999999 end
-	if itemInfo.PawnItemValue then return itemInfo.PawnItemValue end
+
+	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
+		if (not link) then _, link = AutoGearTooltip:GetItem() end
+		local PawnItemData = PawnGetItemData(link)
+		if PawnItemData then return PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName()) end
+		--else AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
+	end
+
 	return (weighting.Strength or 0) * (itemInfo.Strength or 0) +
 		(weighting.Agility or 0) * (itemInfo.Agility or 0) +
 		(weighting.Stamina or 0) * (itemInfo.Stamina or 0) +
@@ -2967,10 +3015,11 @@ function AutoGearTooltipHook(tooltip)
 	if (not weighting) then AutoGearSetStatWeights() end
 	local name, link = tooltip:GetItem()
 	if not link then
-		AutoGearPrint("AutoGear: No item link for "..name.." on "..tooltip:GetName(),3)
+		AutoGearPrint("AutoGear: No item link for "..(name or "(no name)").." on "..tooltip:GetName(),3)
 		return
 	end
 	local tooltipItemInfo = ReadItemInfo(nil,nil,nil,nil,nil,link)
+	local pawnScaleName = AutoGearGetPawnScaleName()
 	local score = DetermineItemScore(tooltipItemInfo, weighting)
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
 		local equippedItemInfo = ReadItemInfo(GetInventorySlotInfo(tooltipItemInfo.Slot))
@@ -2986,12 +3035,12 @@ function AutoGearTooltipHook(tooltip)
 		score = math.floor(score * 1000) / 1000
 		if (not comparing) then
 			equippedScore = math.floor(equippedScore * 1000) / 1000
-			tooltip:AddDoubleLine((tooltipItemInfo.PawnScaleName and "AutoGear: Pawn \""..PawnGetScaleColor(tooltipItemInfo.PawnScaleName)..tooltipItemInfo.PawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped):",
+			tooltip:AddDoubleLine((pawnScaleName and "AutoGear: Pawn \""..PawnGetScaleColor(pawnScaleName)..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped):",
 			equippedScore or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine((tooltipItemInfo.PawnScaleName and "AutoGear: Pawn \""..PawnGetScaleColor(tooltipItemInfo.PawnScaleName)..tooltipItemInfo.PawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..(comparing and "" or " (this)")..":",
+		tooltip:AddDoubleLine((pawnScaleName and "AutoGear: Pawn \""..PawnGetScaleColor(pawnScaleName)..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..(comparing and "" or " (this)")..":",
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
@@ -3010,10 +3059,14 @@ function AutoGearTooltipHook(tooltip)
 		]]
 	end
 end
-GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+--GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+--ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+--ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+--ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+GameTooltip:HookScript("OnShow", AutoGearTooltipHook)
+ShoppingTooltip1:HookScript("OnShow", AutoGearTooltipHook)
+ShoppingTooltip2:HookScript("OnShow", AutoGearTooltipHook)
+ItemRefTooltip:HookScript("OnShow", AutoGearTooltipHook)
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
