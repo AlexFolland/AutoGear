@@ -9,3 +9,4 @@
 
 AutoGear.lua
 ## SavedVariables: AutoGearDB
+## SavedVariablesPerCharacter: AutoGearDB
