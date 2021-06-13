@@ -36,6 +36,7 @@ local reason
 local bestitems
 --local lastlink
 local futureAction = {}
+local curLink
 local weighting --gear stat weighting
 local weapons
 local tUpdate = 0
@@ -124,12 +125,13 @@ for k, v in pairs(AutoGearClassList) do
 	AutoGearReverseClassList[v] = k
 end
 
---initialize missing saved variables with default values
+--initialize missing saved variables with default values; call only after PLAYER_ENTERING_WORLD
 function AutoGearInitializeDB(defaults, reset)
 	if AutoGearDB == nil or reset ~= nil then AutoGearDB = {} end
 	for k,v in pairs(defaults) do
-		if AutoGearDB[k] == nil then
-			AutoGearDB[k] = defaults[k]
+		if _G["AutoGearDB"][k] == nil then
+			--print("AutoGear: found nil value at "..k.."; should be "..tostring(v))
+			_G["AutoGearDB"][k] = v
 		end
 	end
 end
@@ -192,24 +194,24 @@ end
 --default values for variables saved between sessions
 AutoGearDBDefaults = {
 	Enabled = true,
-	Override = false,
-	OverrideSpec = AutoGearGetDefaultOverrideSpec(),
 	AutoLootRoll = true,
 	RollOnNonGearLoot = true,
 	AutoConfirmBinding = true,
+	AutoConfirmBindingEpics = false,
 	AutoAcceptQuests = true,
 	AutoAcceptPartyInvitations = true,
 	ScoreInTooltips = true,
 	ReasonsInTooltips = false,
 	AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
-	UsePawn = false,
-	OverridePawnScale = true,
-	PawnScale = "",
 	AutoSellGreys = true,
 	AutoRepair = true,
+	Override = false,
+	OverrideSpec = AutoGearGetDefaultOverrideSpec(),
+	UsePawn = true, --AutoGear built-in weights are deprecated.  We're using Pawn mainly now, so default true.
+	OverridePawnScale = false,
+	PawnScale = "",
 	AllowedVerbosity = 2
 }
-AutoGearInitializeDB(AutoGearDBDefaults)
 
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate")
@@ -1608,6 +1610,8 @@ optionsMenu:RegisterEvent("ADDON_LOADED")
 optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 	if event == "PLAYER_ENTERING_WORLD" then
 
+		AutoGearInitializeDB(AutoGearDBDefaults)
+
 		--initialize options menu variables
 		AutoGearOptions = {
 			{
@@ -1649,6 +1653,16 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Automatically confirm soul-binding when equipping new gear, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually.",
 				["toggleDescriptionTrue"] = "Automatically confirming soul-binding is now enabled.",
 				["toggleDescriptionFalse"] = "Automatically confirming soul-binding is now disabled.  AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually."
+			},
+			{
+				["option"] = "AutoConfirmBindingEpics",
+				["cliCommands"] = { "epic", "epics", "bindepics", "autobindepics" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically confirm soul-binding for epics",
+				["description"] = "Automatically confirm soul-binding when equipping upgrades that have epic rarity, causing them to become soulbound.  If this is disabled, AutoGear will still try to equip epic binding gear, but you will have to confirm soul-binding manually.",
+				["toggleDescriptionTrue"] = "Automatically confirming soul-binding for epics is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically confirming soul-binding for epics is now disabled.  AutoGear will still epic binding gear, but you will have to confirm soul-binding manually."
 			},
 			{
 				["option"] = "AutoAcceptQuests",
@@ -2047,17 +2061,17 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			local rollItemInfo = AutoGearReadItemInfo(nil, arg1)
 			local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
 			if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
-				AutoGearPrint("AutoGear: This loot is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
+				AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 				--local roll is nil, so no roll
 			elseif (wouldNeed and canNeed) then
 				roll = 1 --need
 			else
 				roll = 2 --greed
 				if (wouldNeed and not canNeed) then
-					AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for this item.", 1)
+					AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for "..rollItemInfo.link..".", 1)
 				end
 			end
-			if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: This item cannot be worn.  "..reason, 1) end
+			if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: "..rollItemInfo.link.." cannot be worn.  "..reason, 1) end
 			if (roll) then
 				local newAction = {}
 				newAction.action = "roll"
@@ -2097,10 +2111,13 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				table.insert(futureAction, newAction)
 			end
 		end
-	elseif (event == "EQUIP_BIND_CONFIRM") then
-		if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
-	elseif (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
-		if (AutoGearDB.AutoConfirmBinding == true) then EquipPendingItem(arg1) end
+	elseif (event == "EQUIP_BIND_CONFIRM") or (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
+		local rarity = select(3,GetItemInfo(curLink))
+		if rarity == nil then return end
+		if ((rarity ~= 4) and (AutoGearDB.AutoConfirmBinding == true))
+		or ((rarity == 4) and (AutoGearDB.AutoConfirmBindingEpics == true)) then
+			EquipPendingItem(arg1)
+		end
 	elseif (event == "MERCHANT_SHOW") then
 		if (AutoGearDB.AutoSellGreys == true) then
 			-- sell all grey items
@@ -2425,7 +2442,7 @@ end
 
 function AutoGearIsItemTwoHanded(itemID)
 	if (not itemID) then return nil end
-	local mainHandType = select(7, GetItemInfo(itemID))
+	local mainHandType = select(3, GetItemInfoInstant(itemID))
 	return mainHandType and
 		(string.find(mainHandType, "Two") or
 		string.find(mainHandType, "Staves") or
@@ -2442,9 +2459,9 @@ end
 
 function AutoGearGetMainHandType()
 	local id = GetInventoryItemID("player", GetInventorySlotInfo("MainHandSlot"))
-	local mainHandType, _
+	local mainHandType
 	if (id) then
-		_, _, _, _, _, _, mainHandType = GetItemInfo(id)
+		mainHandType = select(3, GetItemInfoInstant(id))
 	end
 	if mainHandType then
 		return mainHandType
@@ -3153,10 +3170,11 @@ function AutoGearMain()
 								table.remove(futureAction, i)
 							end
 						else
-							AutoGearItemInfoCache = {}
+							curLink=curAction.link
 							PickupContainerItem(curAction.container, curAction.slot)
 							EquipCursorItem(curAction.replaceSlot)
 							curAction.ensuringEquipped = 1
+							AutoGearItemInfoCache = {}
 						end
 					else
 						table.remove(futureAction, i)
