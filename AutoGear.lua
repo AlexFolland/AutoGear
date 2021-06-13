@@ -1649,10 +1649,10 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliCommands"] = { "bind", "boe", "soulbinding" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Automatically confirm soul-binding",
-				["description"] = "Automatically confirm soul-binding when equipping new gear, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually.",
-				["toggleDescriptionTrue"] = "Automatically confirming soul-binding is now enabled.",
-				["toggleDescriptionFalse"] = "Automatically confirming soul-binding is now disabled.  AutoGear will still try to equip binding gear, but you will have to confirm soul-binding manually."
+				["label"] = "Automatically confirm soul-binding for non-epics",
+				["description"] = "Automatically confirm soul-binding when equipping an upgrade that does not have epic rarity, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip non-epic binding gear, but you will have to confirm soul-binding manually.",
+				["toggleDescriptionTrue"] = "Automatically confirming soul-binding for non-epics is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically confirming soul-binding for non-epics is now disabled.  AutoGear will still try to equip non-epic binding gear, but you will have to confirm soul-binding manually."
 			},
 			{
 				["option"] = "AutoConfirmBindingEpics",
@@ -1660,7 +1660,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
 				["label"] = "Automatically confirm soul-binding for epics",
-				["description"] = "Automatically confirm soul-binding when equipping upgrades that have epic rarity, causing them to become soulbound.  If this is disabled, AutoGear will still try to equip epic binding gear, but you will have to confirm soul-binding manually.",
+				["description"] = "Automatically confirm soul-binding when equipping an upgrade that has epic rarity, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip epic binding gear, but you will have to confirm soul-binding manually.",
 				["toggleDescriptionTrue"] = "Automatically confirming soul-binding for epics is now enabled.",
 				["toggleDescriptionFalse"] = "Automatically confirming soul-binding for epics is now disabled.  AutoGear will still epic binding gear, but you will have to confirm soul-binding manually."
 			},
@@ -3170,7 +3170,7 @@ function AutoGearMain()
 								table.remove(futureAction, i)
 							end
 						else
-							curLink=curAction.link
+							curLink=curAction.info.link
 							PickupContainerItem(curAction.container, curAction.slot)
 							EquipCursorItem(curAction.replaceSlot)
 							curAction.ensuringEquipped = 1
