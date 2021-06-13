@@ -197,6 +197,7 @@ AutoGearDBDefaults = {
 	AutoLootRoll = true,
 	RollOnNonGearLoot = true,
 	AutoConfirmBinding = true,
+	AutoConfirmBindingBlues = false,
 	AutoConfirmBindingEpics = false,
 	AutoAcceptQuests = true,
 	AutoAcceptPartyInvitations = true,
@@ -1649,10 +1650,20 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliCommands"] = { "bind", "boe", "soulbinding" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Automatically confirm soul-binding for non-epics",
-				["description"] = "Automatically confirm soul-binding when equipping an upgrade that does not have epic rarity, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip non-epic binding gear, but you will have to confirm soul-binding manually.",
-				["toggleDescriptionTrue"] = "Automatically confirming soul-binding for non-epics is now enabled.",
-				["toggleDescriptionFalse"] = "Automatically confirming soul-binding for non-epics is now disabled.  AutoGear will still try to equip non-epic binding gear, but you will have to confirm soul-binding manually."
+				["label"] = "Automatically confirm soul-binding for non-blues/non-epics",
+				["description"] = "Automatically confirm soul-binding when equipping an upgrade that does not have blue or epic rarity, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip non-blue/non-epic binding gear, but you will have to confirm soul-binding manually.",
+				["toggleDescriptionTrue"] = "Automatically confirming soul-binding for non-blues/non-epics is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically confirming soul-binding for non-blues/non-epics is now disabled.  AutoGear will still try to equip non-blue/non-epic binding gear, but you will have to confirm soul-binding manually."
+			},
+			{
+				["option"] = "AutoConfirmBindingBlues",
+				["cliCommands"] = { "blue", "blues", "bindblues", "autobindblues" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically confirm soul-binding for blues",
+				["description"] = "Automatically confirm soul-binding when equipping an upgrade that has blue rarity, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip blue binding gear, but you will have to confirm soul-binding manually.",
+				["toggleDescriptionTrue"] = "Automatically confirming soul-binding for blues is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically confirming soul-binding for blues is now disabled.  AutoGear will still try to equip blue binding gear, but you will have to confirm soul-binding manually."
 			},
 			{
 				["option"] = "AutoConfirmBindingEpics",
@@ -1662,7 +1673,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["label"] = "Automatically confirm soul-binding for epics",
 				["description"] = "Automatically confirm soul-binding when equipping an upgrade that has epic rarity, causing it to become soulbound.  If this is disabled, AutoGear will still try to equip epic binding gear, but you will have to confirm soul-binding manually.",
 				["toggleDescriptionTrue"] = "Automatically confirming soul-binding for epics is now enabled.",
-				["toggleDescriptionFalse"] = "Automatically confirming soul-binding for epics is now disabled.  AutoGear will still epic binding gear, but you will have to confirm soul-binding manually."
+				["toggleDescriptionFalse"] = "Automatically confirming soul-binding for epics is now disabled.  AutoGear will still try to equip epic binding gear, but you will have to confirm soul-binding manually."
 			},
 			{
 				["option"] = "AutoAcceptQuests",
@@ -2114,7 +2125,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 	elseif (event == "EQUIP_BIND_CONFIRM") or (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
 		local rarity = select(3,GetItemInfo(curLink))
 		if rarity == nil then return end
-		if ((rarity ~= 4) and (AutoGearDB.AutoConfirmBinding == true))
+		if ((rarity ~= 3) and (rarity ~= 4) and (AutoGearDB.AutoConfirmBinding == true))
+		or ((rarity == 3) and (AutoGearDB.AutoConfirmBindingBlues == true))
 		or ((rarity == 4) and (AutoGearDB.AutoConfirmBindingEpics == true)) then
 			EquipPendingItem(arg1)
 		end
