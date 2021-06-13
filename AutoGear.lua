@@ -2767,7 +2767,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	if (info.BlueSockets == 0) then info.BlueSockets = nil end
 	if (info.MetaSockets == 0) then info.MetaSockets = nil end
 
-	if (info.Slot or info.isMount) then info.shouldShowScoreInTooltip = 1 end
+	if (info.Slot) then info.shouldShowScoreInTooltip = 1 end
 	if (not cannotUse and (info.Slot or info.isMount)) then
 		info.Usable = 1
 	elseif (not info.Slot) then
