@@ -43,56 +43,6 @@ local dataAvailable = nil
 local shouldPrintHelp = false
 local maxPlayerLevel = GetMaxLevelForExpansionLevel(GetExpansionLevel())
 
---names of verbosity levels
-local function GetAllowedVerbosityName(allowedverbosity)
-	if allowedverbosity == 0 then
-		return "errors"
-	elseif allowedverbosity == 1 then
-		return "info"
-	elseif allowedverbosity == 2 then
-		return "details"
-	elseif allowedverbosity == 3 then
-		return "debug"
-	else
-		return "funky"
-	end
-end
-
---initialize table for storing saved variables
-if (not AutoGearDB) then AutoGearDB = {} end
-
---initialize item info cache for quicker repeat lookups
-AutoGearItemInfoCache = {}
-
---fill class lists for lookups later
-AutoGearClassList = {}
-FillLocalizedClassList(AutoGearClassList)
-if not AutoGearClassList["DEATHKNIGHT"] then AutoGearClassList["DEATHKNIGHT"] = "Death Knight" end
-if not AutoGearClassList["DEMONHUNTER"] then AutoGearClassList["DEMONHUNTER"] = "Demon Hunter" end
-if not AutoGearClassList["MONK"] then AutoGearClassList["MONK"] = "Monk" end
-AutoGearReverseClassList = {}
-for k, v in pairs(AutoGearClassList) do
-	AutoGearReverseClassList[v] = k
-end
-
---initialize missing saved variables with default values
-function AutoGearInitializeDB(defaults, reset)
-	if AutoGearDB == nil or reset ~= nil then AutoGearDB = {} end
-	for k,v in pairs(defaults) do
-		if AutoGearDB[k] == nil then
-			AutoGearDB[k] = defaults[k]
-		end
-	end
-end
-
---printing function to check allowed verbosity level
-function AutoGearPrint(text, verbosity)
-	if verbosity == nil then verbosity = 0 end
-	if (AutoGearDB.AllowedVerbosity == nil) or (verbosity <= AutoGearDB.AllowedVerbosity) then
-		print(text)
-	end
-end
-
 function AutoGearSerializeTable(val, name, skipnewlines, depth)
     skipnewlines = skipnewlines or false
     depth = depth or 0
@@ -132,6 +82,56 @@ function AutoGearStringHash(text)
 		  ((string.byte(text,i+2) or (len-i+256))*3932164)
 	end
 	return math.fmod(counter, 4294967291) -- 2^32 - 5: Prime (and different from the prime in the loop)
+end
+
+--names of verbosity levels
+function AutoGearGetAllowedVerbosityName(allowedverbosity)
+	if allowedverbosity == 0 then
+		return "errors"
+	elseif allowedverbosity == 1 then
+		return "info"
+	elseif allowedverbosity == 2 then
+		return "details"
+	elseif allowedverbosity == 3 then
+		return "debug"
+	else
+		return "funky"
+	end
+end
+
+--printing function to check allowed verbosity level
+function AutoGearPrint(text, verbosity)
+	if verbosity == nil then verbosity = 0 end
+	if (AutoGearDB.AllowedVerbosity == nil) or (verbosity <= AutoGearDB.AllowedVerbosity) then
+		print(text)
+	end
+end
+
+--initialize table for storing saved variables
+if (not AutoGearDB) then AutoGearDB = {} end
+
+--initialize item info cache for quicker repeat lookups
+AutoGearItemInfoCache = {}
+
+--fill class lists for lookups later
+AutoGearClassList = {}
+FillLocalizedClassList(AutoGearClassList)
+if not AutoGearClassList["DEATHKNIGHT"] then AutoGearClassList["DEATHKNIGHT"] = "Death Knight" end
+if not AutoGearClassList["DEMONHUNTER"] then AutoGearClassList["DEMONHUNTER"] = "Demon Hunter" end
+if not AutoGearClassList["MONK"] then AutoGearClassList["MONK"] = "Monk" end
+AutoGearReverseClassList = {}
+for k, v in pairs(AutoGearClassList) do
+	AutoGearReverseClassList[v] = k
+end
+
+--initialize missing saved variables with default values
+function AutoGearInitializeDB(defaults, reset)
+	if AutoGearDB == nil or reset ~= nil then AutoGearDB = {} end
+	for k,v in pairs(defaults) do
+		if AutoGearDB[k] == nil then
+			AutoGearDB[k] = defaults[k]
+		end
+	end
 end
 
 -- We run the IsClassic and IsTBC check before function definition to prevent poorer performance
@@ -1626,7 +1626,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
 				["label"] = "Automatically roll on loot",
-				["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..GetAllowedVerbosityName(1)..") or higher.",
+				["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..AutoGearGetAllowedVerbosityName(1)..") or higher.",
 				["toggleDescriptionTrue"] = "Automatically rolling on loot is now enabled.",
 				["toggleDescriptionFalse"] = "Automatically rolling on loot is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on loot manually."
 			},
@@ -1879,22 +1879,22 @@ function AutoGearPrintHelp()
 	AutoGearPrint("AutoGear:    '/ag pawnscale [Pawn scale name]': set Pawn scale override to the specifed Pawn scale", 0)
 	AutoGearPrint("AutoGear:    '/ag sell [enable/on/start]/[disable/off/stop]': toggle automatic selling of grey items", 0)
 	AutoGearPrint("AutoGear:    '/ag repair [enable/on/start]/[disable/off/stop]': toggle automatic repairing", 0)
-	AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..")", 0)
+	AutoGearPrint("AutoGear:    '/ag verbosity [0/1/2/3]': set allowed verbosity level; valid levels are: 0 ("..AutoGearGetAllowedVerbosityName(0).."), 1 ("..AutoGearGetAllowedVerbosityName(1).."), 2 ("..AutoGearGetAllowedVerbosityName(2).."), 3 ("..AutoGearGetAllowedVerbosityName(3)..")", 0)
 end
 
 function AutoGearSetAllowedVerbosity(allowedverbosity)
 	allowedverbosity = tonumber(allowedverbosity)
 	if type(allowedverbosity) ~= "number" then
-		AutoGearPrint("AutoGear: The current allowed verbosity level is "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity).."). Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
+		AutoGearPrint("AutoGear: The current allowed verbosity level is "..tostring(AutoGearDB.AllowedVerbosity).." ("..AutoGearGetAllowedVerbosityName(AutoGearDB.AllowedVerbosity).."). Valid levels are: 0 ("..AutoGearGetAllowedVerbosityName(0).."), 1 ("..AutoGearGetAllowedVerbosityName(1).."), 2 ("..AutoGearGetAllowedVerbosityName(2).."), 3 ("..AutoGearGetAllowedVerbosityName(3)..").", 0)
 		return
 	end
 
 	if allowedverbosity < 0 or allowedverbosity > 3 then
-		AutoGearPrint("AutoGear: That is an invalid allowed verbosity level. Valid levels are: 0 ("..GetAllowedVerbosityName(0).."), 1 ("..GetAllowedVerbosityName(1).."), 2 ("..GetAllowedVerbosityName(2).."), 3 ("..GetAllowedVerbosityName(3)..").", 0)
+		AutoGearPrint("AutoGear: That is an invalid allowed verbosity level. Valid levels are: 0 ("..AutoGearGetAllowedVerbosityName(0).."), 1 ("..AutoGearGetAllowedVerbosityName(1).."), 2 ("..AutoGearGetAllowedVerbosityName(2).."), 3 ("..AutoGearGetAllowedVerbosityName(3)..").", 0)
 		return
 	else
 		AutoGearDB.AllowedVerbosity = allowedverbosity
-		AutoGearPrint("AutoGear: Allowed verbosity level is now: "..tostring(AutoGearDB.AllowedVerbosity).." ("..GetAllowedVerbosityName(AutoGearDB.AllowedVerbosity)..").", 0)
+		AutoGearPrint("AutoGear: Allowed verbosity level is now: "..tostring(AutoGearDB.AllowedVerbosity).." ("..AutoGearGetAllowedVerbosityName(AutoGearDB.AllowedVerbosity)..").", 0)
 	end
 end
 
