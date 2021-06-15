@@ -1,4 +1,7 @@
 ## Interface: 90005
+## Interface-Retail: 90005
+## Interface-Classic: 11307
+## Interface-BCC: 20501
 ## Title: AutoGear
 ## Notes: Automatically chooses loot and equips gear
 

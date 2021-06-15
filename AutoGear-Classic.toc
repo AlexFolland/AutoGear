@@ -1,7 +1,0 @@
-## Interface: 11307
-## Title: AutoGear
-## Notes: Automatically chooses loot and equips gear
-
-AutoGear.lua
-## SavedVariables: AutoGearDB
-## SavedVariablesPerCharacter: AutoGearDB
