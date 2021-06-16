@@ -8,3 +8,5 @@
 AutoGear.lua
 ## SavedVariables: AutoGearDB
 ## SavedVariablesPerCharacter: AutoGearDB
+
+## X-Curse-Project-ID: 39179
