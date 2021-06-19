@@ -2573,7 +2573,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					reason = "(this item has been learned already)"
 				end
 			end
-			local isHealer = spec=="Holy" or spec=="Restoration"
+			local isHealer = spec=="Holy" or spec=="Restoration" or spec=="Mistweaver"
 			if (string.find(text, "strength")) then info.Strength = (info.Strength or 0) + value end
 			if (string.find(text, "agility")) then info.Agility = (info.Agility or 0) + value end
 			if (string.find(text, "intellect")) then info.Intellect = (info.Intellect or 0) + value end

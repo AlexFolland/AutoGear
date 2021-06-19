@@ -45,6 +45,7 @@ jobs:
       # another example where we supply additional arguments, this example is specifically to release
       # for the Classic version of the game
       # the -g arg releases with all classic tags
+      # uploading to CurseForge requires the X-Curse-Project-ID field in the toc file, or else no upload
       - name: Package and Release for Classic
         uses: BigWigsMods/packager@master
         with:
