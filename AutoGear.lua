@@ -2484,10 +2484,21 @@ end
 
 function AutoGearPrintItem(info)
 	if (info and info.link) then AutoGearPrint("AutoGear:     "..info.link..":", 2) end
-	for k,v in pairs(info) do
-		if (k ~= "Name" and weighting[k]) then
-			AutoGearPrint("AutoGear:         "..k..": "..string.format("%.2f", v).." * "..weighting[k].." = "..string.format("%.2f", v * weighting[k]), 2)
+	if AutoGearDB.UsePawn and PawnIsReady ~= nil and PawnIsReady() then
+		local pawnScaleName = AutoGearGetPawnScaleName()
+		local pawnScaleColor = PawnGetScaleColor(pawnScaleName)
+		local score = AutoGearDetermineItemScore(info, weighting)
+		-- 3 decimal places max
+		score = math.floor(score * 1000) / 1000
+		AutoGearPrint("AutoGear:         "..((pawnScaleName and pawnScaleColor) and ("Pawn \""..pawnScaleColor..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"") or "AutoGear").." score: "..(score or "nil"),2)
+	elseif not AutoGearDB.UsePawn then
+		for k,v in pairs(info) do
+			if (k ~= "Name" and weighting[k]) then
+				AutoGearPrint("AutoGear:         "..k..": "..string.format("%.2f", v).." * "..weighting[k].." = "..string.format("%.2f", v * weighting[k]), 2)
+			end
 		end
+	else
+		AutoGearPrint("AutoGear:         (error: Stats aren't ready to be printed.)", 2)
 	end
 end
 
