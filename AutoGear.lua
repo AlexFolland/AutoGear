@@ -3066,8 +3066,10 @@ function AutoGearTooltipHook(tooltip)
 	end
 	local tooltipItemInfo = AutoGearReadItemInfo(nil,nil,nil,nil,nil,link)
 	local pawnScaleName
-	if PawnIsReady ~= nil and PawnIsReady() then
+	local pawnScaleColor
+	if AutoGearDB.UsePawn and PawnIsReady ~= nil and PawnIsReady() then
 		pawnScaleName = AutoGearGetPawnScaleName()
+		pawnScaleColor = PawnGetScaleColor(pawnScaleName)
 	end
 	local score = AutoGearDetermineItemScore(tooltipItemInfo, weighting)
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
@@ -3084,12 +3086,12 @@ function AutoGearTooltipHook(tooltip)
 		score = math.floor(score * 1000) / 1000
 		if (not comparing) then
 			equippedScore = math.floor(equippedScore * 1000) / 1000
-			tooltip:AddDoubleLine((pawnScaleName and "AutoGear: Pawn \""..PawnGetScaleColor(pawnScaleName)..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped):",
+			tooltip:AddDoubleLine(((pawnScaleName and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped):",
 			equippedScore or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine((pawnScaleName and "AutoGear: Pawn \""..PawnGetScaleColor(pawnScaleName)..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..(comparing and "" or " (this)")..":",
+		tooltip:AddDoubleLine(((pawnScaleName and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..(comparing and "" or " (this)")..":",
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
