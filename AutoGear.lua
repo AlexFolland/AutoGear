@@ -204,6 +204,7 @@ AutoGearDBDefaults = {
 	ScoreInTooltips = true,
 	ReasonsInTooltips = false,
 	AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
+	AlwaysShowScoreComparisons = false,
 	AutoSellGreys = true,
 	AutoRepair = true,
 	Override = false,
@@ -1727,6 +1728,16 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["toggleDescriptionFalse"] = "Always showing gear comparison tooltips when viewing gear tooltips is now disabled.  You can still show gear comparison tooltips while holding the Shift key."
 			},
 			{
+				["option"] = "AlwaysShowScoreComparisons",
+				["cliCommands"] = { "scorecomparisons", "scorecomparisonsalways", "alwaysshowscorecomparisons" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Always show score comparisons in tooltips",
+				["description"] = "Always show score comparisons in the item tooltip, even when also also showing the comparison tooltip.  If this is enabled, only the score for the current item will be shown in the tooltip.",
+				["toggleDescriptionTrue"] = "Always show score comparisons in gear tooltips is now enabled.",
+				["toggleDescriptionFalse"] = "Always show score comparisons in gear tooltips is now disabled."
+			},
+			{
 				["option"] = "AutoSellGreys",
 				["cliCommands"] = { "sell", "sellgreys", "greys" },
 				["cliTrue"] = { "enable", "on", "start" },
@@ -2572,14 +2583,15 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			else
 				value = 0
 			end
+			info.equipped = AutoGearPlayerIsWearingItem(info.Name)
 			if (string.find(text, "unique")) then
-				if (AutoGearPlayerIsWearingItem(info.Name)) then
+				if (info.equipped) then
 					cannotUse = 1
 					reason = "(this item is unique and you already have one)"
 				end
 			end
 			if (string.find(text, "already known")) then
-				if (AutoGearPlayerIsWearingItem(info.Name)) then
+				if (info.equipped) then
 					cannotUse = 1
 					reason = "(this item has been learned already)"
 				end
@@ -3086,7 +3098,10 @@ function AutoGearTooltipHook(tooltip)
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
 		local equippedItemInfo = AutoGearReadItemInfo(GetInventorySlotInfo(tooltipItemInfo.Slot))
 		local equippedScore = AutoGearDetermineItemScore(equippedItemInfo, weighting)
-		local comparing = ((tooltip ~= ItemRefTooltip) and (ShoppingTooltip1:IsVisible() or tooltip:IsEquippedItem()))
+		--AutoGearPrint("AutoGear: This tooltip is \""..tooltip:GetName().."\".",1)
+		local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
+		local isAnyComparisonTooltipVisible = ItemRefTooltip:IsVisible() or ShoppingTooltip1:IsVisible() or ShoppingTooltip2:IsVisible()
+		local shouldShowComparisonLine = (not isAComparisonTooltip and (not isAnyComparisonTooltipVisible or AutoGearDB.AlwaysShowScoreComparisons)) and not tooltipItemInfo.equipped
 		local scoreColor = HIGHLIGHT_FONT_COLOR
 		if (score > equippedScore) then
 			scoreColor = GREEN_FONT_COLOR
@@ -3095,14 +3110,14 @@ function AutoGearTooltipHook(tooltip)
 		end
 		-- 3 decimal places max
 		score = math.floor(score * 1000) / 1000
-		if (not comparing) then
+		if shouldShowComparisonLine then
 			equippedScore = math.floor(equippedScore * 1000) / 1000
 			tooltip:AddDoubleLine(((pawnScaleName and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped):",
 			equippedScore or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine(((pawnScaleName and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..(comparing and "" or " (this)")..":",
+		tooltip:AddDoubleLine(((pawnScaleName and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..((shouldShowComparisonLine and not isAComparisonTooltip) and " (this)" or "")..":",
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
