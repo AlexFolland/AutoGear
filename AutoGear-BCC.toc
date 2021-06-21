@@ -1,0 +1,8 @@
+## Interface: 20501
+## Title: AutoGear
+## Notes: Automatically chooses loot and equips gear
+## OptionalDeps: Pawn
+
+AutoGear.lua
+## SavedVariables: AutoGearDB
+## SavedVariablesPerCharacter: AutoGearDB
