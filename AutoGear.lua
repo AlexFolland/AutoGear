@@ -2603,7 +2603,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if (string.find(text, "stamina")) then info.Stamina = (info.Stamina or 0) + value end
 			if (string.find(text, "spirit")) then info.Spirit = (info.Spirit or 0) + value end
 			if (string.find(text, "armor") and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
-			if (string.find(text, "attack power")) and not string.find(text, "when fighting") and not string.find(text, "forms only") then info.AttackPower = (info.AttackPower or 0) + value end
+			if (string.find(text, "attack power")) and not string.find(text, "when fighting") and (not string.find(text, "forms only") or class=="DRUID") then info.AttackPower = (info.AttackPower or 0) + value end
 			if (string.find(text, "spell power") or
 				string.find(text, "damage and healing") or
 				(string.find(text, "frost spell damage") or string.find(text, "damage done by frost spells and effects")) and (spec=="Frost" or class=="MAGE" and spec=="None") or
