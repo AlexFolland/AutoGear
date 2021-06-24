@@ -86,18 +86,17 @@ function AutoGearStringHash(text)
 end
 
 --names of verbosity levels
+local verbosityNames = {
+	[0] = "errors",
+	"info",
+	"details",
+	"debug",
+}
+-- set default value if key unknown
+setmetatable(verbosityNames, {__index = function () return "funky" end})
+
 function AutoGearGetAllowedVerbosityName(allowedverbosity)
-	if allowedverbosity == 0 then
-		return "errors"
-	elseif allowedverbosity == 1 then
-		return "info"
-	elseif allowedverbosity == 2 then
-		return "details"
-	elseif allowedverbosity == 3 then
-		return "debug"
-	else
-		return "funky"
-	end
+	return verbosityNames[allowedverbosity]
 end
 
 --printing function to check allowed verbosity level
