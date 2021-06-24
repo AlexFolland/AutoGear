@@ -2535,11 +2535,12 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	if link == nil then link = select(2,AutoGearTooltip:GetItem()) end
 	info.link = link
 
+	-- EF: this might actually be breaking it as I think it's caching empty tooltips before they're fully loaded
 	-- caching did not show a performance benefit, so commented this and the below out
-	local tooltipitemhash
-	if link then tooltipitemhash = AutoGearStringHash(link) else return {} end
-	local cachediteminfo = AutoGearItemInfoCache[tooltipitemhash]
-	if cachediteminfo ~= nil then return cachediteminfo end
+	-- local tooltipitemhash
+	-- if link then tooltipitemhash = AutoGearStringHash(link) else return {} end
+	-- local cachediteminfo = AutoGearItemInfoCache[tooltipitemhash]
+	-- if cachediteminfo ~= nil then return cachediteminfo end
 
 
 	info.RedSockets = 0
@@ -2802,7 +2803,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.reason = reason
 
 	--caching did not show a performance benefit, so commented this out
-	AutoGearItemInfoCache[tooltipitemhash] = info
+	-- AutoGearItemInfoCache[tooltipitemhash] = info
 
 	return info
 end
