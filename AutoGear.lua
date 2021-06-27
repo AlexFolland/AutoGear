@@ -417,7 +417,7 @@ if (IsClassic or IsTBC) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 1,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 20, Hit = 0, SpellHit = 10,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.2, Hit = 0, SpellHit = 10,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -427,7 +427,7 @@ if (IsClassic or IsTBC) then
 				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 0.40, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 12, Hit = 0, SpellHit = 10,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.9, Hit = 0, SpellHit = 10,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
@@ -437,7 +437,7 @@ if (IsClassic or IsTBC) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.9,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1.1, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 40, Hit = 0, SpellHit = 25,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 2.4, Hit = 0, SpellHit = 25,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
@@ -447,7 +447,7 @@ if (IsClassic or IsTBC) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 0.8,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 23, Hit = 0, SpellHit = 25,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.3, Hit = 0, SpellHit = 25,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
@@ -2614,7 +2614,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				(string.find(text, "healing spells") and isHealer) or
 				(string.find(text, "increases healing done") and isHealer)) then info.SpellPower = (info.SpellPower or 0) + value end
 			if (IsClassic or IsTBC) then
-				if (string.find(text, "critical strike with spells by")) then info.SpellCrit = (info.SpellCrit or 0) + value end
+				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike")) then info.SpellCrit = (info.SpellCrit or 0) + value end
 				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
 				if (string.find(text, "hit with spells by")) then info.SpellHit = (info.SpellHit or 0) + value end
 				if (string.find(text, "hit by")) then info.Hit = (info.Hit or 0) + value end
