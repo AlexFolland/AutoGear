@@ -426,7 +426,7 @@ if (IsClassic or IsTBC) then
 			["Arcane"] = {
 				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 0.40, Spirit = 1,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
+				SpellPower = 1.1, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.9, Hit = 0, SpellHit = 10,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
@@ -2617,7 +2617,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike")) then info.SpellCrit = (info.SpellCrit or 0) + value end
 				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
 				if (string.find(text, "hit with spells by")) then info.SpellHit = (info.SpellHit or 0) + value end
-				if (string.find(text, "hit by")) then info.Hit = (info.Hit or 0) + value end
+				if (string.find(text, "hit by") or string.find(text, "hit rating by")) then info.Hit = (info.Hit or 0) + value end
 			else
 				if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
 			end
