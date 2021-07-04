@@ -2616,8 +2616,8 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if (IsClassic or IsTBC) then
 				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike")) then info.SpellCrit = (info.SpellCrit or 0) + value end
 				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
-				if (string.find(text, "hit with spells by")) then info.SpellHit = (info.SpellHit or 0) + value end
-				if (string.find(text, "hit by") or string.find(text, "hit rating by")) then info.Hit = (info.Hit or 0) + value end
+				if (string.find(text, "hit with spells by") or string.find(text, "improves spell hit rating by")) then info.SpellHit = (info.SpellHit or 0) + value end
+				if (string.find(text, "hit by") or string.find(text, "improves hit rating by")) then info.Hit = (info.Hit or 0) + value end
 			else
 				if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
 			end
