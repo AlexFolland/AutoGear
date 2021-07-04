@@ -2399,7 +2399,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 		--decide whether to roll on the item or not
 		if info.isMount then return 1 end
 		for i = 1, 19 do
-			if (bestitems[i].rollOn) then
+			if (bestitems[i].rollOn and (i ~= 19 or bestitems[19].score > bestitems[16].score + bestitems[17].score)) then
 				return 1
 			end
 		end
@@ -2410,7 +2410,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 		local bestRewardIndex
 		local bestRewardScoreDelta
 		for i = 1, 19 do
-			if (bestitems[i].chooseReward) then
+			if (bestitems[i].chooseReward and (i ~= 19 or bestitems[19].score > bestitems[16].equippedScore + bestitems[17].equippedScore)) then
 				local delta = bestitems[i].score - bestitems[i].equippedScore
 				if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
 					bestRewardScoreDelta = delta
@@ -2611,7 +2611,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				(string.find(text, "arcane spell damage") or string.find(text, "damage done by arcane spells and effects")) and (spec=="Arcane" or class=="MAGE" and spec=="None") or
 				(string.find(text, "shadow spell damage") or string.find(text, "damage done by shadow spells and effects")) and (class=="WARLOCK") or
 				(string.find(text, "nature spell damage") or string.find(text, "damage done by nature spells and effects")) and (spec=="Balance" or class=="DRUID" and spec=="None") or
-				(string.find(text, "healing spells") and isHealer) or
+				(string.find(text, "healing") and isHealer) or
 				(string.find(text, "increases healing done") and isHealer)) then info.SpellPower = (info.SpellPower or 0) + value end
 			if (IsClassic or IsTBC) then
 				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike")) then info.SpellCrit = (info.SpellCrit or 0) + value end
