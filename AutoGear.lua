@@ -2481,14 +2481,22 @@ end
 function AutoGearIsItemTwoHanded(itemID)
 	if (not itemID) then return nil end
 	local mainHandType = select(3, GetItemInfoInstant(itemID))
-	return mainHandType and
-		(string.find(mainHandType, "Two") or
-		string.find(mainHandType, "Staves") or
-		string.find(mainHandType, "Fishing Pole") or
-		string.find(mainHandType, "Polearms") or
-		string.find(mainHandType, "Guns") or
-		string.find(mainHandType, "Bows") or
-		string.find(mainHandType, "Crossbows"))
+	if (IsClassic or isTBC) then
+		return mainHandType and
+			(string.find(mainHandType, "Two") or
+			string.find(mainHandType, "Staves") or
+			string.find(mainHandType, "Fishing Pole") or
+			string.find(mainHandType, "Polearms"))
+	else
+		return mainHandType and
+			(string.find(mainHandType, "Two") or
+			string.find(mainHandType, "Staves") or
+			string.find(mainHandType, "Fishing Pole") or
+			string.find(mainHandType, "Polearms") or
+			string.find(mainHandType, "Guns") or
+			string.find(mainHandType, "Bows") or
+			string.find(mainHandType, "Crossbows"))
+	end
 end
 
 function IsTwoHandEquipped()
