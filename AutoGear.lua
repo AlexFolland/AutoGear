@@ -413,20 +413,20 @@ if (IsClassic or IsTBC) then
 		},
 		["MAGE"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 0.9,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.2, Hit = 0, SpellHit = 0.8,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.3, Hit = 0, SpellHit = 1.25,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
 				DPS = 0.01
 			},
 			["Arcane"] = {
-				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 0.40, Spirit = 1,
+				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 0.40, Spirit = 0.9,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1.1, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.9, Hit = 0, SpellHit = 0.8,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.3, Hit = 0, SpellHit = 1.25,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
@@ -446,7 +446,7 @@ if (IsClassic or IsTBC) then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 0.8,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 1, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.3, Hit = 0, SpellHit = 1.2,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.3, Hit = 0, SpellHit = 1.25,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
@@ -2632,8 +2632,8 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if (IsClassic or IsTBC) then
 				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike")) then info.SpellCrit = (info.SpellCrit or 0) + value end
 				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
-				if (string.find(text, "hit with spells by") or string.find(text, "improves spell hit rating by")) then info.SpellHit = (info.SpellHit or 0) + value end
-				if (string.find(text, "hit by") or string.find(text, "improves hit rating by")) then info.Hit = (info.Hit or 0) + value end
+				if (string.find(text, "hit with spells by") or string.find(text, "spell hit rating by")) then info.SpellHit = (info.SpellHit or 0) + value end
+				if (string.find(text, "hit by") or string.find(text, "improves hit rating by") or string.find(text, "your hit rating by")) then info.Hit = (info.Hit or 0) + value end
 			else
 				if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
 			end
