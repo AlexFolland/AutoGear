@@ -1,7 +1,6 @@
 --AutoGear
 
 -- to do:
--- Classic 2019
 -- implement classic direct % crit and direct % hit
 -- Needing on meteor shard as a mage
 --	In general, needing on one-handers that are near-worthless.  The plan is to only roll if it passes a minimum threshold.  That threshold should be 3x the highest weight among the 5 main stats.
@@ -2399,7 +2398,9 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 		--decide whether to roll on the item or not
 		if info.isMount then return 1 end
 		for i = 1, 19 do
-			if (bestitems[i].rollOn and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(bestitems)) then
+			if (bestitems[i].rollOn
+				and (i ~= 16 or i ~= 17 or AutoGearIs1hWorthwhile(bestitems))
+				and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(bestitems, i)) then
 				return 1
 			end
 		end
@@ -2436,6 +2437,17 @@ end
 
 function AutoGearIsBest2hBetterThanBestMainAndOff(bestitems)
 	return bestitems[19].score > bestitems[16].score + bestitems[17].score
+end
+
+function AutoGearIs1hWorthwhile(bestitems, i)
+	-- 3x the highest weight among the 5 main stats
+	local minScore = 3 * math.max(unpack({
+		weighting.Strength or 0,
+		weighting.Agility or 0,
+		weighting.Stamina or 0,
+		weighting.Intellect or 0,
+		weighting.Spirit or 0}))
+	return bestitems[i].score > minScore and bestitems[i].score > bestitems[19].score * (i == 16 and 0.15 or 0.05)
 end
 
 --companion function to AutoGearScanBags
