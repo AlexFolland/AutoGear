@@ -2399,7 +2399,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 		--decide whether to roll on the item or not
 		if info.isMount then return 1 end
 		for i = 1, 19 do
-			if (bestitems[i].rollOn and (i ~= 19 or bestitems[19].score > bestitems[16].score + bestitems[17].score)) then
+			if (bestitems[i].rollOn and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(bestitems)) then
 				return 1
 			end
 		end
@@ -2410,7 +2410,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 		local bestRewardIndex
 		local bestRewardScoreDelta
 		for i = 1, 19 do
-			if (bestitems[i].chooseReward and (i ~= 19 or bestitems[19].score > bestitems[16].equippedScore + bestitems[17].equippedScore)) then
+			if (bestitems[i].chooseReward and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(bestitems))) then
 				local delta = bestitems[i].score - bestitems[i].equippedScore
 				if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
 					bestRewardScoreDelta = delta
@@ -2432,6 +2432,10 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 		return bestRewardIndex
 	end
 	return anythingBetter
+end
+
+function AutoGearIsBest2hBetterThanBestMainAndOff(bestitems)
+	return bestitems[19].score > bestitems[16].score + bestitems[17].score
 end
 
 --companion function to AutoGearScanBags
