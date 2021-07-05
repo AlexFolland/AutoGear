@@ -2400,7 +2400,7 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 		for i = 1, 19 do
 			if (bestitems[i].rollOn
 				and (i ~= 16 or i ~= 17 or AutoGearIs1hWorthwhile(bestitems))
-				and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(bestitems, i)) then
+				and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(bestitems, i))) then
 				return 1
 			end
 		end
