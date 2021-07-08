@@ -210,6 +210,7 @@ AutoGearDBDefaults = {
 	UsePawn = true, --AutoGear built-in weights are deprecated.  We're using Pawn mainly now, so default true.
 	OverridePawnScale = false,
 	PawnScale = "",
+	LootRollTestMode = false,
 	AllowedVerbosity = 2
 }
 
@@ -1809,6 +1810,16 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 						AutoGearSetStatWeights()
 					end
 				}
+			},
+			{
+				["option"] = "LootRollTestMode",
+				["cliCommands"] = { "test", "rolltest", "testmode", "rolltestmode" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Loot roll test mode (show \"NEED\" or \"GREED\" in item tooltips)",
+				["description"] = "This is a test mode to always show the real roll outcome if the item viewed dropped as a loot roll.  This is to help the developers to figure out why AutoGear sometimes rolls greed even when the score is higher.",
+				["toggleDescriptionTrue"] = "Loot roll test mode is now enabled. \"NEED\" or \"GREED\" will be shown in item tooltips.",
+				["toggleDescriptionFalse"] = "Loot roll test mode is now disabled. \"NEED\" or \"GREED\" will not be shown in item tooltips."
 			}
 		}
 
@@ -2230,7 +2241,7 @@ function AutoGearItemContainsText(container, slot, search)
 	return nil
 end
 
-function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
+function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryItemInfo)
 	AutoGearSetStatWeights()
 	if (not weighting) then
 		return nil
@@ -2281,6 +2292,8 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID)
 	if (lootRollItemID) then
 		info = AutoGearReadItemInfo(nil, lootRollID)
 		AutoGearLookAtItem(bestitems, info, nil, nil, 1, lootRollItemID)
+	elseif (arbitraryItemInfo) then
+		AutoGearLookAtItem(bestitems, arbitraryItemInfo, nil, nil, 1, lootRollItemID)
 	end
 	--look at quest rewards (if any)
 	if (questRewardID) then
@@ -2456,8 +2469,8 @@ function AutoGearLookAtItem(bestitems, info, bag, slot, rollOn, itemID, chooseRe
 	if (info.Usable or (rollOn and info.Within5levels)) then
 		score = AutoGearDetermineItemScore(info, weighting)
 		if info.Slot then
-			i = GetInventorySlotInfo(info.Slot)
-			if (info.Slot2) then i2 = GetInventorySlotInfo(info.Slot2) end
+			i = info.SlotConst
+			if (info.Slot2Const) then i2 = info.Slot2Const end
 			--ignore it if it's a tabard
 			if (i == 19) then return end
 			--compare to the lowest score ring, trinket, or dual wield weapon
@@ -2533,6 +2546,25 @@ function AutoGearPrintItem(info)
 		end
 	else
 		AutoGearPrint("AutoGear:         (error: Stats aren't ready to be printed.)", 2)
+	end
+end
+
+function AutoGearNeedOrGreed(info, lootRollItemID)
+	AutoGearSetStatWeights()
+	if (weighting) then
+		local roll = nil
+		local wouldNeed = AutoGearScanBags(lootRollItemID, nil, nil, info)
+		if ((AutoGearDB.RollOnNonGearLoot == false) and (not info.Slot)) then
+			--AutoGearPrint("AutoGear: "..info.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
+			--local roll is nil, so no roll
+		elseif (wouldNeed) then
+			roll = 1 --need
+		else
+			roll = 2 --greed
+		end
+		return (roll == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (roll == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll on non-gear enabled"))..FONT_COLOR_CODE_CLOSE
+	else
+		AutoGearPrint("AutoGear: No weighting set for this class.", 0)
 	end
 end
 
@@ -2673,20 +2705,20 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			end
 
 			if (text=="mount") then info.isMount = 1 end
-			if (text=="head") then info.Slot = "HeadSlot" end
-			if (text=="neck") then info.Slot = "NeckSlot" end
-			if (text=="shoulder") then info.Slot = "ShoulderSlot" end
-			if (text=="back") then info.Slot = "BackSlot" end
-			if (text=="chest") then info.Slot = "ChestSlot" end
-			if (text=="shirt") then info.Slot = "ShirtSlot" end
-			if (text=="tabard") then info.Slot = "TabardSlot" end
-			if (text=="wrist") then info.Slot = "WristSlot" end
-			if (text=="hands") then info.Slot = "HandsSlot" end
-			if (text=="waist") then info.Slot = "WaistSlot" end
-			if (text=="legs") then info.Slot = "LegsSlot" end
-			if (text=="feet") then info.Slot = "FeetSlot" end
-			if (text=="finger") then info.Slot = "Finger0Slot" end
-			if (text=="trinket") then info.Slot = "Trinket0Slot" end
+			if (text=="head") then info.Slot = "HeadSlot" info.SlotConst = INVSLOT_HEAD end
+			if (text=="neck") then info.Slot = "NeckSlot" info.SlotConst = INVSLOT_NECK end
+			if (text=="shoulder") then info.Slot = "ShoulderSlot" info.SlotConst = INVSLOT_SHOULDER end
+			if (text=="back") then info.Slot = "BackSlot" info.SlotConst = INVSLOT_BACK end
+			if (text=="chest") then info.Slot = "ChestSlot" info.SlotConst = INVSLOT_CHEST end
+			if (text=="shirt") then info.Slot = "ShirtSlot" info.SlotConst = INVSLOT_BODY end
+			if (text=="tabard") then info.Slot = "TabardSlot" info.SlotConst = INVSLOT_TABARD end
+			if (text=="wrist") then info.Slot = "WristSlot" info.SlotConst = INVSLOT_WRIST end
+			if (text=="hands") then info.Slot = "HandsSlot" info.SlotConst = INVSLOT_HAND end
+			if (text=="waist") then info.Slot = "WaistSlot" info.SlotConst = INVSLOT_WAIST end
+			if (text=="legs") then info.Slot = "LegsSlot" info.SlotConst = INVSLOT_LEGS end
+			if (text=="feet") then info.Slot = "FeetSlot" info.SlotConst = INVSLOT_FEET end
+			if (text=="finger") then info.Slot = "Finger0Slot" info.SlotConst = INVSLOT_FINGER1 end
+			if (text=="trinket") then info.Slot = "Trinket0Slot" info.SlotConst = INVSLOT_TRINKET1 end
 			if (text=="main hand") then
                 		if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
                     			cannotUse = 1
@@ -2698,7 +2730,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					cannotUse = 1
 					reason = "(this spec needs a two-hand weapon)"
 				end
-				info.Slot = "MainHandSlot"
+				info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
 			end
 			if (text=="two-hand") then
 				if (weapons == "weapon and shield") then
@@ -2712,19 +2744,19 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					reason = "(this spec should use a ranged weapon)"
 				end
 				if (weapons == "2hDW") then	--Alitwin: adding 2hdw
-					info.Slot = "MainHandSlot"
-					info.Slot2 = "SecondaryHandSlot"
+					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
+					info.Slot2 = "SecondaryHandSlot" info.Slot2Const = INVSLOT_OFFHAND
 				else
-					info.Slot = "MainHandSlot"; info.IncludeOffHand=1
+					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND; info.IncludeOffHand=1
 				end
-				info.Slot = "MainHandSlot"; info.IncludeOffHand=1
+				info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND; info.IncludeOffHand=1
 			end
 			if (text=="held in off-hand") then
 				if (weapons == "2h" or (weapons == "dual wield" and CanDualWield()) or weapons == "weapon and shield" or weapons == "ranged") then
 					cannotUse = 1
 					reason = "(this spec needs the off-hand for a weapon or shield)"
 				end
-				info.Slot = "SecondaryHandSlot"
+				info.Slot = "SecondaryHandSlot" info.SlotConst = INVSLOT_OFFHAND
 			end
 			if (text=="off hand") then
 				if (weapons == "2h" or weapons == "ranged") then
@@ -2740,7 +2772,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					cannotUse = 1
 					reason = "(this spec should dual wield and not use a shield)"
 				end
-				info.Slot = "SecondaryHandSlot"
+				info.Slot = "SecondaryHandSlot" info.SlotConst = INVSLOT_OFFHAND
 			end
 			if (text=="one-hand") then
 				if (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then --Alitwin: adding 2hdw
@@ -2748,15 +2780,15 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
 				end
                 		if (weapons == "dagger" and weaponType == LE_ITEM_WEAPON_DAGGER) then
-                    			info.Slot = "MainHandSlot"
-                    			info.Slot2 = "SecondaryHandSlot"
+							info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
+							info.Slot2 = "SecondaryHandSlot" info.Slot2Const = INVSLOT_OFFHAND
 				elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
-					info.Slot = "SecondaryHandSlot"
+					info.Slot = "SecondaryHandSlot" info.SlotConst = INVSLOT_OFFHAND
 				elseif (((weapons == "dual wield") and CanDualWield()) or weapons == "dagger and any") then
-					info.Slot = "MainHandSlot"
-					info.Slot2 = "SecondaryHandSlot"
-		                elseif (weapons ~= LE_ITEM_WEAPON_DAGGER) then
-					info.Slot = "MainHandSlot"
+					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
+					info.Slot2 = "SecondaryHandSlot" info.Slot2Const = INVSLOT_OFFHAND
+		        elseif (weapons ~= LE_ITEM_WEAPON_DAGGER) then
+					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
 				end
 			end
 			if (IsClassic or IsTBC) then
@@ -2769,11 +2801,11 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					text=="totem" or
 					text=="sigil" or
 					text=="relic") then
-					info.Slot = "RangedSlot"
+					info.Slot = "RangedSlot" info.SlotConst = INVSLOT_RANGED
 				end
 			else
 				if (text=="ranged") then
-					info.Slot = "MainHandSlot"
+					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
 					if (weapons ~= "ranged" and weaponType ~= LE_ITEM_WEAPON_WAND) then
 						cannotUse = 1
 						reason = "(this class or spec should not use a ranged 2h weapon)"
@@ -3011,7 +3043,7 @@ function AutoGearDetermineItemScore(itemInfo, weighting)
 			--AutoGearPrint(itemInfo.link.." value from Pawn is "..tostring(PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName())),3)
 			return PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName())
 		end
-		--else AutoGearPrint("AutoGear: PawnItemData was nil in ReadItemInfo", 3)
+		--else AutoGearPrint("AutoGear: PawnItemData was nil in AutoGearReadItemInfo", 3)
 	end
 
 
@@ -3145,6 +3177,12 @@ function AutoGearTooltipHook(tooltip)
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
+		if (AutoGearDB.LootRollTestMode == true) then
+			tooltip:AddDoubleLine("AutoGear: Would roll:",
+			AutoGearNeedOrGreed(tooltipItemInfo, GetItemInfoInstant(link)),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+		end
 		if (AutoGearDB.ReasonsInTooltips == true) and (not tooltipItemInfo.Usable) then
 			tooltip:AddDoubleLine("won't auto-equip",
 			tooltipItemInfo.reason,
