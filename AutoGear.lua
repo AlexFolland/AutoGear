@@ -2094,7 +2094,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
 				AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 				--local roll is nil, so no roll
-			elseif (wouldNeed and canNeed) then
+			elseif ((wouldNeed or rollItemInfo.isMount) and canNeed) then
 				roll = 1 --need
 			else
 				roll = 2 --greed
@@ -2557,7 +2557,7 @@ function AutoGearNeedOrGreed(info, lootRollItemID)
 		if ((AutoGearDB.RollOnNonGearLoot == false) and (not info.Slot)) then
 			--AutoGearPrint("AutoGear: "..info.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 			--local roll is nil, so no roll
-		elseif (wouldNeed) then
+		elseif (wouldNeed or info.isMount) then
 			roll = 1 --need
 		else
 			roll = 2 --greed
@@ -3177,12 +3177,6 @@ function AutoGearTooltipHook(tooltip)
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
-		if (AutoGearDB.LootRollTestMode == true) then
-			tooltip:AddDoubleLine("AutoGear: Would roll:",
-			AutoGearNeedOrGreed(tooltipItemInfo, GetItemInfoInstant(link)),
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-		end
 		if (AutoGearDB.ReasonsInTooltips == true) and (not tooltipItemInfo.Usable) then
 			tooltip:AddDoubleLine("won't auto-equip",
 			tooltipItemInfo.reason,
@@ -3197,6 +3191,12 @@ function AutoGearTooltipHook(tooltip)
 			AutoGearRecursivePrint(tooltipItemInfo)
 		end
 		]]
+	end
+	if (AutoGearDB.LootRollTestMode == true) then
+		tooltip:AddDoubleLine("AutoGear: Would roll:",
+		AutoGearNeedOrGreed(tooltipItemInfo, GetItemInfoInstant(link)),
+		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 	end
 end
 GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
