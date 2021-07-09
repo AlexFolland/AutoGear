@@ -32,11 +32,9 @@ local IsSL = GetNumExpansions() == 9
 
 local _ --prevent taint when using throwaway variable
 local reason
-local bestitems
 --local lastlink
 local futureAction = {}
 local curLink
-local weighting --gear stat weighting
 local weapons
 local tUpdate = 0
 local dataAvailable = nil
@@ -210,7 +208,7 @@ AutoGearDBDefaults = {
 	UsePawn = true, --AutoGear built-in weights are deprecated.  We're using Pawn mainly now, so default true.
 	OverridePawnScale = false,
 	PawnScale = "",
-	LootRollTestMode = false,
+	DebugInfoInTooltips = false,
 	AllowedVerbosity = 2
 }
 
@@ -1414,8 +1412,8 @@ end
 function AutoGearSetStatWeights()
 	AutoGearItemInfoCache = {}
 	local class, spec = AutoGearGetClassAndSpec()
-	weighting = AutoGearDefaultWeights[class][spec] or nil
-	weapons = weighting.weapons or "any"
+	AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec] or nil
+	weapons = AutoGearCurrentWeighting.weapons or "any"
 	AutoGearPrint("AutoGear: Stat weights set for \""..class..": "..spec.."\". Weapons: "..weapons, 3)
 end
 
@@ -1812,14 +1810,14 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				}
 			},
 			{
-				["option"] = "LootRollTestMode",
-				["cliCommands"] = { "test", "rolltest", "testmode", "rolltestmode" },
+				["option"] = "DebugInfoInTooltips",
+				["cliCommands"] = { "debuginfo", "debuginfointooltips", "test", "testmode", "rolltestmode" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Loot roll test mode (show \"NEED\" or \"GREED\" in item tooltips)",
-				["description"] = "This is a test mode to always show the real roll outcome if the item viewed dropped as a loot roll.  This is to help the developers to figure out why AutoGear sometimes rolls greed even when the score is higher.",
-				["toggleDescriptionTrue"] = "Loot roll test mode is now enabled. \"NEED\" or \"GREED\" will be shown in item tooltips.",
-				["toggleDescriptionFalse"] = "Loot roll test mode is now disabled. \"NEED\" or \"GREED\" will not be shown in item tooltips."
+				["label"] = "Show debug info in item tooltips",
+				["description"] = "This is a test mode to show debug info in tooltips, such as the real roll outcome if the item viewed dropped as a loot roll.  This is to help the developers find and fix bugs in AutoGear.  You can use it to help too and report issues.",
+				["toggleDescriptionTrue"] = "Debug info in tooltips is now enabled. Info such as whether AutoGear would \"NEED\" or \"GREED\" on an item will be shown in item tooltips.",
+				["toggleDescriptionFalse"] = "Debug info in tooltips is now disabled. Debug info will not be shown in item tooltips."
 			}
 		}
 
@@ -2083,14 +2081,14 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		end
 	elseif (event == "START_LOOT_ROLL") then
 		AutoGearSetStatWeights()
-		if (weighting) then
+		if (AutoGearCurrentWeighting) then
 			local roll = nil
 			reason = "(no reason set)"
 			link = GetLootRollItemLink(arg1)
 			local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
 			local wouldNeed = AutoGearScanBags(lootRollItemID, arg1)
 			local rollItemInfo = AutoGearReadItemInfo(nil, arg1)
-			local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1);
+			local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1)
 			if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
 				AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 				--local roll is nil, so no roll
@@ -2241,41 +2239,37 @@ function AutoGearItemContainsText(container, slot, search)
 	return nil
 end
 
-function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryItemInfo)
-	AutoGearSetStatWeights()
-	if (not weighting) then
-		return nil
-	end
+--create the table for best items
+AutoGearBestItems = {}
+function AutoGearPopulateBestItems()
+	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
 	local class, spec = AutoGearGetClassAndSpec()
-	local anythingBetter = nil
-	--create the table for best items
-	bestitems = {}
-	local info, score, i, bag, slot
+	local info, score
 	--look at all equipped items and set starting best scores
 	for i = 1, 18 do
 		info = AutoGearReadItemInfo(i)
-		score = AutoGearDetermineItemScore(info, weighting)
-		bestitems[i] = {}
-		bestitems[i].info = info
-		bestitems[i].score = score
-		bestitems[i].equippedScore = score
-		bestitems[i].equipped = 1
+		score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
+		AutoGearBestItems[i] = {}
+		AutoGearBestItems[i].info = info
+		AutoGearBestItems[i].score = score
+		AutoGearBestItems[i].equippedScore = score
+		AutoGearBestItems[i].equipped = 1
 	end
 	--pretend slot 19 is a separate slot for 2-handers
-	bestitems[19] = {}
+	AutoGearBestItems[19] = {}
 	if (IsTwoHandEquipped() and spec ~= "Fury") then
-		bestitems[19].info = bestitems[16].info
-		bestitems[19].score = bestitems[16].score
-		bestitems[19].equippedScore = bestitems[16].equippedScore
-		bestitems[19].equipped = 1
-		bestitems[16].info = {Name = "nothing"}
-		bestitems[16].score = 0
-		bestitems[16].equipped = nil
+		AutoGearBestItems[19].info = AutoGearBestItems[16].info
+		AutoGearBestItems[19].score = AutoGearBestItems[16].score
+		AutoGearBestItems[19].equippedScore = AutoGearBestItems[16].equippedScore
+		AutoGearBestItems[19].equipped = 1
+		AutoGearBestItems[16].info = {Name = "nothing"}
+		AutoGearBestItems[16].score = 0
+		AutoGearBestItems[16].equipped = nil
 	else
-		bestitems[19].info = {Name = "nothing"}
-		bestitems[19].score = 0
-		bestitems[19].equippedScore = bestitems[16].equippedScore + bestitems[17].equippedScore
-		bestitems[19].equipped = nil
+		AutoGearBestItems[19].info = {Name = "nothing"}
+		AutoGearBestItems[19].score = 0
+		AutoGearBestItems[19].equippedScore = AutoGearBestItems[16].equippedScore + AutoGearBestItems[17].equippedScore
+		AutoGearBestItems[19].equipped = nil
 	end
 	--look at all items in bags
 	for bag = 0, NUM_BAG_SLOTS do
@@ -2284,22 +2278,66 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryIt
 			local _,_,_,_,_,_, link = GetContainerItemInfo(bag, slot)
 			if (link) then
 				info = AutoGearReadItemInfo(nil, nil, bag, slot)
-				AutoGearLookAtItem(bestitems, info, bag, slot, nil, GetContainerItemID(bag, slot))
+				AutoGearIsItemAnUpgrade(AutoGearBestItems, info, bag, slot, nil, GetContainerItemID(bag, slot))
+			end
+		end
+	end
+end
+
+function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryItemInfo)
+	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
+	local class, spec = AutoGearGetClassAndSpec()
+	local anythingBetter = nil
+	local info, score, i, bag, slot
+	--look at all equipped items and set starting best scores
+	for i = 1, 18 do
+		info = AutoGearReadItemInfo(i)
+		score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
+		AutoGearBestItems[i] = {}
+		AutoGearBestItems[i].info = info
+		AutoGearBestItems[i].score = score
+		AutoGearBestItems[i].equippedScore = score
+		AutoGearBestItems[i].equipped = 1
+	end
+	--pretend slot 19 is a separate slot for 2-handers
+	AutoGearBestItems[19] = {}
+	if (IsTwoHandEquipped() and spec ~= "Fury") then
+		AutoGearBestItems[19].info = AutoGearBestItems[16].info
+		AutoGearBestItems[19].score = AutoGearBestItems[16].score
+		AutoGearBestItems[19].equippedScore = AutoGearBestItems[16].equippedScore
+		AutoGearBestItems[19].equipped = 1
+		AutoGearBestItems[16].info = {Name = "nothing"}
+		AutoGearBestItems[16].score = 0
+		AutoGearBestItems[16].equipped = nil
+	else
+		AutoGearBestItems[19].info = {Name = "nothing"}
+		AutoGearBestItems[19].score = 0
+		AutoGearBestItems[19].equippedScore = AutoGearBestItems[16].equippedScore + AutoGearBestItems[17].equippedScore
+		AutoGearBestItems[19].equipped = nil
+	end
+	--look at all items in bags
+	for bag = 0, NUM_BAG_SLOTS do
+		local slotMax = GetContainerNumSlots(bag)
+		for slot = 0, slotMax do
+			local _,_,_,_,_,_, link = GetContainerItemInfo(bag, slot)
+			if (link) then
+				info = AutoGearReadItemInfo(nil, nil, bag, slot)
+				AutoGearIsItemAnUpgrade(AutoGearBestItems, info, bag, slot, nil, GetContainerItemID(bag, slot))
 			end
 		end
 	end
 	--look at item being rolled on (if any)
 	if (lootRollItemID) then
 		info = AutoGearReadItemInfo(nil, lootRollID)
-		AutoGearLookAtItem(bestitems, info, nil, nil, 1, lootRollItemID)
+		AutoGearIsItemAnUpgrade(AutoGearBestItems, info, nil, nil, 1, lootRollItemID)
 	elseif (arbitraryItemInfo) then
-		AutoGearLookAtItem(bestitems, arbitraryItemInfo, nil, nil, 1, lootRollItemID)
+		AutoGearIsItemAnUpgrade(AutoGearBestItems, arbitraryItemInfo, nil, nil, 1, lootRollItemID)
 	end
 	--look at quest rewards (if any)
 	if (questRewardID) then
 		for i = 1, GetNumQuestChoices() do
 			info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
-			AutoGearLookAtItem(bestitems, info, nil, nil, nil, questRewardID[i], i)
+			AutoGearIsItemAnUpgrade(AutoGearBestItems, info, nil, nil, nil, questRewardID[i], i)
 		end
 	end
 	--create all future equip actions required (only if not rolling currently)
@@ -2309,50 +2347,50 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryIt
 				--skip for now
 			else
 				local equippedInfo = AutoGearReadItemInfo(i)
-				local equippedScore = AutoGearDetermineItemScore(equippedInfo, weighting)
-				if ((not bestitems[i].equipped) and bestitems[i].score > equippedScore) then
-					AutoGearPrint("AutoGear: "..(bestitems[i].info.link or "nothing").." ("..string.format("%.2f", bestitems[i].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-					AutoGearPrintItem(bestitems[i].info)
+				local equippedScore = AutoGearDetermineItemScore(equippedInfo, AutoGearCurrentWeighting)
+				if ((not AutoGearBestItems[i].equipped) and AutoGearBestItems[i].score > equippedScore) then
+					AutoGearPrint("AutoGear: "..(AutoGearBestItems[i].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[i].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+					AutoGearPrintItem(AutoGearBestItems[i].info)
 					AutoGearPrintItem(equippedInfo)
 					anythingBetter = 1
 					local newAction = {}
 					newAction.action = "equip"
 					newAction.t = GetTime()
-					newAction.container = bestitems[i].bag
-					newAction.slot = bestitems[i].slot
+					newAction.container = AutoGearBestItems[i].bag
+					newAction.slot = AutoGearBestItems[i].slot
 					newAction.replaceSlot = i
-					newAction.info = bestitems[i].info
+					newAction.info = AutoGearBestItems[i].info
 					table.insert(futureAction, newAction)
 				end
 			end
 		end
 		--handle main and off-hand
-		if (bestitems[16].score + bestitems[17].score > bestitems[19].score) then
+		if (AutoGearBestItems[16].score + AutoGearBestItems[17].score > AutoGearBestItems[19].score) then
 			local extraDelay = 0
 			local mainSwap, offSwap
 			--main hand
-			if (not bestitems[16].equipped and bestitems[16].info.Name ~= "nothing") then
+			if (not AutoGearBestItems[16].equipped and AutoGearBestItems[16].info.Name ~= "nothing") then
 				mainSwap = 1
 				local newAction = {}
 				newAction.action = "equip"
 				newAction.t = GetTime()
-				newAction.container = bestitems[16].bag
-				newAction.slot = bestitems[16].slot
+				newAction.container = AutoGearBestItems[16].bag
+				newAction.slot = AutoGearBestItems[16].slot
 				newAction.replaceSlot = 16
-				newAction.info = bestitems[16].info
+				newAction.info = AutoGearBestItems[16].info
 				table.insert(futureAction, newAction)
 				extraDelay = 0.5
 			end
 			--off-hand
-			if (not bestitems[17].equipped) then
+			if (not AutoGearBestItems[17].equipped) then
 				offSwap = 1
 				local newAction = {}
 				newAction.action = "equip"
 				newAction.t = GetTime() + extraDelay --do it after a longer delay
-				newAction.container = bestitems[17].bag
-				newAction.slot = bestitems[17].slot
+				newAction.container = AutoGearBestItems[17].bag
+				newAction.slot = AutoGearBestItems[17].slot
 				newAction.replaceSlot = 17
-				newAction.info = bestitems[17].info
+				newAction.info = AutoGearBestItems[17].info
 				table.insert(futureAction, newAction)
 			end
 			if (mainSwap or offSwap) then
@@ -2360,19 +2398,19 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryIt
 				if (mainSwap and offSwap) then
 					if (IsTwoHandEquipped()) then
 						local equippedMain = AutoGearReadItemInfo(16)
-						local mainScore = AutoGearDetermineItemScore(equippedMain, weighting)
-						AutoGearPrint("AutoGear: "..(bestitems[16].info.link or "nothing").." ("..string.format("%.2f", bestitems[16].score)..") combined with "..(bestitems[17].info.link or "nothing").." ("..string.format("%.2f", bestitems[17].score)..") was determined to be better than "..(equippedMain.link or "nothing").." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-						AutoGearPrintItem(bestitems[16].info)
-						AutoGearPrintItem(bestitems[17].info)
+						local mainScore = AutoGearDetermineItemScore(equippedMain, AutoGearCurrentWeighting)
+						AutoGearPrint("AutoGear: "..(AutoGearBestItems[16].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[16].score)..") combined with "..(AutoGearBestItems[17].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[17].score)..") was determined to be better than "..(equippedMain.link or "nothing").." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						AutoGearPrintItem(AutoGearBestItems[16].info)
+						AutoGearPrintItem(AutoGearBestItems[17].info)
 						AutoGearPrintItem(equippedMain)
 					else
 						local equippedMain = AutoGearReadItemInfo(16)
-						local mainScore = AutoGearDetermineItemScore(equippedMain, weighting)
+						local mainScore = AutoGearDetermineItemScore(equippedMain, AutoGearCurrentWeighting)
 						local equippedOff = AutoGearReadItemInfo(17)
-						local offScore = AutoGearDetermineItemScore(equippedOff, weighting)
-						AutoGearPrint("AutoGear: "..(bestitems[16].info.link or "nothing").." ("..string.format("%.2f", bestitems[16].score)..") combined with "..(bestitems[17].info.link or "nothing").." ("..string.format("%.2f", bestitems[17].score)..") was determined to be better than "..(equippedMain.link or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.link or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-						AutoGearPrintItem(bestitems[16].info)
-						AutoGearPrintItem(bestitems[17].info)
+						local offScore = AutoGearDetermineItemScore(equippedOff, AutoGearCurrentWeighting)
+						AutoGearPrint("AutoGear: "..(AutoGearBestItems[16].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[16].score)..") combined with "..(AutoGearBestItems[17].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[17].score)..") was determined to be better than "..(equippedMain.link or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.link or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						AutoGearPrintItem(AutoGearBestItems[16].info)
+						AutoGearPrintItem(AutoGearBestItems[17].info)
 						AutoGearPrintItem(equippedMain)
 						AutoGearPrintItem(equippedOff)
 					end
@@ -2380,30 +2418,30 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryIt
 					local i = 16
 					if (offSwap) then i = 17 end
 					local equippedInfo = AutoGearReadItemInfo(i)
-					local equippedScore = AutoGearDetermineItemScore(equippedInfo, weighting)
-					AutoGearPrint("AutoGear: "..(bestitems[i].info.link or "nothing").." ("..string.format("%.2f", bestitems[i].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-					AutoGearPrintItem(bestitems[i].info)
+					local equippedScore = AutoGearDetermineItemScore(equippedInfo, AutoGearCurrentWeighting)
+					AutoGearPrint("AutoGear: "..(AutoGearBestItems[i].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[i].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+					AutoGearPrintItem(AutoGearBestItems[i].info)
 					AutoGearPrintItem(equippedInfo)
 				end
 			end
-		elseif (bestitems[19].score > bestitems[16].score + bestitems[17].score) then
-			if (not bestitems[19].equipped) then
+		elseif (AutoGearBestItems[19].score > AutoGearBestItems[16].score + AutoGearBestItems[17].score) then
+			if (not AutoGearBestItems[19].equipped) then
 				local equippedMain = AutoGearReadItemInfo(16)
-				local mainScore = AutoGearDetermineItemScore(equippedMain, weighting)
+				local mainScore = AutoGearDetermineItemScore(equippedMain, AutoGearCurrentWeighting)
 				local equippedOff = AutoGearReadItemInfo(17)
-				local offScore = AutoGearDetermineItemScore(equippedOff, weighting)
-				AutoGearPrint("AutoGear: "..(bestitems[19].info.Name or "nothing").." ("..string.format("%.2f", bestitems[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-				AutoGearPrintItem(bestitems[19].info)
+				local offScore = AutoGearDetermineItemScore(equippedOff, AutoGearCurrentWeighting)
+				AutoGearPrint("AutoGear: "..(AutoGearBestItems[19].info.Name or "nothing").." ("..string.format("%.2f", AutoGearBestItems[19].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+				AutoGearPrintItem(AutoGearBestItems[19].info)
 				AutoGearPrintItem(equippedMain)
 				AutoGearPrintItem(equippedOff)
 				anythingBetter = 1
 				local newAction = {}
 				newAction.action = "equip"
 				newAction.t = GetTime() + 0.5 --do it after a short delay
-				newAction.container = bestitems[19].bag
-				newAction.slot = bestitems[19].slot
+				newAction.container = AutoGearBestItems[19].bag
+				newAction.slot = AutoGearBestItems[19].slot
 				newAction.replaceSlot = 16
-				newAction.info = bestitems[19].info
+				newAction.info = AutoGearBestItems[19].info
 				table.insert(futureAction, newAction)
 			end
 		end
@@ -2411,9 +2449,9 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryIt
 		--decide whether to roll on the item or not
 		if info.isMount then return 1 end
 		for i = 1, 19 do
-			if (bestitems[i].rollOn
-				and (i ~= 16 or i ~= 17 or AutoGearIs1hWorthwhile(bestitems))
-				and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(bestitems, i))) then
+			if (AutoGearBestItems[i].rollOn
+				and (i ~= 16 or i ~= 17 or AutoGearIs1hWorthwhile())
+				and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(i))) then
 				return 1
 			end
 		end
@@ -2424,11 +2462,11 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryIt
 		local bestRewardIndex
 		local bestRewardScoreDelta
 		for i = 1, 19 do
-			if (bestitems[i].chooseReward and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(bestitems))) then
-				local delta = bestitems[i].score - bestitems[i].equippedScore
+			if (AutoGearBestItems[i].chooseReward and (i ~= 19 or AutoGearIsBest2hBetterThanBestMainAndOff(AutoGearBestItems))) then
+				local delta = AutoGearBestItems[i].score - AutoGearBestItems[i].equippedScore
 				if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
 					bestRewardScoreDelta = delta
-					bestRewardIndex = bestitems[i].chooseReward
+					bestRewardIndex = AutoGearBestItems[i].chooseReward
 				end
 			end
 		end
@@ -2448,44 +2486,46 @@ function AutoGearScanBags(lootRollItemID, lootRollID, questRewardID, arbitraryIt
 	return anythingBetter
 end
 
-function AutoGearIsBest2hBetterThanBestMainAndOff(bestitems)
-	return bestitems[19].score > bestitems[16].score + bestitems[17].score
+function AutoGearIsBest2hBetterThanBestMainAndOff()
+	return AutoGearBestItems[19].score > AutoGearBestItems[16].score + AutoGearBestItems[17].score
 end
 
-function AutoGearIs1hWorthwhile(bestitems, i)
+function AutoGearIs1hWorthwhile(i)
 	-- 3x the highest weight among the 5 main stats
 	local minScore = 3 * math.max(unpack({
-		weighting.Strength or 0,
-		weighting.Agility or 0,
-		weighting.Stamina or 0,
-		weighting.Intellect or 0,
-		weighting.Spirit or 0}))
-	return bestitems[i].score > minScore and bestitems[i].score > bestitems[19].score * (i == 16 and 0.15 or 0.05)
+		AutoGearCurrentWeighting.Strength or 0,
+		AutoGearCurrentWeighting.Agility or 0,
+		AutoGearCurrentWeighting.Stamina or 0,
+		AutoGearCurrentWeighting.Intellect or 0,
+		AutoGearCurrentWeighting.Spirit or 0}))
+	return AutoGearBestItems[i].score > minScore and AutoGearBestItems[i].score > AutoGearBestItems[19].score * (i == 16 and 0.15 or 0.05)
 end
 
 --companion function to AutoGearScanBags
-function AutoGearLookAtItem(bestitems, info, bag, slot, rollOn, itemID, chooseReward)
+function AutoGearIsItemAnUpgrade(info, bag, slot, rollOn, itemID, chooseReward)
 	local score, i, i2
+	if info.isMount then return true end
 	if (info.Usable or (rollOn and info.Within5levels)) then
-		score = AutoGearDetermineItemScore(info, weighting)
+		score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
 		if info.Slot then
 			i = info.SlotConst
 			if (info.Slot2Const) then i2 = info.Slot2Const end
 			--ignore it if it's a tabard
 			if (i == 19) then return end
 			--compare to the lowest score ring, trinket, or dual wield weapon
-			if (i == 11 and bestitems[12].score < bestitems[11].score) then i = 12 end
-			if (i == 13 and bestitems[14].score < bestitems[13].score) then i = 14 end
-			if (i2 and i == 16 and i2 == 17 and bestitems[17].score < bestitems[16].score) then i = 17 end
+			if (i == 11 and AutoGearBestItems[12].score < AutoGearBestItems[11].score) then i = 12 end
+			if (i == 13 and AutoGearBestItems[14].score < AutoGearBestItems[13].score) then i = 14 end
+			if (i2 and i == 16 and i2 == 17 and AutoGearBestItems[17].score < AutoGearBestItems[16].score) then i = 17 end
 			if (i == 16 and AutoGearIsItemTwoHanded(itemID)) then i = 19 end
-			if (score > bestitems[i].score) then
-				bestitems[i].info = info
-				bestitems[i].score = score
-				bestitems[i].equipped = nil
-				bestitems[i].bag = bag
-				bestitems[i].slot = slot
-				bestitems[i].rollOn = rollOn
-				bestitems[i].chooseReward = chooseReward
+			if (score > AutoGearBestItems[i].score) then
+				AutoGearBestItems[i].info = info
+				AutoGearBestItems[i].score = score
+				AutoGearBestItems[i].equipped = nil
+				AutoGearBestItems[i].bag = bag
+				AutoGearBestItems[i].slot = slot
+				AutoGearBestItems[i].rollOn = rollOn
+				AutoGearBestItems[i].chooseReward = chooseReward
+				return true
 			end
 		end
 	end
@@ -2493,23 +2533,24 @@ end
 
 function AutoGearIsItemTwoHanded(itemID)
 	if (not itemID) then return nil end
-	local mainHandType = select(3, GetItemInfoInstant(itemID))
-	if (IsClassic or isTBC) then
-		return mainHandType and
-			(string.find(mainHandType, "Two") or
-			string.find(mainHandType, "Staves") or
-			string.find(mainHandType, "Fishing Pole") or
-			string.find(mainHandType, "Polearms"))
-	else
-		return mainHandType and
-			(string.find(mainHandType, "Two") or
-			string.find(mainHandType, "Staves") or
-			string.find(mainHandType, "Fishing Pole") or
-			string.find(mainHandType, "Polearms") or
-			string.find(mainHandType, "Guns") or
-			string.find(mainHandType, "Bows") or
-			string.find(mainHandType, "Crossbows"))
-	end
+	local invType = select(4, GetItemInfoInstant(itemID))
+	return (invType == INVTYPE_2HWEAPON)
+	-- if (IsClassic or isTBC) then
+	-- 	return mainHandType and
+	-- 		(string.find(mainHandType, "Two") or
+	-- 		string.find(mainHandType, "Staves") or
+	-- 		string.find(mainHandType, "Fishing Pole") or
+	-- 		string.find(mainHandType, "Polearms"))
+	-- else
+	-- 	return mainHandType and
+	-- 		(string.find(mainHandType, "Two") or
+	-- 		string.find(mainHandType, "Staves") or
+	-- 		string.find(mainHandType, "Fishing Pole") or
+	-- 		string.find(mainHandType, "Polearms") or
+	-- 		string.find(mainHandType, "Guns") or
+	-- 		string.find(mainHandType, "Bows") or
+	-- 		string.find(mainHandType, "Crossbows"))
+	-- end
 end
 
 function IsTwoHandEquipped()
@@ -2534,14 +2575,14 @@ function AutoGearPrintItem(info)
 	if AutoGearDB.UsePawn and PawnIsReady ~= nil and PawnIsReady() then
 		local pawnScaleName = AutoGearGetPawnScaleName()
 		local pawnScaleColor = PawnGetScaleColor(pawnScaleName)
-		local score = AutoGearDetermineItemScore(info, weighting)
+		local score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
 		-- 3 decimal places max
 		score = math.floor(score * 1000) / 1000
 		AutoGearPrint("AutoGear:         "..((pawnScaleName and pawnScaleColor) and ("Pawn \""..pawnScaleColor..pawnScaleName..FONT_COLOR_CODE_CLOSE.."\"") or "AutoGear").." score: "..(score or "nil"),2)
 	elseif not AutoGearDB.UsePawn or PawnIsReady == nil then
 		for k,v in pairs(info) do
-			if (k ~= "Name" and weighting[k]) then
-				AutoGearPrint("AutoGear:         "..k..": "..string.format("%.2f", v).." * "..weighting[k].." = "..string.format("%.2f", v * weighting[k]), 2)
+			if (k ~= "Name" and AutoGearCurrentWeighting[k]) then
+				AutoGearPrint("AutoGear:         "..k..": "..string.format("%.2f", v).." * "..AutoGearCurrentWeighting[k].." = "..string.format("%.2f", v * AutoGearCurrentWeighting[k]), 2)
 			end
 		end
 	else
@@ -2549,11 +2590,11 @@ function AutoGearPrintItem(info)
 	end
 end
 
-function AutoGearNeedOrGreed(info, lootRollItemID)
+function AutoGearNeedOrGreed(info)
 	AutoGearSetStatWeights()
-	if (weighting) then
+	if (AutoGearCurrentWeighting) then
 		local roll = nil
-		local wouldNeed = AutoGearScanBags(lootRollItemID, nil, nil, info)
+		local wouldNeed = AutoGearIsItemAnUpgrade(info)
 		if ((AutoGearDB.RollOnNonGearLoot == false) and (not info.Slot)) then
 			--AutoGearPrint("AutoGear: "..info.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 			--local roll is nil, so no roll
@@ -2623,14 +2664,14 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			-- don't count greyed out set bonus lines
 			if (r < 0.8 and g < 0.8 and b < 0.8 and string.find(text, "set:")) then multiplier = 0 end
 			-- note: these proc checks may not be correct for all cases
-			if (string.find(text, "deal damage")) then multiplier = multiplier * (weighting.DamageProc or 0) end
-			if (string.find(text, "damage and healing")) then multiplier = multiplier * math.max((weighting.HealingProc or 0), (weighting.DamageProc or 0))
-			elseif (string.find(text, "healing spells")) then multiplier = multiplier * (weighting.HealingProc or 0)
-			elseif (string.find(text, "damage spells")) then multiplier = multiplier * (weighting.DamageSpellProc or 0)
+			if (string.find(text, "deal damage")) then multiplier = multiplier * (AutoGearCurrentWeighting.DamageProc or 0) end
+			if (string.find(text, "damage and healing")) then multiplier = multiplier * math.max((AutoGearCurrentWeighting.HealingProc or 0), (AutoGearCurrentWeighting.DamageProc or 0))
+			elseif (string.find(text, "healing spells")) then multiplier = multiplier * (AutoGearCurrentWeighting.HealingProc or 0)
+			elseif (string.find(text, "damage spells")) then multiplier = multiplier * (AutoGearCurrentWeighting.DamageSpellProc or 0)
 			end
-			if (string.find(text, "melee and ranged")) then multiplier = multiplier * math.max((weighting.MeleeProc or 0), (weighting.RangedProc or 0))
-			elseif (string.find(text, "melee attacks")) then multiplier = multiplier * (weighting.MeleeProc or 0)
-			elseif (string.find(text, "ranged attacks")) then multiplier = multiplier * (weighting.RangedProc or 0)
+			if (string.find(text, "melee and ranged")) then multiplier = multiplier * math.max((AutoGearCurrentWeighting.MeleeProc or 0), (AutoGearCurrentWeighting.RangedProc or 0))
+			elseif (string.find(text, "melee attacks")) then multiplier = multiplier * (AutoGearCurrentWeighting.MeleeProc or 0)
+			elseif (string.find(text, "ranged attacks")) then multiplier = multiplier * (AutoGearCurrentWeighting.RangedProc or 0)
 			end
 			local value = 0
 			value = tonumber(string.match(text, "-?[0-9]+%.?[0-9]*"))
@@ -3034,7 +3075,7 @@ function AutoGearPlayerIsWearingItem(name)
 	return nil
 end
 
-function AutoGearDetermineItemScore(itemInfo, weighting)
+function AutoGearDetermineItemScore(itemInfo)
 	if itemInfo.isMount then return 999999 end
 
 	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
@@ -3047,36 +3088,36 @@ function AutoGearDetermineItemScore(itemInfo, weighting)
 	end
 
 
-	local score = (weighting.Strength or 0) * (itemInfo.Strength or 0) +
-		(weighting.Agility or 0) * (itemInfo.Agility or 0) +
-		(weighting.Stamina or 0) * (itemInfo.Stamina or 0) +
-		(weighting.Intellect or 0) * (itemInfo.Intellect or 0) +
-		(weighting.Spirit or 0) * (itemInfo.Spirit or 0) +
-		(weighting.Armor or 0) * (itemInfo.Armor or 0) +
-		(weighting.Dodge or 0) * (itemInfo.Dodge or 0) +
-		(weighting.Parry or 0) * (itemInfo.Parry or 0) +
-		(weighting.Block or 0) * (itemInfo.Block or 0) +
-		(weighting.Defense or 0) * (itemInfo.Defense or 0) +
-		(weighting.SpellPower or 0) * (itemInfo.SpellPower or 0) +
-		(weighting.SpellPenetration or 0) * (itemInfo.SpellPenetration or 0) +
-		(weighting.Haste or 0) * (itemInfo.Haste or 0) +
-		(weighting.Mp5 or 0) * (itemInfo.Mp5 or 0) +
-		(weighting.AttackPower or 0) * (itemInfo.AttackPower or 0) +
-		(weighting.ArmorPenetration or 0) * (itemInfo.ArmorPenetration or 0) +
-		(weighting.Crit or 0) * (itemInfo.Crit or 0) +
-		(weighting.SpellCrit or 0) * (itemInfo.SpellCrit or 0) +
-		(weighting.Hit or 0) * (itemInfo.Hit or 0) +
-		(weighting.SpellHit or 0) * (itemInfo.SpellHit or 0) +
-		(weighting.RedSockets or 0) * (itemInfo.RedSockets or 0) +
-		(weighting.YellowSockets or 0) * (itemInfo.YellowSockets or 0) +
-		(weighting.BlueSockets or 0) * (itemInfo.BlueSockets or 0) +
-		(weighting.MetaSockets or 0) * (itemInfo.MetaSockets or 0) +
-		(weighting.Mastery or 0) * (itemInfo.Mastery or 0) +
-		(weighting.Multistrike or 0) * (itemInfo.Multistrike or 0) +
-		(weighting.Versatility or 0) * (itemInfo.Versatility or 0) +
-		(weighting.ExperienceGained or 0) * (itemInfo.ExperienceGained or 0) +
-		(weighting.DPS or 0) * (itemInfo.DPS or 0) +
-		(weighting.Damage or 0) * (itemInfo.Damage or 0)
+	local score = (AutoGearCurrentWeighting.Strength or 0) * (itemInfo.Strength or 0) +
+		(AutoGearCurrentWeighting.Agility or 0) * (itemInfo.Agility or 0) +
+		(AutoGearCurrentWeighting.Stamina or 0) * (itemInfo.Stamina or 0) +
+		(AutoGearCurrentWeighting.Intellect or 0) * (itemInfo.Intellect or 0) +
+		(AutoGearCurrentWeighting.Spirit or 0) * (itemInfo.Spirit or 0) +
+		(AutoGearCurrentWeighting.Armor or 0) * (itemInfo.Armor or 0) +
+		(AutoGearCurrentWeighting.Dodge or 0) * (itemInfo.Dodge or 0) +
+		(AutoGearCurrentWeighting.Parry or 0) * (itemInfo.Parry or 0) +
+		(AutoGearCurrentWeighting.Block or 0) * (itemInfo.Block or 0) +
+		(AutoGearCurrentWeighting.Defense or 0) * (itemInfo.Defense or 0) +
+		(AutoGearCurrentWeighting.SpellPower or 0) * (itemInfo.SpellPower or 0) +
+		(AutoGearCurrentWeighting.SpellPenetration or 0) * (itemInfo.SpellPenetration or 0) +
+		(AutoGearCurrentWeighting.Haste or 0) * (itemInfo.Haste or 0) +
+		(AutoGearCurrentWeighting.Mp5 or 0) * (itemInfo.Mp5 or 0) +
+		(AutoGearCurrentWeighting.AttackPower or 0) * (itemInfo.AttackPower or 0) +
+		(AutoGearCurrentWeighting.ArmorPenetration or 0) * (itemInfo.ArmorPenetration or 0) +
+		(AutoGearCurrentWeighting.Crit or 0) * (itemInfo.Crit or 0) +
+		(AutoGearCurrentWeighting.SpellCrit or 0) * (itemInfo.SpellCrit or 0) +
+		(AutoGearCurrentWeighting.Hit or 0) * (itemInfo.Hit or 0) +
+		(AutoGearCurrentWeighting.SpellHit or 0) * (itemInfo.SpellHit or 0) +
+		(AutoGearCurrentWeighting.RedSockets or 0) * (itemInfo.RedSockets or 0) +
+		(AutoGearCurrentWeighting.YellowSockets or 0) * (itemInfo.YellowSockets or 0) +
+		(AutoGearCurrentWeighting.BlueSockets or 0) * (itemInfo.BlueSockets or 0) +
+		(AutoGearCurrentWeighting.MetaSockets or 0) * (itemInfo.MetaSockets or 0) +
+		(AutoGearCurrentWeighting.Mastery or 0) * (itemInfo.Mastery or 0) +
+		(AutoGearCurrentWeighting.Multistrike or 0) * (itemInfo.Multistrike or 0) +
+		(AutoGearCurrentWeighting.Versatility or 0) * (itemInfo.Versatility or 0) +
+		(AutoGearCurrentWeighting.ExperienceGained or 0) * (itemInfo.ExperienceGained or 0) +
+		(AutoGearCurrentWeighting.DPS or 0) * (itemInfo.DPS or 0) +
+		(AutoGearCurrentWeighting.Damage or 0) * (itemInfo.Damage or 0)
 	--AutoGearPrint(itemInfo.link.." value from AutoGear is "..tostring(score),3)
 	return score
 end
@@ -3106,8 +3147,8 @@ function AutoGearPutItemInEmptyBagSlot()
 end
 
 function AutoGearScan()
-	if (not weighting) then AutoGearSetStatWeights() end
-	if (not weighting) then
+	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
+	if (not AutoGearCurrentWeighting) then
 		AutoGearPrint("AutoGear: No weighting set for this class.", 0)
 		return
 	end
@@ -3137,7 +3178,7 @@ end
 
 function AutoGearTooltipHook(tooltip)
 	if (not AutoGearDB.ScoreInTooltips) then return end
-	if (not weighting) then AutoGearSetStatWeights() end
+	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
 	local name, link = tooltip:GetItem()
 	if not link then
 		AutoGearPrint("AutoGear: No item link for "..(name or "(no name)").." on "..tooltip:GetName(),3)
@@ -3150,10 +3191,10 @@ function AutoGearTooltipHook(tooltip)
 		pawnScaleName = AutoGearGetPawnScaleName()
 		pawnScaleColor = PawnGetScaleColor(pawnScaleName)
 	end
-	local score = AutoGearDetermineItemScore(tooltipItemInfo, weighting)
+	local score = AutoGearDetermineItemScore(tooltipItemInfo, AutoGearCurrentWeighting)
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
 		local equippedItemInfo = AutoGearReadItemInfo(GetInventorySlotInfo(tooltipItemInfo.Slot))
-		local equippedScore = AutoGearDetermineItemScore(equippedItemInfo, weighting)
+		local equippedScore = AutoGearDetermineItemScore(equippedItemInfo, AutoGearCurrentWeighting)
 		--AutoGearPrint("AutoGear: This tooltip is \""..tooltip:GetName().."\".",1)
 		local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
 		local isAnyComparisonTooltipVisible = ItemRefTooltip:IsVisible() or ShoppingTooltip1:IsVisible() or ShoppingTooltip2:IsVisible()
@@ -3192,9 +3233,13 @@ function AutoGearTooltipHook(tooltip)
 		end
 		]]
 	end
-	if (AutoGearDB.LootRollTestMode == true) then
+	if (AutoGearDB.DebugInfoInTooltips == true) then
 		tooltip:AddDoubleLine("AutoGear: Would roll:",
-		AutoGearNeedOrGreed(tooltipItemInfo, GetItemInfoInstant(link)),
+		AutoGearNeedOrGreed(tooltipItemInfo),
+		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+		tooltip:AddDoubleLine("AutoGear: 2-handed?:",
+		tostring(AutoGearIsItemTwoHanded(tooltip:GetItemID())),
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 	end
