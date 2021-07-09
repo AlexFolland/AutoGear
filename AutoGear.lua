@@ -1621,7 +1621,8 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["label"] = "Automatically equip gear",
 				["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the AutoGearDefaultWeights table in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
 				["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
-				["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\"."
+				["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\".",
+				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,nil,true) end
 			},
 			{
 				["option"] = "AutoLootRoll",
@@ -1763,7 +1764,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Override specialization with the specialization chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the spec detected automatically.",
 				["toggleDescriptionTrue"] = "Specialization overriding is now enabled.  AutoGear will use the specialization selected in the dropdown for evaluating gear.",
 				["toggleDescriptionFalse"] = "Specialization overriding is now disabled.  AutoGear will use your class and its detected specialization for evaluating gear.  Type \"/ag spec\" to check what specialization AutoGear detects for your character.",
-				["togglePostHook"] = function() AutoGearSetStatWeights() end,
+				["togglePostHook"] = function() AutoGearSetStatWeights() AutoGearConsiderAllItems(nil,nil,nil,nil,true) end,
 				["child"] = {
 					["option"] = "OverrideSpec",
 					["options"] = AutoGearGetOverrideSpecs(),
@@ -1780,7 +1781,8 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["label"] = "Use Pawn to evaluate upgrades",
 				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use a Pawn scale instead of AutoGear's internal stat weights for evaluating gear upgrades.  AutoGear will use the Pawn scale with a name matching the \"[class]: [spec]\" format; example \"Paladin: Retribution\". If \"Override specialization\" is also enabled, that class and spec will be used for detecting which Pawn scale name to use instead. Visible scales (not hidden in Pawn's settings) will be prioritized when detecting which scale to use."..(((PawnIsReady ~= nil) and PawnIsReady()) and "" or "\n\n"..RED_FONT_COLOR_CODE.."Pawn is not running, so this option will do nothing."..FONT_COLOR_CODE_CLOSE),
 				["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
-				["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled."
+				["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled.",
+				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,nil,true) end,
 			},
 			{
 				["option"] = "OverridePawnScale",
