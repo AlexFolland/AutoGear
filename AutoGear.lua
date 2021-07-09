@@ -1817,10 +1817,10 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliCommands"] = { "debuginfo", "debuginfointooltips", "test", "testmode", "rolltestmode" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Show debug info in item tooltips",
-				["description"] = "This is a test mode to show debug info in tooltips, such as the real roll outcome if the item viewed dropped as a loot roll.  This is to help the developers find and fix bugs in AutoGear.  You can use it to help too and report issues.",
-				["toggleDescriptionTrue"] = "Debug info in tooltips is now enabled. Info such as whether AutoGear would \"NEED\" or \"GREED\" on an item will be shown in item tooltips.",
-				["toggleDescriptionFalse"] = "Debug info in tooltips is now disabled. Debug info will not be shown in item tooltips."
+				["label"] = "Show debug info in item tooltips (warning: "..RED_FONT_COLOR_CODE.."laggy"..FONT_COLOR_CODE_CLOSE.."!)",
+				["description"] = "This is a test mode to show debug info in tooltips, such as the real roll outcome if the item viewed dropped as a loot roll.  This is to help the developers find and fix bugs in AutoGear.  You can use it to help too and report issues.  (warning: "..RED_FONT_COLOR_CODE.."laggy"..FONT_COLOR_CODE_CLOSE.."!)",
+				["toggleDescriptionTrue"] = "Debug info in tooltips is now enabled. Info such as whether AutoGear would \""..GREEN_FONT_COLOR_CODE.."NEED"..FONT_COLOR_CODE_CLOSE.."\" or \""..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.."\" on an item will be shown in item tooltips.  (warning: "..RED_FONT_COLOR_CODE.."laggy"..FONT_COLOR_CODE_CLOSE.."!)",
+				["toggleDescriptionFalse"] = "Debug info in tooltips is now disabled."
 			}
 		}
 
