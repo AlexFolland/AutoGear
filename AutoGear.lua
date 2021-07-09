@@ -2291,10 +2291,12 @@ function AutoGearConsiderAllItems(lootRollItemID, lootRollID, questRewardID, arb
 	end
 	--consider item being rolled on (if any)
 	if (lootRollItemID) then
-		info = AutoGearReadItemInfo(nil, lootRollID)
+		if (arbitraryItemInfo) then
+			info = arbitraryItemInfo
+		elseif (lootRoolID) then
+			info = AutoGearReadItemInfo(nil, lootRollID)
+		end
 		AutoGearConsiderItem(info, nil, nil, 1, lootRollItemID)
-	elseif (arbitraryItemInfo) then
-		AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1, lootRollItemID)
 	end
 	--consider quest rewards (if any)
 	if (questRewardID) then
@@ -2558,7 +2560,7 @@ function AutoGearNeedOrGreed(info)
 	if not AutoGearCurrentWeighting then AutoGearSetStatWeights() end
 	--AutoGearPopulateBestItems()
 	local roll = nil
-	local wouldNeed = AutoGearConsiderItem(info,nil,nil,nil,nil,nil,true)
+	local wouldNeed = AutoGearConsiderAllItems(info.id,nil,nil,info,true)
 	if ((AutoGearDB.RollOnNonGearLoot == false) and (not info.Slot)) then
 		--AutoGearPrint("AutoGear: "..info.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 		--local roll is nil, so no roll
