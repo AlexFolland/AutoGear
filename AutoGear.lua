@@ -1782,7 +1782,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use a Pawn scale instead of AutoGear's internal stat weights for evaluating gear upgrades.  AutoGear will use the Pawn scale with a name matching the \"[class]: [spec]\" format; example \"Paladin: Retribution\". If \"Override specialization\" is also enabled, that class and spec will be used for detecting which Pawn scale name to use instead. Visible scales (not hidden in Pawn's settings) will be prioritized when detecting which scale to use."..(((PawnIsReady ~= nil) and PawnIsReady()) and "" or "\n\n"..RED_FONT_COLOR_CODE.."Pawn is not running, so this option will do nothing."..FONT_COLOR_CODE_CLOSE),
 				["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
 				["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled.",
-				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,nil,true) end,
+				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,nil,true) end
 			},
 			{
 				["option"] = "OverridePawnScale",
@@ -1794,6 +1794,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Override the Pawn scale that would normally be automatically detected in \"[class]: [spec]\" format with the Pawn scale chosen in this dropdown.\n\nThis override does nothing unless \"Use Pawn to evaluate upgrades\" is enabled.",
 				["toggleDescriptionTrue"] = "Overriding Pawn scale with the selected scale is now enabled.",
 				["toggleDescriptionFalse"] = "Overriding Pawn scale with the selected scale is now disabled.",
+				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,nil,true) end,
 				["child"] = {
 					["option"] = "PawnScale",
 					["options"] = (function() if PawnIsReady ~= nil and PawnIsReady() then return AutoGearGetPawnScales() end end)(),
