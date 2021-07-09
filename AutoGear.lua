@@ -2285,22 +2285,22 @@ function AutoGearConsiderAllItems(lootRollItemID, lootRollID, questRewardID, arb
 			local _,_,_,_,_,_, link = GetContainerItemInfo(bag, slot)
 			if (link) then
 				info = AutoGearReadItemInfo(nil, nil, bag, slot)
-				AutoGearConsiderItem(AutoGearBestItems, info, bag, slot, nil, GetContainerItemID(bag, slot))
+				AutoGearConsiderItem(info, bag, slot, nil, GetContainerItemID(bag, slot))
 			end
 		end
 	end
 	--consider item being rolled on (if any)
 	if (lootRollItemID) then
 		info = AutoGearReadItemInfo(nil, lootRollID)
-		AutoGearConsiderItem(AutoGearBestItems, info, nil, nil, 1, lootRollItemID)
+		AutoGearConsiderItem(info, nil, nil, 1, lootRollItemID)
 	elseif (arbitraryItemInfo) then
-		AutoGearConsiderItem(AutoGearBestItems, arbitraryItemInfo, nil, nil, 1, lootRollItemID)
+		AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1, lootRollItemID)
 	end
 	--consider quest rewards (if any)
 	if (questRewardID) then
 		for i = 1, GetNumQuestChoices() do
 			info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
-			AutoGearConsiderItem(AutoGearBestItems, info, nil, nil, nil, questRewardID[i], i)
+			AutoGearConsiderItem(info, nil, nil, nil, questRewardID[i], i)
 		end
 	end
 	--create all future equip actions required (only if not rolling currently)
