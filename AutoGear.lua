@@ -2086,7 +2086,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			AutoGearConsiderAllItems()
 		end
 	elseif (event == "START_LOOT_ROLL") then
-		link = GetLootRollItemLink(arg1)
+		local link = GetLootRollItemLink(arg1)
 		AutoGearHandleLootRoll(link, arg1)
 	elseif (event == "CONFIRM_LOOT_ROLL") then
 		ConfirmLootRoll(arg1, arg2)
@@ -2129,7 +2129,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			local soldSomething = nil
 			local totalSellValue = 0
 			for i = 0, NUM_BAG_SLOTS do
-				slotMax = GetContainerNumSlots(i)
+				local slotMax = GetContainerNumSlots(i)
 				for j = 0, slotMax do
 					_, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
 					if (link) then
