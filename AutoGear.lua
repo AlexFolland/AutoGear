@@ -40,6 +40,7 @@ local tUpdate = 0
 local dataAvailable = nil
 local shouldPrintHelp = false
 local maxPlayerLevel = GetMaxLevelForExpansionLevel(GetExpansionLevel())
+AutoGearWouldRoll = "nil"
 
 function AutoGearSerializeTable(val, name, skipnewlines, depth)
     skipnewlines = skipnewlines or false
@@ -2085,39 +2086,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			AutoGearConsiderAllItems()
 		end
 	elseif (event == "START_LOOT_ROLL") then
-		AutoGearSetStatWeights()
-		if (AutoGearCurrentWeighting) then
-			local roll = nil
-			reason = "(no reason set)"
-			link = GetLootRollItemLink(arg1)
-			local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-			local wouldNeed = AutoGearConsiderAllItems(lootRollItemID, arg1)
-			local rollItemInfo = AutoGearReadItemInfo(nil, arg1)
-			local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(arg1)
-			if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
-				AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
-				--local roll is nil, so no roll
-			elseif ((wouldNeed or rollItemInfo.isMount) and canNeed) then
-				roll = 1 --need
-			else
-				roll = 2 --greed
-				if (wouldNeed and not canNeed) then
-					AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for "..rollItemInfo.link..".", 1)
-				end
-			end
-			if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: "..rollItemInfo.link.." cannot be worn.  "..reason, 1) end
-			if (roll) then
-				local newAction = {}
-				newAction.action = "roll"
-				newAction.t = GetTime() --roll right away
-				newAction.rollID = arg1
-				newAction.rollType = roll
-				newAction.info = rollItemInfo
-				table.insert(futureAction, newAction)
-			end
-		else
-			AutoGearPrint("AutoGear: No weighting set for this class.", 0)
-		end
+		link = GetLootRollItemLink(arg1)
+		AutoGearHandleLootRoll(link, arg1)
 	elseif (event == "CONFIRM_LOOT_ROLL") then
 		ConfirmLootRoll(arg1, arg2)
 	elseif (event == "CONFIRM_DISENCHANT_ROLL") then
@@ -2207,6 +2177,42 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		AutoGearPrint("AutoGear: event fired: "..event, 3)
 	end
 end)
+
+function AutoGearHandleLootRoll(link, lootRollID, simulate, tooltip)
+	AutoGearSetStatWeights()
+	if (AutoGearCurrentWeighting) then
+		local roll = nil
+		reason = "(no reason set)"
+		local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+		local wouldNeed = AutoGearConsiderAllItems(lootRollItemID, lootRollID)
+		local rollItemInfo = AutoGearReadItemInfo(nil, nil, nil, nil, nil, link)
+		local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(lootRollID)
+		if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
+			AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
+			--local roll is nil, so no roll
+		elseif ((wouldNeed or rollItemInfo.isMount) and canNeed) then
+			roll = 1 --need
+		else
+			roll = 2 --greed
+			if (wouldNeed and not canNeed) then
+				AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for "..rollItemInfo.link..".", 1)
+			end
+		end
+		if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: "..rollItemInfo.link.." cannot be worn.  "..reason, 1) end
+		if (roll) then
+			local newAction = {}
+			newAction.action = (simulate and "simulateroll" or "roll")
+			newAction.t = GetTime() --roll right away
+			newAction.rollID = lootRollID
+			newAction.rollType = roll
+			newAction.info = rollItemInfo
+			newAction.tooltip = tooltip --to send tooltip context for NEED/GREED simulation
+			table.insert(futureAction, newAction)
+		end
+	else
+		AutoGearPrint("AutoGear: No weighting set for this class.", 0)
+	end
+end
 
 -- from Attrition addon
 function AutoGearCashToString(cash)
@@ -3200,10 +3206,7 @@ function AutoGearTooltipHook(tooltip)
 		]]
 	end
 	if (AutoGearDB.DebugInfoInTooltips == true) then
-		tooltip:AddDoubleLine("AutoGear: Would roll:",
-		AutoGearNeedOrGreed(tooltipItemInfo),
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+		AutoGearHandleLootRoll(tooltipItemInfo.link,1,1,tooltip)
 		tooltip:AddDoubleLine("AutoGear: Item ID:",
 		tostring(tooltipItemInfo.id),
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
@@ -3271,6 +3274,13 @@ function AutoGearMain()
 					end
 					table.remove(futureAction, i)
 				end
+			elseif (curAction.action == "simulateroll" and curAction.tooltip) then
+				AutoGearWouldRoll = (curAction.rollType == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (curAction.rollType == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll"))..FONT_COLOR_CODE_CLOSE
+				curAction.tooltip:AddDoubleLine("AutoGear: Would roll:",
+				AutoGearWouldRoll,
+				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+				table.remove(futureAction, i)
 			elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
 				if (GetTime() > curAction.t) then
 					if ((AutoGearDB.Enabled ~= nil) and (AutoGearDB.Enabled == true)) then
