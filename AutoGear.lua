@@ -2184,9 +2184,10 @@ function AutoGearHandleLootRoll(link, lootRollID, simulate, tooltip)
 		local roll = nil
 		reason = "(no reason set)"
 		local _, _, _, _, lootRollItemID, _, _, _, _, _, _, _, _, _ = string.find(link, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-		local wouldNeed = AutoGearConsiderAllItems(lootRollItemID, lootRollID)
 		local rollItemInfo = AutoGearReadItemInfo(nil, nil, nil, nil, nil, link)
+		local wouldNeed = AutoGearConsiderAllItems(lootRollItemID, lootRollID, nil, rollItemInfo)
 		local _, _, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(lootRollID)
+		if (simulate) then canNeed = 1 end
 		if ((AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.Slot)) then
 			AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 			--local roll is nil, so no roll
@@ -2297,12 +2298,7 @@ function AutoGearConsiderAllItems(lootRollItemID, lootRollID, questRewardID, arb
 	end
 	--consider item being rolled on (if any)
 	if (lootRollItemID) then
-		if (arbitraryItemInfo) then
-			info = arbitraryItemInfo
-		elseif (lootRoolID) then
-			info = AutoGearReadItemInfo(nil, lootRollID)
-		end
-		AutoGearConsiderItem(info, nil, nil, 1, lootRollItemID)
+		AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1, lootRollItemID)
 	end
 	--consider quest rewards (if any)
 	if (questRewardID) then
@@ -2507,22 +2503,6 @@ end
 function AutoGearIsItemTwoHanded(itemID)
 	if (not itemID) then return nil end
 	return (select(4,GetItemInfoInstant(itemID)) == "INVTYPE_2HWEAPON")
-	-- if (IsClassic or isTBC) then
-	-- 	return mainHandType and
-	-- 		(string.find(mainHandType, "Two") or
-	-- 		string.find(mainHandType, "Staves") or
-	-- 		string.find(mainHandType, "Fishing Pole") or
-	-- 		string.find(mainHandType, "Polearms"))
-	-- else
-	-- 	return mainHandType and
-	-- 		(string.find(mainHandType, "Two") or
-	-- 		string.find(mainHandType, "Staves") or
-	-- 		string.find(mainHandType, "Fishing Pole") or
-	-- 		string.find(mainHandType, "Polearms") or
-	-- 		string.find(mainHandType, "Guns") or
-	-- 		string.find(mainHandType, "Bows") or
-	-- 		string.find(mainHandType, "Crossbows"))
-	-- end
 end
 
 function IsTwoHandEquipped()
