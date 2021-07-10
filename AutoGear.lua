@@ -3280,6 +3280,7 @@ function AutoGearMain()
 				AutoGearWouldRoll,
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+				curAction.tooltip:Show()
 				table.remove(futureAction, i)
 			elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
 				if (GetTime() > curAction.t) then
