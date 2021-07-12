@@ -384,7 +384,7 @@ if (IsClassic or IsTBC) then
 				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, SpellCrit = 0, Hit = 0.4, SpellHit = 0,
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.4, SpellCrit = 0, Hit = 0.9, SpellHit = 0,
 				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
