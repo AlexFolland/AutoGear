@@ -3245,9 +3245,9 @@ function AutoGearMain()
 			if (curAction.action == "roll") then
 				if (GetTime() > curAction.t) then
 					if (curAction.rollType == 1) then
-						AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ").."NEED on "..curAction.info.link..".", 1)
+						AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ")..GREEN_FONT_COLOR_CODE.."NEED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
 					elseif (curAction.rollType == 2) then
-						AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ").."GREED on "..curAction.info.link..".", 1)
+						AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ")..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
 					end
 					if ((AutoGearDB.AutoLootRoll ~= nil) and (AutoGearDB.AutoLootRoll == true)) then
 						RollOnLoot(curAction.rollID, curAction.rollType)
