@@ -2087,10 +2087,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		end
 	elseif (event == "START_LOOT_ROLL") then
 		local link = GetLootRollItemLink(arg1)
-		--local item = Item:CreateFromItemLink(link)
-		--item:ContinueOnItemLoad(function()
-			AutoGearHandleLootRoll(link, arg1)
-		--end)
+		AutoGearHandleLootRoll(link, arg1)
 	elseif (event == "CONFIRM_LOOT_ROLL") then
 		ConfirmLootRoll(arg1, arg2)
 	elseif (event == "CONFIRM_DISENCHANT_ROLL") then
@@ -2182,6 +2179,13 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 end)
 
 function AutoGearHandleLootRoll(link, lootRollID, simulate, tooltip)
+	local item = Item:CreateFromItemLink(link)
+	item:ContinueOnItemLoad(function()
+		AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
+	end)
+end
+
+function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 	AutoGearSetStatWeights()
 	if (AutoGearCurrentWeighting) then
 		local roll = nil
