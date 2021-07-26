@@ -2087,10 +2087,10 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		end
 	elseif (event == "START_LOOT_ROLL") then
 		local link = GetLootRollItemLink(arg1)
-		local item = Item:CreateFromItemLink(link)
-		item:ContinueOnItemLoad(function()
+		--local item = Item:CreateFromItemLink(link)
+		--item:ContinueOnItemLoad(function()
 			AutoGearHandleLootRoll(link, arg1)
-		end)
+		--end)
 	elseif (event == "CONFIRM_LOOT_ROLL") then
 		ConfirmLootRoll(arg1, arg2)
 	elseif (event == "CONFIRM_DISENCHANT_ROLL") then
