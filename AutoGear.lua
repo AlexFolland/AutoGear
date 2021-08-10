@@ -2720,9 +2720,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if (text=="finger") then info.Slot = "Finger0Slot" info.SlotConst = INVSLOT_FINGER1 end
 			if (text=="trinket") then info.Slot = "Trinket0Slot" info.SlotConst = INVSLOT_TRINKET1 end
 			if (text=="main hand") then
-                		if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
-                    			cannotUse = 1
-                    			reason = "(this spec needs a dagger main hand)"
+				if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+					cannotUse = 1
+					reason = "(this spec needs a dagger main hand)"
 				elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
 					reason = "(this spec needs a dagger main hand)"
@@ -2762,9 +2762,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				if (weapons == "2h" or weapons == "ranged") then
 					cannotUse = 1
 					reason = "(this spec should use a two-hand weapon)"
-                		elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
-                    			cannotUse = 1
-                    			reason = "(this spec needs a dagger in the off-hand)"
+				elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+						cannotUse = 1
+						reason = "(this spec needs a dagger in the off-hand)"
 				elseif (weapons == "weapon and shield" and weaponType ~= LE_ITEM_ARMOR_SHIELD) then
 					cannotUse = 1
 					reason = "(this spec needs a shield in the off-hand)"
@@ -2779,9 +2779,12 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					cannotUse = 1
 					reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
 				end
-                		if (weapons == "dagger" and weaponType == LE_ITEM_WEAPON_DAGGER) then
-							info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
-							info.Slot2 = "SecondaryHandSlot" info.Slot2Const = INVSLOT_OFFHAND
+				if (weapons == "dagger" and weaponType == LE_ITEM_WEAPON_DAGGER) then
+					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
+					info.Slot2 = "SecondaryHandSlot" info.Slot2Const = INVSLOT_OFFHAND
+				elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+					cannotUse = 1
+					reason = "(this spec needs a dagger in each hand)"
 				elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					info.Slot = "SecondaryHandSlot" info.SlotConst = INVSLOT_OFFHAND
 				elseif (((weapons == "dual wield") and CanDualWield()) or weapons == "dagger and any") then
