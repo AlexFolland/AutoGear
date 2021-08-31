@@ -2537,7 +2537,7 @@ function AutoGearPrintItem(info)
 		local score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
 		-- 3 decimal places max
 		score = math.floor(score * 1000) / 1000
-		AutoGearPrint("AutoGear:         "..((pawnScaleLocalizedName and pawnScaleColor) and ("Pawn \""..pawnScaleColor..pawnScaleLocalizedName..FONT_COLOR_CODE_CLOSE.."\"") or "AutoGear").." score: "..(score or "nil"),2)
+		AutoGearPrint("AutoGear:         "..(((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and ("Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"") or "AutoGear").." score: "..(score or "nil"),2)
 	elseif not AutoGearDB.UsePawn or PawnIsReady == nil then
 		for k,v in pairs(info) do
 			if (k ~= "Name" and AutoGearCurrentWeighting[k]) then
@@ -2970,7 +2970,7 @@ function AutoGearGetPawnScaleName()
 	-- Try to find a visible scale matching the real class and spec string (example: "Warrior: Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if PawnIsScaleVisible(ScaleName) and realClassAndSpec == ScaleName and Scale.Values and next(Scale.Values) then
-			AutoGearPrint("got the matching visible real spec and class name: "..ScaleName, 3)
+			-- AutoGearPrint("got the matching visible real spec and class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -2978,7 +2978,7 @@ function AutoGearGetPawnScaleName()
 	-- Try to find a visible scale matching the real localized class and spec string (example: "Warrior: Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if PawnIsScaleVisible(ScaleName) and realClassAndSpec == Scale.LocalizedName and Scale.Values and next(Scale.Values) then
-			AutoGearPrint("got the matching visible localized real spec and class name: "..ScaleName, 3)
+			-- AutoGearPrint("got the matching visible localized real spec and class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -2986,7 +2986,7 @@ function AutoGearGetPawnScaleName()
 	-- Try to find a visible scale matching just the real spec name (example: "Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if PawnIsScaleVisible(ScaleName) and realSpec == ScaleName and Scale.Values and next(Scale.Values) then
-			AutoGearPrint("got the matching visible real spec name: "..ScaleName, 3)
+			-- AutoGearPrint("got the matching visible real spec name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -2994,7 +2994,7 @@ function AutoGearGetPawnScaleName()
 	-- Try to find a visible scale matching just the real class name (example: "Warrior")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if PawnIsScaleVisible(ScaleName) and realClass == ScaleName and Scale.Values and next(Scale.Values) then
-			AutoGearPrint("got the matching visible real class name: "..ScaleName, 3)
+			-- AutoGearPrint("got the matching visible real class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3002,7 +3002,7 @@ function AutoGearGetPawnScaleName()
 	-- Try to find any scale matching the real class and spec string (example: "Warrior: Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if realClassAndSpec == ScaleName and Scale.Values and next(Scale.Values) then
-			AutoGearPrint("got the matching class and spec: "..ScaleName, 3)
+			-- AutoGearPrint("got the matching class and spec: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3010,7 +3010,7 @@ function AutoGearGetPawnScaleName()
 	-- Try to find any scale matching the real localized class and spec string (example: "Warrior: Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if realClassAndSpec == Scale.LocalizedName and Scale.Values and next(Scale.Values) then
-			AutoGearPrint("got the matching visible localized real spec and class name: "..ScaleName, 3)
+			-- AutoGearPrint("got the matching visible localized real spec and class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3018,7 +3018,7 @@ function AutoGearGetPawnScaleName()
 	-- Try to find any scale matching just the real spec name (example: "Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if realSpec == ScaleName and Scale.Values and next(Scale.Values) then
-			AutoGearPrint("got the matching real spec name: "..ScaleName, 3)
+			-- AutoGearPrint("got the matching real spec name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3026,7 +3026,7 @@ function AutoGearGetPawnScaleName()
 	-- Try to find any scale matching just the real class name (example: "Warrior")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if realClass == ScaleName and Scale.Values and next(Scale.Values) then
-			AutoGearPrint("got the matching real class name: "..ScaleName, 3)
+			-- AutoGearPrint("got the matching real class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3034,7 +3034,7 @@ function AutoGearGetPawnScaleName()
 	-- Try to find the matching class with the matching spec
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if PawnIsScaleVisible(ScaleName) and Scale.ClassID == ClassID and Scale.Values and next(Scale.Values) then
-			--AutoGearPrint("got the matching class: \""..ScaleName.."\"; Scale.Values: ", 3)
+			--AutoGearPrint("got the matching class with matching spec: \""..ScaleName.."\"; Scale.Values: ", 3)
 			--AutoGearRecursivePrint(Scale.Values)
 			return ScaleName, Scale.LocalizedName
 		end
@@ -3224,12 +3224,12 @@ function AutoGearTooltipHook(tooltip)
 		score = math.floor(score * 1000) / 1000
 		if shouldShowComparisonLine then
 			equippedScore = math.floor(equippedScore * 1000) / 1000
-			tooltip:AddDoubleLine(((pawnScaleLocalizedName and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..pawnScaleLocalizedName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped):",
+			tooltip:AddDoubleLine((((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped):",
 			equippedScore or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine(((pawnScaleLocalizedName and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..pawnScaleLocalizedName..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..((shouldShowComparisonLine and not isAComparisonTooltip) and " (this)" or "")..":",
+		tooltip:AddDoubleLine((((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..((shouldShowComparisonLine and not isAComparisonTooltip) and " (this)" or "")..":",
 		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
