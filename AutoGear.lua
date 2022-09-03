@@ -28,6 +28,7 @@
 local IsClassic = GetNumExpansions() == 1
 local IsTBC = GetNumExpansions() == 2
 local IsBFA = GetNumExpansions() == 8
+local IsWotLK = GetNumExpansions() == 3
 local IsSL = GetNumExpansions() == 9
 
 local _ --prevent taint when using throwaway variable
@@ -134,7 +135,7 @@ function AutoGearInitializeDB(defaults, reset)
 end
 
 -- We run the IsClassic and IsTBC check before function definition to prevent poorer performance
-if (IsClassic or IsTBC) then
+if (IsClassic or IsTBC or IsWotLK) then
 	function AutoGearGetSpec()
 		-- GetSpecialization() doesn't exist on Classic or TBC.
 		-- Instead, this finds the talent tree where the most points are allocated.
@@ -226,7 +227,7 @@ end)
 
 local E = 0.000001 --epsilon; non-zero value that's insignificantly different from 0, used here for the purpose of valuing gear that has higher stats that give the player "almost no benefit"
 -- regex for finding 0 in this block to replace with E: (?<=[^ ] = )0(?=[^\.0-9])
-if (IsClassic or IsTBC) then
+if (IsClassic or IsTBC or IsWotLK) then
 	AutoGearDefaultWeights = {
 		["DEATHKNIGHT"] = {
 			["None"] = {
@@ -1947,7 +1948,7 @@ function AutoGearSetAllowedVerbosity(allowedverbosity)
 	end
 end
 
-if not (IsClassic or IsTBC) then
+if not (IsClassic or IsTBC or IsWotLK) then
 	--These are events that don't exist in WoW Classic or TBC
 	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
@@ -2010,13 +2011,13 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
 					local quest = C_GossipInfo.GetAvailableQuests()[i]
 					if (quest["isTrivial"]==false) then
-	  					C_GossipInfo.SelectAvailableQuest(i)
+						C_GossipInfo.SelectAvailableQuest(i)
 					end
 				end
 			else
 				info = {GetGossipAvailableQuests()}
 				for i = 1, GetNumGossipAvailableQuests() do
-				local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
+					local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
 					if (not isTrivial) then
 						SelectGossipAvailableQuest(i)
 					end
@@ -2031,7 +2032,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if not (IsClassic or IsTBC) then
+			if not (IsClassic or IsTBC or IsWotLK) then
 				for i = 1, GetNumAvailableQuests() do
 					local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i)
 					if (not isTrivial) then
@@ -2150,7 +2151,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		if (AutoGearDB.AutoRepair == true) then
 			-- repair all gear
 			local cashString = AutoGearCashToString(GetRepairAllCost())
-			if not (IsClassic or IsTBC) then
+			if not (IsClassic or IsTBC or IsWotLK) then
 				if (GetRepairAllCost() > 0) then
 					if (CanGuildBankRepair()) then
 						RepairAllItems(1) --guild repair
@@ -2669,7 +2670,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				(string.find(text, "nature spell damage") or string.find(text, "damage done by nature spells and effects")) and (spec=="Balance" or class=="DRUID" and spec=="None") or
 				(string.find(text, "healing") and isHealer) or
 				(string.find(text, "increases healing done") and isHealer)) then info.SpellPower = (info.SpellPower or 0) + value end
-			if (IsClassic or IsTBC) then
+			if (IsClassic or IsTBC or IsWotLK) then
 				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike")) then info.SpellCrit = (info.SpellCrit or 0) + value end
 				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
 				if (string.find(text, "hit with spells by") or string.find(text, "spell hit rating by")) then info.SpellHit = (info.SpellHit or 0) + value end
@@ -2763,8 +2764,8 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					cannotUse = 1
 					reason = "(this spec should use a two-hand weapon)"
 				elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
-						cannotUse = 1
-						reason = "(this spec needs a dagger in the off-hand)"
+					cannotUse = 1
+					reason = "(this spec needs a dagger in the off-hand)"
 				elseif (weapons == "weapon and shield" and weaponType ~= LE_ITEM_ARMOR_SHIELD) then
 					cannotUse = 1
 					reason = "(this spec needs a shield in the off-hand)"
@@ -2794,7 +2795,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
 				end
 			end
-			if (IsClassic or IsTBC) then
+			if (IsClassic or IsTBC or IsWotLK) then
 				if (text=="wand" or
 					text=="gun" or
 					text=="ranged" or
