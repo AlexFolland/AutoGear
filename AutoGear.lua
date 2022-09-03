@@ -43,38 +43,38 @@ local maxPlayerLevel = GetMaxLevelForExpansionLevel(GetExpansionLevel())
 AutoGearWouldRoll = "nil"
 
 function AutoGearSerializeTable(val, name, skipnewlines, depth)
-    skipnewlines = skipnewlines or false
-    depth = depth or 0
+	skipnewlines = skipnewlines or false
+	depth = depth or 0
 
-    local tmp = string.rep(" ", depth)
+	local tmp = string.rep(" ", depth)
 
-    if name then tmp = tmp .. name .. " = " end
+	if name then tmp = tmp .. name .. " = " end
 
-    if type(val) == "table" then
-        tmp = tmp .. "{" .. (not skipnewlines and "\n" or "")
+	if type(val) == "table" then
+		tmp = tmp .. "{" .. (not skipnewlines and "\n" or "")
 
-        for k, v in pairs(val) do
-            tmp =  tmp .. AutoGearSerializeTable(v, k, skipnewlines, depth + 1) .. "," .. (not skipnewlines and "\n" or "")
-        end
+		for k, v in pairs(val) do
+			tmp =  tmp .. AutoGearSerializeTable(v, k, skipnewlines, depth + 1) .. "," .. (not skipnewlines and "\n" or "")
+		end
 
-        tmp = tmp .. string.rep(" ", depth) .. "}"
-    elseif type(val) == "number" then
-        tmp = tmp .. tostring(val)
-    elseif type(val) == "string" then
-        tmp = tmp .. string.format("%q", val)
-    elseif type(val) == "boolean" then
-        tmp = tmp .. (val and "true" or "false")
-    else
-        tmp = tmp .. "\"[inserializeable datatype:" .. type(val) .. "]\""
-    end
+		tmp = tmp .. string.rep(" ", depth) .. "}"
+	elseif type(val) == "number" then
+		tmp = tmp .. tostring(val)
+	elseif type(val) == "string" then
+		tmp = tmp .. string.format("%q", val)
+	elseif type(val) == "boolean" then
+		tmp = tmp .. (val and "true" or "false")
+	else
+		tmp = tmp .. "\"[inserializeable datatype:" .. type(val) .. "]\""
+	end
 
-    return tmp
+	return tmp
 end
 
 function AutoGearStringHash(text)
 	local counter = 1
 	local len = string.len(text)
-	for i = 1, len, 3 do 
+	for i = 1, len, 3 do
 	  counter = math.fmod(counter*8161, 4294967279) +  -- 2^32 - 17: Prime!
 		  (string.byte(text,i)*16776193) +
 		  ((string.byte(text,i+1) or (len-i+256))*8372226) +
@@ -172,11 +172,11 @@ else
 	function AutoGearGetSpec()
 		local currentSpec = GetSpecialization()
 		local currentSpecName = currentSpec and select(2, GetSpecializationInfo(currentSpec)) or "None"
-    	if (currentSpec == 5) then
+		if (currentSpec == 5) then
 			return "None"
-    	else
+		else
 			return currentSpecName
-    	end
+		end
 	end
 end
 
@@ -1951,7 +1951,7 @@ if not (IsClassic or IsTBC) then
 	--These are events that don't exist in WoW Classic or TBC
 	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
-	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")             --This event is not yet documented
+	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")    	     --This event is not yet documented
 end
 AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
@@ -2033,7 +2033,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			--available quests
 			if not (IsClassic or IsTBC) then
 				for i = 1, GetNumAvailableQuests() do
-                			local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i)
+							local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i)
 					if (not isTrivial) then
 						SelectAvailableQuest(i)
 					end
@@ -2790,7 +2790,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				elseif (((weapons == "dual wield") and CanDualWield()) or weapons == "dagger and any") then
 					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
 					info.Slot2 = "SecondaryHandSlot" info.Slot2Const = INVSLOT_OFFHAND
-		        elseif (weapons ~= LE_ITEM_WEAPON_DAGGER) then
+				elseif (weapons ~= LE_ITEM_WEAPON_DAGGER) then
 					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
 				end
 			end
