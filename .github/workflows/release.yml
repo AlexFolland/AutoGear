@@ -55,3 +55,8 @@ jobs:
         uses: BigWigsMods/packager@master
         with:
           args: -g bcc
+
+      - name: Package and Release for Wrath of the Lich King Classic
+        uses: BigWigsMods/packager@master
+        with:
+          args: -g wrath
