@@ -7,6 +7,8 @@
 ## Notes: Automatically chooses loot and equips gear
 ## OptionalDeps: Pawn
 
+localization.core.lua
+localization.ru.lua
 AutoGear.lua
 ## SavedVariables: AutoGearDB
 ## SavedVariablesPerCharacter: AutoGearDB

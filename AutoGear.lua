@@ -24,6 +24,8 @@
 -- factor in racial weapon bonuses
 -- eye of arachnida slot nil error
 
+local _, T = ...;
+
 --check whether it's WoW Classic, TBC, BFA, or Shadowlands for automatic compatibility
 local IsClassic = GetNumExpansions() == 1
 local IsTBC = GetNumExpansions() == 2
@@ -41,6 +43,7 @@ local tUpdate = 0
 local dataAvailable = nil
 local shouldPrintHelp = false
 local maxPlayerLevel = GetMaxLevelForExpansionLevel(GetExpansionLevel())
+local L = T.Localization
 AutoGearWouldRoll = "nil"
 
 function AutoGearSerializeTable(val, name, skipnewlines, depth)
@@ -2654,12 +2657,12 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				end
 			end
 			local isHealer = spec=="Holy" or spec=="Restoration" or spec=="Mistweaver" or spec=="Discipline"
-			if (string.find(text, "strength")) then info.Strength = (info.Strength or 0) + value end
-			if (string.find(text, "agility")) then info.Agility = (info.Agility or 0) + value end
-			if (string.find(text, "intellect")) then info.Intellect = (info.Intellect or 0) + value end
-			if (string.find(text, "stamina")) then info.Stamina = (info.Stamina or 0) + value end
-			if (string.find(text, "spirit")) then info.Spirit = (info.Spirit or 0) + value end
-			if (string.find(text, "armor") and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
+			if (string.find(text, L["strength"])) then info.Strength = (info.Strength or 0) + value end
+			if (string.find(text, L["agility"])) then info.Agility = (info.Agility or 0) + value end
+			if (string.find(text, L["intellect"])) then info.Intellect = (info.Intellect or 0) + value end
+			if (string.find(text, L["stamina"])) then info.Stamina = (info.Stamina or 0) + value end
+			if (string.find(text, L["spirit"])) then info.Spirit = (info.Spirit or 0) + value end
+			if (string.find(text, L["armor"]) and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
 			if (string.find(text, "attack power")) and not string.find(text, "when fighting") and (not string.find(text, "forms only") or class=="DRUID") then info.AttackPower = (info.AttackPower or 0) + value end
 			if (string.find(text, "spell power") or
 				string.find(text, "damage and healing") or
@@ -2686,7 +2689,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if (string.find(text, "blue socket")) then info.BlueSockets = info.BlueSockets + 1 end
 			if (string.find(text, "dodge")) then info.Dodge = (info.Dodge or 0) + value end
 			if (string.find(text, "parry")) then info.Parry = (info.Parry or 0) + value end
-			if (string.find(text, "block")) then info.Block = (info.Block or 0) + value end
+			if (string.find(text, L["block"])) then info.Block = (info.Block or 0) + value end
 			if (string.find(text, "defense")) then info.Defense = (info.Defense or 0) + value end
 			if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
 			if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
@@ -2709,15 +2712,15 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if (text=="head") then info.Slot = "HeadSlot" info.SlotConst = INVSLOT_HEAD end
 			if (text=="neck") then info.Slot = "NeckSlot" info.SlotConst = INVSLOT_NECK end
 			if (text=="shoulder") then info.Slot = "ShoulderSlot" info.SlotConst = INVSLOT_SHOULDER end
-			if (text=="back") then info.Slot = "BackSlot" info.SlotConst = INVSLOT_BACK end
+			if (text==L["back"]) then info.Slot = "BackSlot" info.SlotConst = INVSLOT_BACK end
 			if (text=="chest") then info.Slot = "ChestSlot" info.SlotConst = INVSLOT_CHEST end
-			if (text=="shirt") then info.Slot = "ShirtSlot" info.SlotConst = INVSLOT_BODY end
+			if (text==L["shirt"]) then info.Slot = "ShirtSlot" info.SlotConst = INVSLOT_BODY end
 			if (text=="tabard") then info.Slot = "TabardSlot" info.SlotConst = INVSLOT_TABARD end
-			if (text=="wrist") then info.Slot = "WristSlot" info.SlotConst = INVSLOT_WRIST end
-			if (text=="hands") then info.Slot = "HandsSlot" info.SlotConst = INVSLOT_HAND end
+			if (text==L["wrist"]) then info.Slot = "WristSlot" info.SlotConst = INVSLOT_WRIST end
+			if (text==L["hands"]) then info.Slot = "HandsSlot" info.SlotConst = INVSLOT_HAND end
 			if (text=="waist") then info.Slot = "WaistSlot" info.SlotConst = INVSLOT_WAIST end
-			if (text=="legs") then info.Slot = "LegsSlot" info.SlotConst = INVSLOT_LEGS end
-			if (text=="feet") then info.Slot = "FeetSlot" info.SlotConst = INVSLOT_FEET end
+			if (text==L["legs"]) then info.Slot = "LegsSlot" info.SlotConst = INVSLOT_LEGS end
+			if (text==L["feet"]) then info.Slot = "FeetSlot" info.SlotConst = INVSLOT_FEET end
 			if (text=="finger") then info.Slot = "Finger0Slot" info.SlotConst = INVSLOT_FINGER1 end
 			if (text=="trinket") then info.Slot = "Trinket0Slot" info.SlotConst = INVSLOT_TRINKET1 end
 			if (text=="main hand") then
@@ -2733,7 +2736,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				end
 				info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
 			end
-			if (text=="two-hand") then
+			if (text==L["two-hand"]) then
 				if (weapons == "weapon and shield") then
 					cannotUse = 1
 					reason = "(this spec needs weapon and shield)"
@@ -2759,7 +2762,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				end
 				info.Slot = "SecondaryHandSlot" info.SlotConst = INVSLOT_OFFHAND
 			end
-			if (text=="off hand") then
+			if (text==L["off hand"]) then
 				if (weapons == "2h" or weapons == "ranged") then
 					cannotUse = 1
 					reason = "(this spec should use a two-hand weapon)"
@@ -2850,9 +2853,19 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	if (info.BlueSockets == 0) then info.BlueSockets = nil end
 	if (info.MetaSockets == 0) then info.MetaSockets = nil end
 
-	if (info.Slot) then info.shouldShowScoreInTooltip = 1 end
+	local classId = 0
+	if info.id then
+		classId = select(12, GetItemInfo(info.id))
+	end
+
+	if (info.Slot) then
+		info.shouldShowScoreInTooltip = 1
+	end
 	if (not cannotUse and (info.Slot or info.isMount)) then
 		info.Usable = 1
+	elseif classId == 15 then
+		cannotUse = 1
+		reason = "(classId = " .. classId .. ", it is not usable)"
 	elseif (not info.Slot) then
 		cannotUse = 1
 		reason = "(info.Slot was nil)"
@@ -3333,12 +3346,14 @@ function AutoGearMain()
 					table.remove(futureAction, i)
 				end
 			elseif (curAction.action == "simulateroll" and curAction.tooltip) then
-				AutoGearWouldRoll = (curAction.rollType == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (curAction.rollType == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll"))..FONT_COLOR_CODE_CLOSE
-				curAction.tooltip:AddDoubleLine("AutoGear: Would roll:",
-				AutoGearWouldRoll,
-				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-				curAction.tooltip:Show()
+				AutoGearWouldRoll = (curAction.rollType == 1 and GREEN_FONT_COLOR_CODE .. "NEED" or (curAction.rollType == 2 and RED_FONT_COLOR_CODE .. "GREED" or HIGHLIGHT_FONT_COLOR_CODE .. "no roll")) .. FONT_COLOR_CODE_CLOSE
+				--removed because of spam in item's tooltip.
+				--
+				--curAction.tooltip:AddDoubleLine("AutoGear: Would roll:",
+				--	AutoGearWouldRoll,
+				--	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+				--	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+				--curAction.tooltip:Show()
 				table.remove(futureAction, i)
 			elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
 				if (GetTime() > curAction.t) then
