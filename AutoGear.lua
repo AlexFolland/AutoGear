@@ -1951,7 +1951,7 @@ if not (IsClassic or IsTBC) then
 	--These are events that don't exist in WoW Classic or TBC
 	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
-	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")    	     --This event is not yet documented
+	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")          --This event is not yet documented
 end
 AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
@@ -2033,7 +2033,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			--available quests
 			if not (IsClassic or IsTBC) then
 				for i = 1, GetNumAvailableQuests() do
-							local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i)
+					local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i)
 					if (not isTrivial) then
 						SelectAvailableQuest(i)
 					end
