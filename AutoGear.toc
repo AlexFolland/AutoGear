@@ -2,6 +2,7 @@
 ## Interface-Retail: 90100
 ## Interface-Classic: 11307
 ## Interface-BCC: 20502
+## Interface-Wrath: 30400
 ## Title: AutoGear
 ## Notes: Automatically chooses loot and equips gear
 ## OptionalDeps: Pawn
