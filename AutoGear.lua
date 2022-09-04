@@ -2615,9 +2615,12 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	local class, spec = AutoGearGetClassAndSpec()
 	local weaponType = AutoGearGetWeaponType(info.link)
 	local itemEquipLoc = ""
+	local itemClassId = 0
 	if info.id then
 		itemEquipLoc = select(9, GetItemInfo(info.id))
+		itemClassId = select(12, GetItemInfo(info.id))
 	end
+
 	for i = 1, AutoGearTooltip:NumLines() do
 		local mytext = getglobal("AutoGearTooltipTextLeft"..i)
 		if (mytext) then
@@ -2906,29 +2909,19 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	if (info.BlueSockets == 0) then info.BlueSockets = nil end
 	if (info.MetaSockets == 0) then info.MetaSockets = nil end
 
-	local classId = 0
-	if info.id then
-		classId = select(12, GetItemInfo(info.id))
-	end
-
 	if (info.Slot) then
 		info.shouldShowScoreInTooltip = 1
 	end
 	if (not cannotUse and (info.Slot or info.isMount)) then
 		info.Usable = 1
-	elseif classId == 15 then
+	elseif itemClassId == 15 then
 		cannotUse = 1
-		reason = "(classId = " .. classId .. ", it is not usable)"
+		reason = "(classId = " .. itemClassId .. ", it is not usable)"
 	elseif (not info.Slot) then
 		cannotUse = 1
 		reason = "(info.Slot was nil. itemEquipLoc = '".. tostring(itemEquipLoc) .."')"
 	end
 
-	if not cannotUse then
-		info.canUse = "yes"
-	else
-		info.canUse = "no"
-	end
 	--if (cannotUse) then AutoGearPrint("Cannot use "..(info.link or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
 	info.reason = reason
 
@@ -3336,14 +3329,6 @@ function AutoGearTooltipHook(tooltip)
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		tooltip:AddDoubleLine("AutoGear: info.Slot2Const:",
 			tostring(tooltipItemInfo.Slot2Const or "nil"),
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-		tooltip:AddDoubleLine("AutoGear: info.reason:",
-			tostring(tooltipItemInfo.reason or "nil"),
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-		tooltip:AddDoubleLine("AutoGear: info.canUse:",
-			tostring(tooltipItemInfo.canUse or 0),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		-- tooltip:AddDoubleLine("AutoGear: AGDIS returns:",
