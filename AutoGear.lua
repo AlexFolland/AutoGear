@@ -34,8 +34,8 @@ local IsBFA = GetNumExpansions() == 8
 local IsWotLK = GetNumExpansions() == 3
 local IsSL = GetNumExpansions() == 9
 
----TOC Version which from started Mists of Pandaria expansion
-local TOC_VERSION_MOA = 50000
+---Mists of Pandaria TOC version number
+local TOC_VERSION_MOP = 50000
 ---Current TOC version
 local TOC_VERSION_CURRENT = select(4, GetBuildInfo())
 
@@ -2857,7 +2857,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				end
 			end
 
-			if (TOC_VERSION_CURRENT < TOC_VERSION_MOA) then
+			if (TOC_VERSION_CURRENT < TOC_VERSION_MOP) then
 				-- ranged slots exists until Mists of Pandaria expansion
 				if (itemEquipLoc == "INVTYPE_THROWN" or itemEquipLoc == "INVTYPE_RELIC"
 						or itemEquipLoc == "INVTYPE_RANGEDRIGHT"
@@ -2916,7 +2916,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		info.Usable = 1
 	elseif itemClassId == 15 then
 		cannotUse = 1
-		reason = "(classId = " .. itemClassId .. ", it is not usable)"
+		reason = "(item's classId is " .. itemClassId .. ", it is not usable)"
 	elseif (not info.Slot) then
 		cannotUse = 1
 		reason = "(info.Slot was nil. itemEquipLoc = '".. tostring(itemEquipLoc) .."')"
