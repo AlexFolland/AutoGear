@@ -2021,7 +2021,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			QuestDetailAcceptButton_OnClick()
 		elseif (event == "GOSSIP_SHOW") then
 			--active quests
-			if (TOC_VERSION_CURRENT > TOC_VERSION_SL) then
+			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL) then
 				for i = 1, C_GossipInfo.GetNumActiveQuests() do
 					local quest = C_GossipInfo.GetActiveQuests()[i]
 					if (quest["isComplete"]==true) then
@@ -2038,7 +2038,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if (TOC_VERSION_CURRENT > TOC_VERSION_SL) then
+			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL) then
 				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
 					local quest = C_GossipInfo.GetAvailableQuests()[i]
 					if (quest["isTrivial"]==false) then
@@ -2182,7 +2182,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		if (AutoGearDB.AutoRepair == true) then
 			-- repair all gear
 			local cashString = AutoGearCashToString(GetRepairAllCost())
-			if TOC_VERSION_CURRENT > TOC_VERSION_TBC then
+			if TOC_VERSION_CURRENT >= TOC_VERSION_TBC then
 				if (GetRepairAllCost() > 0) then
 					if (CanGuildBankRepair()) then
 						RepairAllItems(1) --guild repair
