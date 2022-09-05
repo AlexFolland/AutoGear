@@ -2774,7 +2774,6 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					cannotUse = 1
 					reason = "(this spec needs a dagger main hand)"
 				elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
-					--Alitwin: adding 2hdw
 					cannotUse = 1
 					reason = "(this spec needs a two-hand weapon)"
 				end
@@ -2792,7 +2791,6 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					reason = "(this spec should use a ranged weapon)"
 				end
 				if (weapons == "2hDW") then
-					--Alitwin: adding 2hdw
 					info.Slot = "MainHandSlot"
 					info.SlotConst = INVSLOT_MAINHAND
 					info.Slot2 = "SecondaryHandSlot"
@@ -2831,7 +2829,6 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				info.SlotConst = INVSLOT_OFFHAND
 			elseif (itemEquipLoc == "INVTYPE_WEAPON") then
 				if (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
-					--Alitwin: adding 2hdw
 					cannotUse = 1
 					reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
 				end
