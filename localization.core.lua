@@ -1,3 +1,4 @@
+---@type AutoGearAddon
 local _, T = ...;
 T.Localization = {}
 local function defaultFunc(_, key)

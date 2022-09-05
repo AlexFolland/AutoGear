@@ -24,6 +24,7 @@
 -- factor in racial weapon bonuses
 -- eye of arachnida slot nil error
 
+---@type AutoGearAddon
 local _, T = ...;
 
 --check whether it's WoW Classic, TBC, BFA, or Shadowlands for automatic compatibility
@@ -32,6 +33,11 @@ local IsTBC = GetNumExpansions() == 2
 local IsBFA = GetNumExpansions() == 8
 local IsWotLK = GetNumExpansions() == 3
 local IsSL = GetNumExpansions() == 9
+
+---Mists of Pandaria TOC version number
+local TOC_VERSION_MOP = 50000
+---Current TOC version
+local TOC_VERSION_CURRENT = select(4, GetBuildInfo())
 
 local _ --prevent taint when using throwaway variable
 local reason
@@ -2320,24 +2326,24 @@ function AutoGearConsiderAllItems(lootRollItemID, lootRollID, questRewardID, arb
 	end
 	--create all future equip actions required (only if not rolling currently)
 	if (not lootRollItemID and not questRewardID and not noActions) then
-		for i = 1, 18 do
-			if i == INVSLOT_MAINHAND or i == INVSLOT_OFFHAND then
+		for invSlot = 1, 18 do
+			if invSlot == INVSLOT_MAINHAND or invSlot == INVSLOT_OFFHAND then
 				--skip for now
 			else
-				local equippedInfo = AutoGearReadItemInfo(i)
+				local equippedInfo = AutoGearReadItemInfo(invSlot)
 				local equippedScore = AutoGearDetermineItemScore(equippedInfo, AutoGearCurrentWeighting)
-				if ((not AutoGearBestItems[i].equipped) and AutoGearBestItems[i].score > equippedScore) then
-					AutoGearPrint("AutoGear: "..(AutoGearBestItems[i].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[i].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-					AutoGearPrintItem(AutoGearBestItems[i].info)
+				if ((not AutoGearBestItems[invSlot].equipped) and AutoGearBestItems[invSlot].score > equippedScore) then
+					AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+					AutoGearPrintItem(AutoGearBestItems[invSlot].info)
 					AutoGearPrintItem(equippedInfo)
 					anythingBetter = 1
 					local newAction = {}
 					newAction.action = "equip"
 					newAction.t = GetTime()
-					newAction.container = AutoGearBestItems[i].bag
-					newAction.slot = AutoGearBestItems[i].slot
-					newAction.replaceSlot = i
-					newAction.info = AutoGearBestItems[i].info
+					newAction.container = AutoGearBestItems[invSlot].bag
+					newAction.slot = AutoGearBestItems[invSlot].slot
+					newAction.replaceSlot = invSlot
+					newAction.info = AutoGearBestItems[invSlot].info
 					table.insert(futureAction, newAction)
 				end
 			end
@@ -2393,12 +2399,12 @@ function AutoGearConsiderAllItems(lootRollItemID, lootRollID, questRewardID, arb
 						AutoGearPrintItem(equippedOff)
 					end
 				else
-					local i = 16
-					if (offSwap) then i = 17 end
-					local equippedInfo = AutoGearReadItemInfo(i)
+					local invSlot = 16
+					if (offSwap) then invSlot = 17 end
+					local equippedInfo = AutoGearReadItemInfo(invSlot)
 					local equippedScore = AutoGearDetermineItemScore(equippedInfo, AutoGearCurrentWeighting)
-					AutoGearPrint("AutoGear: "..(AutoGearBestItems[i].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[i].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-					AutoGearPrintItem(AutoGearBestItems[i].info)
+					AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+					AutoGearPrintItem(AutoGearBestItems[invSlot].info)
 					AutoGearPrintItem(equippedInfo)
 				end
 			end
@@ -2608,6 +2614,13 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.MetaSockets = 0
 	local class, spec = AutoGearGetClassAndSpec()
 	local weaponType = AutoGearGetWeaponType(info.link)
+	local itemEquipLoc = ""
+	local itemClassId = 0
+	if info.id then
+		itemEquipLoc = select(9, GetItemInfo(info.id))
+		itemClassId = select(12, GetItemInfo(info.id))
+	end
+
 	for i = 1, AutoGearTooltip:NumLines() do
 		local mytext = getglobal("AutoGearTooltipTextLeft"..i)
 		if (mytext) then
@@ -2708,35 +2721,65 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				end
 			end
 
-			if (text=="mount") then info.isMount = 1 end
-			if (text=="head") then info.Slot = "HeadSlot" info.SlotConst = INVSLOT_HEAD end
-			if (text=="neck") then info.Slot = "NeckSlot" info.SlotConst = INVSLOT_NECK end
-			if (text=="shoulder") then info.Slot = "ShoulderSlot" info.SlotConst = INVSLOT_SHOULDER end
-			if (text==L["back"]) then info.Slot = "BackSlot" info.SlotConst = INVSLOT_BACK end
-			if (text=="chest") then info.Slot = "ChestSlot" info.SlotConst = INVSLOT_CHEST end
-			if (text==L["shirt"]) then info.Slot = "ShirtSlot" info.SlotConst = INVSLOT_BODY end
-			if (text=="tabard") then info.Slot = "TabardSlot" info.SlotConst = INVSLOT_TABARD end
-			if (text==L["wrist"]) then info.Slot = "WristSlot" info.SlotConst = INVSLOT_WRIST end
-			if (text==L["hands"]) then info.Slot = "HandsSlot" info.SlotConst = INVSLOT_HAND end
-			if (text=="waist") then info.Slot = "WaistSlot" info.SlotConst = INVSLOT_WAIST end
-			if (text==L["legs"]) then info.Slot = "LegsSlot" info.SlotConst = INVSLOT_LEGS end
-			if (text==L["feet"]) then info.Slot = "FeetSlot" info.SlotConst = INVSLOT_FEET end
-			if (text=="finger") then info.Slot = "Finger0Slot" info.SlotConst = INVSLOT_FINGER1 end
-			if (text=="trinket") then info.Slot = "Trinket0Slot" info.SlotConst = INVSLOT_TRINKET1 end
-			if (text=="main hand") then
+			if (text == "mount") then
+				info.isMount = 1
+			end
+			if (itemEquipLoc == "INVTYPE_HEAD") then
+				info.Slot = "HeadSlot"
+				info.SlotConst = INVSLOT_HEAD
+			elseif (itemEquipLoc == "INVTYPE_NECK") then
+				info.Slot = "NeckSlot"
+				info.SlotConst = INVSLOT_NECK
+			elseif (itemEquipLoc == "INVTYPE_SHOULDER") then
+				info.Slot = "ShoulderSlot"
+				info.SlotConst = INVSLOT_SHOULDER
+			elseif (itemEquipLoc == "INVTYPE_CLOAK") then
+				info.Slot = "BackSlot"
+				info.SlotConst = INVSLOT_BACK
+			elseif (itemEquipLoc == "INVTYPE_CHEST") then
+				info.Slot = "ChestSlot"
+				info.SlotConst = INVSLOT_CHEST
+			elseif (itemEquipLoc == "INVTYPE_BODY") then
+				info.Slot = "ShirtSlot"
+				info.SlotConst = INVSLOT_BODY
+			elseif (itemEquipLoc == "INVTYPE_TABARD") then
+				info.Slot = "TabardSlot"
+				info.SlotConst = INVSLOT_TABARD
+			elseif (itemEquipLoc == "INVTYPE_WRIST") then
+				info.Slot = "WristSlot"
+				info.SlotConst = INVSLOT_WRIST
+			elseif (itemEquipLoc == "INVTYPE_HAND") then
+				info.Slot = "HandsSlot"
+				info.SlotConst = INVSLOT_HAND
+			elseif (itemEquipLoc == "INVTYPE_WAIST") then
+				info.Slot = "WaistSlot"
+				info.SlotConst = INVSLOT_WAIST
+			elseif (itemEquipLoc == "INVTYPE_LEGS") then
+				info.Slot = "LegsSlot"
+				info.SlotConst = INVSLOT_LEGS
+			elseif (itemEquipLoc == "INVTYPE_FEET") then
+				info.Slot = "FeetSlot"
+				info.SlotConst = INVSLOT_FEET
+			elseif (itemEquipLoc == "INVTYPE_FINGER") then
+				info.Slot = "Finger0Slot"
+				info.SlotConst = INVSLOT_FINGER1
+			elseif (itemEquipLoc == "INVTYPE_TRINKET") then
+				info.Slot = "Trinket0Slot"
+				info.SlotConst = INVSLOT_TRINKET1
+			elseif (itemEquipLoc == "INVTYPE_WEAPONMAINHAND") then
 				if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
 					reason = "(this spec needs a dagger main hand)"
 				elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
 					reason = "(this spec needs a dagger main hand)"
-				elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then --Alitwin: adding 2hdw
+				elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
 					cannotUse = 1
 					reason = "(this spec needs a two-hand weapon)"
 				end
-				info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
-			end
-			if (text==L["two-hand"]) then
+				info.Slot = "MainHandSlot"
+				info.SlotConst = INVSLOT_MAINHAND
+			elseif (itemEquipLoc == "INVTYPE_2HWEAPON") then
 				if (weapons == "weapon and shield") then
 					cannotUse = 1
 					reason = "(this spec needs weapon and shield)"
@@ -2747,22 +2790,27 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					cannotUse = 1
 					reason = "(this spec should use a ranged weapon)"
 				end
-				if (weapons == "2hDW") then	--Alitwin: adding 2hdw
-					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
-					info.Slot2 = "SecondaryHandSlot" info.Slot2Const = INVSLOT_OFFHAND
+				if (weapons == "2hDW") then
+					info.Slot = "MainHandSlot"
+					info.SlotConst = INVSLOT_MAINHAND
+					info.Slot2 = "SecondaryHandSlot"
+					info.Slot2Const = INVSLOT_OFFHAND
 				else
-					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND; info.IncludeOffHand=1
+					info.Slot = "MainHandSlot"
+					info.SlotConst = INVSLOT_MAINHAND;
+					info.IncludeOffHand = 1
 				end
-				info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND; info.IncludeOffHand=1
-			end
-			if (text=="held in off-hand") then
+				info.Slot = "MainHandSlot"
+				info.SlotConst = INVSLOT_MAINHAND;
+				info.IncludeOffHand = 1
+			elseif (itemEquipLoc == "INVTYPE_HOLDABLE") then
 				if (weapons == "2h" or (weapons == "dual wield" and CanDualWield()) or weapons == "weapon and shield" or weapons == "ranged") then
 					cannotUse = 1
 					reason = "(this spec needs the off-hand for a weapon or shield)"
 				end
-				info.Slot = "SecondaryHandSlot" info.SlotConst = INVSLOT_OFFHAND
-			end
-			if (text==L["off hand"]) then
+				info.Slot = "SecondaryHandSlot"
+				info.SlotConst = INVSLOT_OFFHAND
+			elseif (itemEquipLoc == "INVTYPE_WEAPONOFFHAND") then
 				if (weapons == "2h" or weapons == "ranged") then
 					cannotUse = 1
 					reason = "(this spec should use a two-hand weapon)"
@@ -2776,47 +2824,52 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					cannotUse = 1
 					reason = "(this spec should dual wield and not use a shield)"
 				end
-				info.Slot = "SecondaryHandSlot" info.SlotConst = INVSLOT_OFFHAND
-			end
-			if (text=="one-hand") then
-				if (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then --Alitwin: adding 2hdw
+
+				info.Slot = "SecondaryHandSlot"
+				info.SlotConst = INVSLOT_OFFHAND
+			elseif (itemEquipLoc == "INVTYPE_WEAPON") then
+				if (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
 					cannotUse = 1
 					reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
 				end
 				if (weapons == "dagger" and weaponType == LE_ITEM_WEAPON_DAGGER) then
-					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
-					info.Slot2 = "SecondaryHandSlot" info.Slot2Const = INVSLOT_OFFHAND
+					info.Slot = "MainHandSlot"
+					info.SlotConst = INVSLOT_MAINHAND
+					info.Slot2 = "SecondaryHandSlot"
+					info.Slot2Const = INVSLOT_OFFHAND
 				elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
 					reason = "(this spec needs a dagger in each hand)"
 				elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
-					info.Slot = "SecondaryHandSlot" info.SlotConst = INVSLOT_OFFHAND
+					info.Slot = "SecondaryHandSlot"
+					info.SlotConst = INVSLOT_OFFHAND
 				elseif (((weapons == "dual wield") and CanDualWield()) or weapons == "dagger and any") then
-					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
-					info.Slot2 = "SecondaryHandSlot" info.Slot2Const = INVSLOT_OFFHAND
+					info.Slot = "MainHandSlot"
+					info.SlotConst = INVSLOT_MAINHAND
+					info.Slot2 = "SecondaryHandSlot"
+					info.Slot2Const = INVSLOT_OFFHAND
 				elseif (weapons ~= LE_ITEM_WEAPON_DAGGER) then
-					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
+					info.Slot = "MainHandSlot"
+					info.SlotConst = INVSLOT_MAINHAND
 				end
 			end
-			if (IsClassic or IsTBC or IsWotLK) then
-				if (text=="wand" or
-					text=="gun" or
-					text=="ranged" or
-					text=="crossbow" or
-					text=="idol" or
-					text=="libram" or
-					text=="totem" or
-					text=="sigil" or
-					text=="relic") then
-					info.Slot = "RangedSlot" info.SlotConst = INVSLOT_RANGED
+
+			if (TOC_VERSION_CURRENT < TOC_VERSION_MOP) then
+				-- ranged slots exists until Mists of Pandaria expansion
+				if (itemEquipLoc == "INVTYPE_THROWN" or itemEquipLoc == "INVTYPE_RELIC"
+						or itemEquipLoc == "INVTYPE_RANGEDRIGHT"
+				) then
+					info.Slot = "RangedSlot"
+					info.SlotConst = INVSLOT_RANGED
 				end
 			else
-				if (text=="ranged") then
-					info.Slot = "MainHandSlot" info.SlotConst = INVSLOT_MAINHAND
+				if (itemEquipLoc == "INVTYPE_RANGED") then
 					if (weapons ~= "ranged" and weaponType ~= LE_ITEM_WEAPON_WAND) then
 						cannotUse = 1
 						reason = "(this class or spec should not use a ranged 2h weapon)"
 					end
+					info.Slot = "MainHandSlot"
+					info.SlotConst = INVSLOT_MAINHAND
 				end
 			end
 
@@ -2853,22 +2906,17 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	if (info.BlueSockets == 0) then info.BlueSockets = nil end
 	if (info.MetaSockets == 0) then info.MetaSockets = nil end
 
-	local classId = 0
-	if info.id then
-		classId = select(12, GetItemInfo(info.id))
-	end
-
 	if (info.Slot) then
 		info.shouldShowScoreInTooltip = 1
 	end
 	if (not cannotUse and (info.Slot or info.isMount)) then
 		info.Usable = 1
-	elseif classId == 15 then
+	elseif itemClassId == 15 then
 		cannotUse = 1
-		reason = "(classId = " .. classId .. ", it is not usable)"
+		reason = "(item's classId is " .. itemClassId .. ", it is not usable)"
 	elseif (not info.Slot) then
 		cannotUse = 1
-		reason = "(info.Slot was nil)"
+		reason = "(info.Slot was nil. itemEquipLoc = '".. tostring(itemEquipLoc) .."')"
 	end
 
 	--if (cannotUse) then AutoGearPrint("Cannot use "..(info.link or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
@@ -3277,9 +3325,9 @@ function AutoGearTooltipHook(tooltip)
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		tooltip:AddDoubleLine("AutoGear: info.Slot2Const:",
-		tostring(tooltipItemInfo.Slot2Const or "nil"),
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+			tostring(tooltipItemInfo.Slot2Const or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		-- tooltip:AddDoubleLine("AutoGear: AGDIS returns:",
 		-- tostring(AutoGearDetermineItemScore(tooltipItemInfo, AutoGearCurrentWeighting) or "nil"),
 		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
