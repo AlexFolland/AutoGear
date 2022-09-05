@@ -47,6 +47,15 @@ local _, T = ...;
 --- - SL: 90000
 --- - DF: 100000
 local TOC_VERSION_CURRENT = select(4, GetBuildInfo())
+local TOC_VERSION_TBC = 20000
+local TOC_VERSION_WOTLK = 30000
+local TOC_VERSION_CATA = 40000
+local TOC_VERSION_MOP = 50000
+local TOC_VERSION_WOD = 60000
+local TOC_VERSION_LEGION = 70000
+local TOC_VERSION_BFA = 80000
+local TOC_VERSION_SL = 90000
+local TOC_VERSION_DF = 100000
 
 local _ --prevent taint when using throwaway variable
 local reason
@@ -154,7 +163,7 @@ end
 
 ---Specializations appeared only in Mists Of Pandaria. We also have make changes to Cataclysm with prefered talent tree
 ---later
-if TOC_VERSION_CURRENT < 50000 then
+if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 	function AutoGearGetSpec()
 		-- GetSpecialization() doesn't exist on Classic or TBC or WotLK.
 		-- Instead, this finds the talent tree where the most points are allocated.
@@ -246,7 +255,7 @@ end)
 
 local E = 0.000001 --epsilon; non-zero value that's insignificantly different from 0, used here for the purpose of valuing gear that has higher stats that give the player "almost no benefit"
 -- regex for finding 0 in this block to replace with E: (?<=[^ ] = )0(?=[^\.0-9])
-if TOC_VERSION_CURRENT < 90000 then
+if TOC_VERSION_CURRENT < TOC_VERSION_SL then
 	AutoGearDefaultWeights = {
 		["DEATHKNIGHT"] = {
 			["None"] = {
@@ -1967,11 +1976,11 @@ function AutoGearSetAllowedVerbosity(allowedverbosity)
 	end
 end
 
-if TOC_VERSION_CURRENT >= 50000 then
+if TOC_VERSION_CURRENT >= TOC_VERSION_MOP then
 	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 end
 
-if TOC_VERSION_CURRENT >= 40000 then
+if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
 	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")
 end
@@ -2012,7 +2021,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			QuestDetailAcceptButton_OnClick()
 		elseif (event == "GOSSIP_SHOW") then
 			--active quests
-			if (TOC_VERSION_CURRENT > 90000) then
+			if (TOC_VERSION_CURRENT > TOC_VERSION_SL) then
 				for i = 1, C_GossipInfo.GetNumActiveQuests() do
 					local quest = C_GossipInfo.GetActiveQuests()[i]
 					if (quest["isComplete"]==true) then
@@ -2029,7 +2038,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if (TOC_VERSION_CURRENT > 90000) then
+			if (TOC_VERSION_CURRENT > TOC_VERSION_SL) then
 				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
 					local quest = C_GossipInfo.GetAvailableQuests()[i]
 					if (quest["isTrivial"]==false) then
@@ -2054,7 +2063,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if TOC_VERSION_CURRENT >= 90001 then
+			if TOC_VERSION_CURRENT >= TOC_VERSION_SL then
 				for i = 1, GetNumAvailableQuests() do
 					local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i)
 					if (not isTrivial) then
@@ -2173,7 +2182,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		if (AutoGearDB.AutoRepair == true) then
 			-- repair all gear
 			local cashString = AutoGearCashToString(GetRepairAllCost())
-			if TOC_VERSION_CURRENT > 20300 then
+			if TOC_VERSION_CURRENT > TOC_VERSION_TBC then
 				if (GetRepairAllCost() > 0) then
 					if (CanGuildBankRepair()) then
 						RepairAllItems(1) --guild repair
@@ -2699,15 +2708,15 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				(string.find(text, "nature spell damage") or string.find(text, "damage done by nature spells and effects")) and (spec=="Balance" or class=="DRUID" and spec=="None") or
 				(string.find(text, "healing") and isHealer) or
 				(string.find(text, "increases healing done") and isHealer)) then info.SpellPower = (info.SpellPower or 0) + value end
-			if TOC_VERSION_CURRENT < 30000 then
+			if TOC_VERSION_CURRENT < TOC_VERSION_WOTLK then
 				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike")) then info.SpellCrit = (info.SpellCrit or 0) + value end
 				if (string.find(text, "hit with spells by") or string.find(text, "spell hit rating by")) then info.SpellHit = (info.SpellHit or 0) + value end
 				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
 			end
-			if TOC_VERSION_CURRENT >= 30000 then
+			if TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK then
 				if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
 			end
-			if TOC_VERSION_CURRENT < 60000 then
+			if TOC_VERSION_CURRENT < TOC_VERSION_WOD then
 				if (string.find(text, "hit by") or string.find(text, "improves hit rating by") or string.find(text, "your hit rating by")) then info.Hit = (info.Hit or 0) + value end
 			else
 
@@ -2872,7 +2881,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				end
 			end
 
-			if (TOC_VERSION_CURRENT < 50000) then
+			if (TOC_VERSION_CURRENT < TOC_VERSION_MOP) then
 				-- ranged slots exists until Mists of Pandaria expansion
 				if (itemEquipLoc == "INVTYPE_THROWN" or itemEquipLoc == "INVTYPE_RELIC"
 						or itemEquipLoc == "INVTYPE_RANGEDRIGHT"
