@@ -165,7 +165,7 @@ end
 ---later
 if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 	function AutoGearGetSpec()
-		-- GetSpecialization() doesn't exist on Classic or TBC or WotLK.
+		-- GetSpecialization() doesn't exist until MoP
 		-- Instead, this finds the talent tree where the most points are allocated.
 		local highestSpec = nil
 		local highestPointsSpent = nil
