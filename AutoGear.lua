@@ -27,17 +27,35 @@
 ---@type AutoGearAddon
 local _, T = ...;
 
---check whether it's WoW Classic, TBC, BFA, or Shadowlands for automatic compatibility
-local IsClassic = GetNumExpansions() == 1
-local IsTBC = GetNumExpansions() == 2
-local IsBFA = GetNumExpansions() == 8
-local IsWotLK = GetNumExpansions() == 3
-local IsSL = GetNumExpansions() == 9
-
----Mists of Pandaria TOC version number
-local TOC_VERSION_MOP = 50000
 ---Current TOC version
+---you should know how this versions works to compare.
+---Example WoW Version to TOC Version:
+--- - v1.2.0 -> 10200
+--- - v3.4.3 -> 30403
+--- - v9.7.2 -> 90702
+--- - v10.0.1 -> 100001
+---
+---Start numbers for every expansion:
+--- - Vanilla: 10000
+--- - TBC: 20000
+--- - WotLK: 30000
+--- - Cata: 40000
+--- - MoP: 50000
+--- - WoD: 60000
+--- - Legion: 70000
+--- - BfA: 80000
+--- - SL: 90000
+--- - DF: 100000
 local TOC_VERSION_CURRENT = select(4, GetBuildInfo())
+local TOC_VERSION_TBC = 20000
+local TOC_VERSION_WOTLK = 30000
+local TOC_VERSION_CATA = 40000
+local TOC_VERSION_MOP = 50000
+local TOC_VERSION_WOD = 60000
+local TOC_VERSION_LEGION = 70000
+local TOC_VERSION_BFA = 80000
+local TOC_VERSION_SL = 90000
+local TOC_VERSION_DF = 100000
 
 local _ --prevent taint when using throwaway variable
 local reason
@@ -143,10 +161,11 @@ function AutoGearInitializeDB(defaults, reset)
 	end
 end
 
--- We run the IsClassic and IsTBC check before function definition to prevent poorer performance
-if (IsClassic or IsTBC or IsWotLK) then
+---Specializations appeared only in Mists Of Pandaria. We also have make changes to Cataclysm with prefered talent tree
+---later
+if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 	function AutoGearGetSpec()
-		-- GetSpecialization() doesn't exist on Classic or TBC.
+		-- GetSpecialization() doesn't exist until MoP
 		-- Instead, this finds the talent tree where the most points are allocated.
 		local highestSpec = nil
 		local highestPointsSpent = nil
@@ -236,7 +255,7 @@ end)
 
 local E = 0.000001 --epsilon; non-zero value that's insignificantly different from 0, used here for the purpose of valuing gear that has higher stats that give the player "almost no benefit"
 -- regex for finding 0 in this block to replace with E: (?<=[^ ] = )0(?=[^\.0-9])
-if (IsClassic or IsTBC or IsWotLK) then
+if TOC_VERSION_CURRENT < TOC_VERSION_SL then
 	AutoGearDefaultWeights = {
 		["DEATHKNIGHT"] = {
 			["None"] = {
@@ -1957,12 +1976,15 @@ function AutoGearSetAllowedVerbosity(allowedverbosity)
 	end
 end
 
-if not (IsClassic or IsTBC or IsWotLK) then
-	--These are events that don't exist in WoW Classic or TBC
+if TOC_VERSION_CURRENT >= TOC_VERSION_MOP then
 	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
-	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")          --This event is not yet documented
 end
+
+if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
+	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
+	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")
+end
+
 AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
 AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
@@ -1999,7 +2021,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			QuestDetailAcceptButton_OnClick()
 		elseif (event == "GOSSIP_SHOW") then
 			--active quests
-			if (IsSL) then
+			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL) then
 				for i = 1, C_GossipInfo.GetNumActiveQuests() do
 					local quest = C_GossipInfo.GetActiveQuests()[i]
 					if (quest["isComplete"]==true) then
@@ -2016,7 +2038,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if (IsSL) then
+			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL) then
 				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
 					local quest = C_GossipInfo.GetAvailableQuests()[i]
 					if (quest["isTrivial"]==false) then
@@ -2041,7 +2063,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if not (IsClassic or IsTBC or IsWotLK) then
+			if TOC_VERSION_CURRENT >= TOC_VERSION_SL then
 				for i = 1, GetNumAvailableQuests() do
 					local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i)
 					if (not isTrivial) then
@@ -2160,7 +2182,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		if (AutoGearDB.AutoRepair == true) then
 			-- repair all gear
 			local cashString = AutoGearCashToString(GetRepairAllCost())
-			if not (IsClassic or IsTBC or IsWotLK) then
+			if TOC_VERSION_CURRENT >= TOC_VERSION_TBC then
 				if (GetRepairAllCost() > 0) then
 					if (CanGuildBankRepair()) then
 						RepairAllItems(1) --guild repair
@@ -2686,13 +2708,18 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				(string.find(text, "nature spell damage") or string.find(text, "damage done by nature spells and effects")) and (spec=="Balance" or class=="DRUID" and spec=="None") or
 				(string.find(text, "healing") and isHealer) or
 				(string.find(text, "increases healing done") and isHealer)) then info.SpellPower = (info.SpellPower or 0) + value end
-			if (IsClassic or IsTBC or IsWotLK) then
+			if TOC_VERSION_CURRENT < TOC_VERSION_WOTLK then
 				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike")) then info.SpellCrit = (info.SpellCrit or 0) + value end
-				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
 				if (string.find(text, "hit with spells by") or string.find(text, "spell hit rating by")) then info.SpellHit = (info.SpellHit or 0) + value end
+				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
+			end
+			if TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK then
+				if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
+			end
+			if TOC_VERSION_CURRENT < TOC_VERSION_WOD then
 				if (string.find(text, "hit by") or string.find(text, "improves hit rating by") or string.find(text, "your hit rating by")) then info.Hit = (info.Hit or 0) + value end
 			else
-				if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
+
 			end
 			if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
 			if (string.find(text, "mana per 5") or string.find(text, "mana every 5")) then info.Mp5 = (info.Mp5 or 0) + value end
