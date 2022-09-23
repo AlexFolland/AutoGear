@@ -1427,24 +1427,25 @@ function AutoGearGetOverrideSpecs()
 end
 
 function AutoGearGetClassAndSpec()
-	local class, spec
+	local localizedClass, class, spec
 	if (AutoGearDB.Override and AutoGearDB.OverrideSpec) then
 		class, spec = string.match(AutoGearDB.OverrideSpec,"(.+): ?(.+)")
-		class = string.upper(string.gsub(class, "%s+", ""))
+		localizedClass = string.gsub(class, "%s+", "")
+		class = string.upper(localizedClass)
 	end
 	if ((class == nil) or (spec == nil)) then
-		_, class = UnitClass("player")
+		localizedClass, class = UnitClass("player")
 		spec = AutoGearGetSpec()
 	end
-	return class, spec
+	return localizedClass, class, spec
 end
 
 function AutoGearSetStatWeights()
 	AutoGearItemInfoCache = {}
-	local class, spec = AutoGearGetClassAndSpec()
+	local localizedClass, class, spec = AutoGearGetClassAndSpec()
 	AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec] or nil
 	weapons = AutoGearCurrentWeighting.weapons or "any"
-	--AutoGearPrint("AutoGear: Stat weights set for \""..class..": "..spec.."\". Weapons: "..weapons, 3)
+	--AutoGearPrint("AutoGear: Stat weights set for \""..localizedClass..": "..spec.."\". Weapons: "..weapons, 3)
 end
 
 local function newCheckbox(dbname, label, description, onClick, optionsMenu)
@@ -2113,7 +2114,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		--make sure this doesn't happen as part of logon
 		if (dataAvailable ~= nil) then
 			--AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
-			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for this spec.", 2)
+			local localizedClass, class, spec = AutoGearGetClassAndSpec()
+			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..spec.." "..localizedClass..".", 2)
 			AutoGearItemInfoCache = {}
 			AutoGearConsiderAllItems()
 		end
@@ -2292,7 +2294,7 @@ end
 
 function AutoGearConsiderAllItems(lootRollItemID, lootRollID, questRewardID, arbitraryItemInfo, noActions)
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
-	local class, spec = AutoGearGetClassAndSpec()
+	local localizedClass, class, spec = AutoGearGetClassAndSpec()
 	local anythingBetter = nil
 	local info, score, i, bag, slot
 
@@ -2634,7 +2636,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.YellowSockets = 0
 	info.BlueSockets = 0
 	info.MetaSockets = 0
-	local class, spec = AutoGearGetClassAndSpec()
+	local localizedClass, class, spec = AutoGearGetClassAndSpec()
 	local weaponType = AutoGearGetWeaponType(info.link)
 	local itemEquipLoc = ""
 	local itemClassId = 0
@@ -2796,26 +2798,33 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			elseif (itemEquipLoc == "INVTYPE_WEAPONMAINHAND") then
 				if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
-					reason = "(this spec needs a dagger main hand)"
+					reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
 				elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
-					reason = "(this spec needs a dagger main hand)"
+					reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
 				elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
 					cannotUse = 1
-					reason = "(this spec needs a two-hand weapon)"
+					reason = "("..spec.." "..localizedClass.." needs a two-hand weapon)"
 				end
 				info.Slot = "MainHandSlot"
 				info.SlotConst = INVSLOT_MAINHAND
+			elseif (itemEquipLoc == "INVTYPE_SHIELD") then
+				if (weapons ~= "weapon and shield") then
+					cannotUse = 1
+					reason = "("..spec.." "..localizedClass.." should not use a shield)"
+				end
+				info.Slot = "SecondaryHandSlot"
+				info.SlotConst = INVSLOT_OFFHAND
 			elseif (itemEquipLoc == "INVTYPE_2HWEAPON") then
 				if (weapons == "weapon and shield") then
 					cannotUse = 1
-					reason = "(this spec needs weapon and shield)"
+					reason = "("..spec.." "..localizedClass.." needs weapon and shield)"
 				elseif (weapons == "dual wield" and CanDualWield()) then
 					cannotUse = 1
-					reason = "(this spec should dual wield)"
+					reason = "("..spec.." "..localizedClass.." should dual wield)"
 				elseif (weapons == "ranged") then
 					cannotUse = 1
-					reason = "(this spec should use a ranged weapon)"
+					reason = "("..spec.." "..localizedClass.." should use a ranged weapon)"
 				end
 				if (weapons == "2hDW") then
 					info.Slot = "MainHandSlot"
@@ -2833,31 +2842,30 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			elseif (itemEquipLoc == "INVTYPE_HOLDABLE") then
 				if (weapons == "2h" or (weapons == "dual wield" and CanDualWield()) or weapons == "weapon and shield" or weapons == "ranged") then
 					cannotUse = 1
-					reason = "(this spec needs the off-hand for a weapon or shield)"
+					reason = "("..spec.." "..localizedClass.." needs the off-hand for a weapon or shield)"
 				end
 				info.Slot = "SecondaryHandSlot"
 				info.SlotConst = INVSLOT_OFFHAND
 			elseif (itemEquipLoc == "INVTYPE_WEAPONOFFHAND") then
 				if (weapons == "2h" or weapons == "ranged") then
 					cannotUse = 1
-					reason = "(this spec should use a two-hand weapon)"
+					reason = "("..spec.." "..localizedClass.." should use a two-hand weapon)"
 				elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
-					reason = "(this spec needs a dagger in the off-hand)"
+					reason = "("..spec.." "..localizedClass.." needs a dagger in the off-hand)"
 				elseif (weapons == "weapon and shield" and weaponType ~= LE_ITEM_ARMOR_SHIELD) then
 					cannotUse = 1
-					reason = "(this spec needs a shield in the off-hand)"
+					reason = "("..spec.." "..localizedClass.." needs a shield in the off-hand)"
 				elseif (weapons == "dual wield" and CanDualWield() and weaponType == LE_ITEM_ARMOR_SHIELD) then
 					cannotUse = 1
-					reason = "(this spec should dual wield and not use a shield)"
+					reason = "("..spec.." "..localizedClass.." should dual wield and not use a shield)"
 				end
-
 				info.Slot = "SecondaryHandSlot"
 				info.SlotConst = INVSLOT_OFFHAND
 			elseif (itemEquipLoc == "INVTYPE_WEAPON") then
 				if (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
 					cannotUse = 1
-					reason = "(this spec should use a two-handed weapon or dual wield two-handers)"
+					reason = "("..spec.." "..localizedClass.." should use a two-handed weapon or dual wield two-handers)"
 				end
 				if (weapons == "dagger" and weaponType == LE_ITEM_WEAPON_DAGGER) then
 					info.Slot = "MainHandSlot"
@@ -2866,7 +2874,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					info.Slot2Const = INVSLOT_OFFHAND
 				elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					cannotUse = 1
-					reason = "(this spec needs a dagger in each hand)"
+					reason = "("..spec.." "..localizedClass.." needs a dagger in each hand)"
 				elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
 					info.Slot = "SecondaryHandSlot"
 					info.SlotConst = INVSLOT_OFFHAND
@@ -2981,7 +2989,7 @@ function AutoGearGetPawnScaleName()
 	local realClass, _, ClassID = UnitClass("player")
 
 	local realSpec = AutoGearGetSpec()
-	local overrideClass, overrideSpec = AutoGearGetClassAndSpec()
+	local localizedOverrideClass, overrideClass, overrideSpec = AutoGearGetClassAndSpec()
 
 	-- Try to find the selected Pawn scale
 	if AutoGearDB.OverridePawnScale and AutoGearDB.PawnScale then
@@ -3373,6 +3381,11 @@ function AutoGearTooltipHook(tooltip)
 		-- tostring(AutoGearIsItemTwoHanded(tooltipItemInfo.id)),
 		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+		tooltip:AddDoubleLine("AutoGear: weapon type:",
+			tostring(AutoGearGetWeaponType(tooltipItemInfo.link)),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
 	end
 end
 GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
