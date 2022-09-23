@@ -360,7 +360,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_SL then
 			},
 			["Feral"] = {
 				Strength = 0.3, Agility = 1.05, Stamina = 1, Intellect = 0.1, Spirit = 0.2,
-				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0.05,
+				Armor = 0.08, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0.05,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.3, SpellHit = 0,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -370,7 +370,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_SL then
 			},
 			["Feral Combat"] = { -- Classic spec name
 				Strength = 0.3, Agility = 1.05, Stamina = 1, Intellect = 0.1, Spirit = 0.2,
-				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0.05,
+				Armor = 0.08, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0.05,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.3, SpellHit = 0,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -380,7 +380,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_SL then
 			},
 			["Guardian"] = {
 				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 1.33,
+				Armor = 0.08, Dodge = 0.4, Parry = 0, Block = 0, Defense = 1.33,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
 				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.3, SpellHit = 0,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
@@ -3410,7 +3410,7 @@ function AutoGearTooltipHook(tooltip)
 		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		tooltip:AddDoubleLine("AutoGear: weapon type:",
-			tostring(AutoGearGetWeaponType(tooltipItemInfo.link)),
+			tostring(AutoGearGetWeaponType(tooltipItemInfo.link) or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
