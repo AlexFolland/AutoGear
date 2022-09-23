@@ -414,7 +414,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_SL then
 				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
 				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.4, SpellCrit = 0, Hit = 0.9, SpellHit = 0,
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 2, SpellCrit = 0, Hit = 1.4, SpellHit = 0,
 				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
@@ -458,7 +458,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_SL then
 				SpellPower = 1.1, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
 				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.3, Hit = 0, SpellHit = 1.25,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				RedSockets = 10, YellowSockets = 8, BlueSockets = 7, MetaSockets = 20,
 				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
 				DPS = 0.01
 			},
@@ -2251,6 +2251,8 @@ function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 			if (wouldNeed and not canNeed) then
 				AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for "..rollItemInfo.link..".", 1)
 			end
+			local score = AutoGearDetermineItemScore(rollItemInfo)
+			AutoGearPrint("AutoGear: GREED for "..rollItemInfo.link.." with score "..score.." and info:\n"..AutoGearDump(rollItemInfo), 3)
 		end
 		if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: "..rollItemInfo.link.." cannot be worn.  "..reason, 1) end
 		if (roll) then
@@ -2713,7 +2715,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if (string.find(text, L["spirit"])) then info.Spirit = (info.Spirit or 0) + value end
 			if (string.find(text, L["armor"]) and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
 			if (string.find(text, "attack power")) and not string.find(text, "when fighting") and (not string.find(text, "forms only") or class=="DRUID") then info.AttackPower = (info.AttackPower or 0) + value end
-			if (string.find(text, "spell power") or
+			if ((string.find(text, "spell power") or string.find(text, "spell damage")) or
 				string.find(text, "damage and healing") or
 				(string.find(text, "frost spell damage") or string.find(text, "damage done by frost spells and effects")) and (spec=="Frost" or class=="MAGE" and spec=="None") or
 				(string.find(text, "fire spell damage") or string.find(text, "damage done by fire spells and effects")) and (spec=="Fire" or class=="MAGE" and spec=="None") or
@@ -2723,7 +2725,8 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				(string.find(text, "healing") and isHealer) or
 				(string.find(text, "increases healing done") and isHealer)) then info.SpellPower = (info.SpellPower or 0) + value end
 			if TOC_VERSION_CURRENT < TOC_VERSION_WOTLK then
-				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike")) then info.SpellCrit = (info.SpellCrit or 0) + value end
+				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike") or string.find(text, "spell critical rating")) then info.SpellCrit = (info.SpellCrit or 0) + value end
+				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
 				if (string.find(text, "hit with spells by") or string.find(text, "spell hit rating by")) then info.SpellHit = (info.SpellHit or 0) + value end
 				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
 			end
@@ -3299,6 +3302,19 @@ function AutoGearRecursivePrint(s, l, i) -- recursive Print (structure, limit, i
 	return l
 end
 
+function AutoGearDump(o)
+    if type(o) == 'table' then
+        local s = '{ '
+        for k,v in pairs(o) do
+                if type(k) ~= 'number' then k = '"'..k..'"' end
+                s = s .. '['..k..'] = ' .. AutoGearDump(v) .. ','
+        end
+        return s .. '} '
+    else
+        return tostring(o)
+    end
+end
+
 function AutoGearTooltipHook(tooltip)
 	if (not AutoGearDB.ScoreInTooltips) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
@@ -3446,15 +3462,15 @@ function AutoGearMain()
 					table.remove(futureAction, i)
 				end
 			elseif (curAction.action == "simulateroll" and curAction.tooltip) then
-				AutoGearWouldRoll = (curAction.rollType == 1 and GREEN_FONT_COLOR_CODE .. "NEED" or (curAction.rollType == 2 and RED_FONT_COLOR_CODE .. "GREED" or HIGHLIGHT_FONT_COLOR_CODE .. "no roll")) .. FONT_COLOR_CODE_CLOSE
-				--removed because of spam in item's tooltip.
-				--
-				--curAction.tooltip:AddDoubleLine("AutoGear: Would roll:",
-				--	AutoGearWouldRoll,
-				--	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-				--	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-				--curAction.tooltip:Show()
-				table.remove(futureAction, i)
+				if (GetTime() > curAction.t) then
+					AutoGearWouldRoll = (curAction.rollType == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (curAction.rollType == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll"))..FONT_COLOR_CODE_CLOSE
+					curAction.tooltip:AddDoubleLine("AutoGear: Would roll:",
+					AutoGearWouldRoll,
+					HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+					HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+					curAction.tooltip:Show()
+					table.remove(futureAction, i)
+				end
 			elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
 				if (GetTime() > curAction.t) then
 					if ((AutoGearDB.Enabled ~= nil) and (AutoGearDB.Enabled == true)) then
