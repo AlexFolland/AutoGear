@@ -226,6 +226,7 @@ AutoGearDBDefaults = {
 	AutoConfirmBindingBlues = false,
 	AutoConfirmBindingEpics = false,
 	AutoAcceptQuests = true,
+	AutoCompleteItemQuests = true,
 	AutoAcceptPartyInvitations = true,
 	ScoreInTooltips = true,
 	ReasonsInTooltips = false,
@@ -1710,10 +1711,20 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliCommands"] = { "quest", "quests" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Automatically handle quests",
-				["description"] = "Automatically accept and complete quests, including choosing the best upgrade for your current spec.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  If this is disabled, AutoGear will not interact with quest-givers in any way, but you can still view the total AutoGear score in item tooltips.",
-				["toggleDescriptionTrue"] = "Automatic quest handling is now enabled.",
-				["toggleDescriptionFalse"] = "Automatic quest handling is now disabled."
+				["label"] = "Automatically accept all quests and complete quests which do not award items",
+				["description"] = "Automatically accept all quests and complete quests which do not award items.  If this is disabled, AutoGear will not accept any quests and will only be able to complete quests which award items.",
+				["toggleDescriptionTrue"] = "Automatically accepting all quests and completing quests which do not award items is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically accepting all quests and completing quests which do not award items is now disabled."
+			},
+			{
+				["option"] = "AutoCompleteItemQuests",
+				["cliCommands"] = { "completeitemquests", "questitems", "questloot", "questgear" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically complete quests which award items",
+				["description"] = "Automatically evaluate quest item rewards and choose the best upgrade for your current spec, turning in the quest.  If no upgrade is found, AutoGear will choose the most valuable reward in vendor gold.  If this is disabled, AutoGear can still interact with quests, but will not complete quests which present item rewards to choose, and you can still view the total AutoGear score in item tooltips.",
+				["toggleDescriptionTrue"] = "Automatically completing quests which award items is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically completing quests which award items is now disabled."
 			},
 			{
 				["option"] = "AutoAcceptPartyInvitations",
@@ -2080,22 +2091,23 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			if (IsQuestCompletable()) then
 				CompleteQuest()
 			end
-		elseif (event == "QUEST_COMPLETE") then
-			local rewards = GetNumQuestChoices()
-			if (not rewards or rewards == 0) then
-				GetQuestReward()
-			else
-				--choose a quest reward
-				questRewardID = {}
-				for i = 1, rewards do
-					local itemLink = GetQuestItemLink("choice", i)
-					if (not itemLink) then AutoGearPrint("AutoGear: No item link received from the server.", 0) end
-					local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-					questRewardID[i] = id
-				end
-				local choice = AutoGearConsiderAllItems(nil, nil, questRewardID)
-				GetQuestReward(choice)
+		end
+	end
+	if (event == "QUEST_COMPLETE") then
+		local rewards = GetNumQuestChoices()
+		if ((not rewards or rewards == 0) and AutoGearDB.AutoAcceptQuests) then
+			GetQuestReward()
+		elseif (AutoGearDB.AutoCompleteItemQuests) then
+			--choose a quest reward
+			questRewardID = {}
+			for i = 1, rewards do
+				local itemLink = GetQuestItemLink("choice", i)
+				if (not itemLink) then AutoGearPrint("AutoGear: No item link received from the server.", 0) end
+				local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+				questRewardID[i] = id
 			end
+			local choice = AutoGearConsiderAllItems(nil, nil, questRewardID)
+			GetQuestReward(choice)
 		end
 	end
 
