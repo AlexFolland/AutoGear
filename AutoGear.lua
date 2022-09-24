@@ -2783,6 +2783,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			elseif (itemEquipLoc == "INVTYPE_CHEST") then
 				info.Slot = "ChestSlot"
 				info.SlotConst = INVSLOT_CHEST
+			elseif (itemEquipLoc == "INVTYPE_ROBE") then
+				info.Slot = "ChestSlot"
+				info.SlotConst = INVSLOT_CHEST
 			elseif (itemEquipLoc == "INVTYPE_BODY") then
 				info.Slot = "ShirtSlot"
 				info.SlotConst = INVSLOT_BODY
