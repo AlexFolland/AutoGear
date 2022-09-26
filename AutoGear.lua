@@ -1943,6 +1943,8 @@ SlashCmdList["AutoGear"] = function(msg)
 			AutoGearPrint("AutoGear: Pawn is either not installed or not ready yet.",0)
 		end
 	elseif (param1 == "") then
+		-- This needs to be called twice to work properly; seems like a Blizzard bug.
+		InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 		InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 	else
 		shouldPrintHelp = true
@@ -2161,12 +2163,14 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				table.insert(futureAction, newAction)
 			end
 		end
-	elseif (event == "EQUIP_BIND_CONFIRM") or (event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
-		local rarity = select(3,GetItemInfo(curLink))
+	elseif (event == "EQUIP_BIND_CONFIRM") or
+	(event == "EQUIP_BIND_REFUNDABLE_CONFIRM") or
+	(event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
+		local rarity = C_Item.GetItemQualityByID(curLink)
 		if rarity == nil then return end
-		if ((rarity ~= 3) and (rarity ~= 4) and (AutoGearDB.AutoConfirmBinding == true))
-		or ((rarity == 3) and (AutoGearDB.AutoConfirmBindingBlues == true))
-		or ((rarity == 4) and (AutoGearDB.AutoConfirmBindingEpics == true)) then
+		if ((rarity ~= 3) and (rarity ~= 4) and (AutoGearDB.AutoConfirmBinding == true)) or
+		((rarity == 3) and (AutoGearDB.AutoConfirmBindingBlues == true)) or
+		((rarity == 4) and (AutoGearDB.AutoConfirmBindingEpics == true)) then
 			EquipPendingItem(arg1)
 		end
 	elseif (event == "MERCHANT_SHOW") then
@@ -3378,42 +3382,64 @@ function AutoGearTooltipHook(tooltip)
 	end
 	if (AutoGearDB.DebugInfoInTooltips == true) then
 		AutoGearHandleLootRoll(tooltipItemInfo.link,1,1,tooltip)
-		tooltip:AddDoubleLine("AutoGear: Item ID:",
-		tostring(tooltipItemInfo.id),
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-		tooltip:AddDoubleLine("AutoGear: itemEquipLoc:",
-		select(4,GetItemInfoInstant(tooltipItemInfo.id)),
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-		tooltip:AddDoubleLine("AutoGear: info.SlotConst:",
-		tostring(tooltipItemInfo.SlotConst or "nil"),
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+		tooltip:AddDoubleLine(
+			"AutoGear: item ID:",
+			tostring(tooltipItemInfo.id),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		tooltip:AddDoubleLine(
+			"AutoGear: itemEquipLoc:",
+			select(4,GetItemInfoInstant(tooltipItemInfo.id)),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		tooltip:AddDoubleLine(
+			"AutoGear: info.SlotConst:",
+			tostring(tooltipItemInfo.SlotConst or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
 		tooltip:AddDoubleLine("AutoGear: info.Slot2Const:",
 			tostring(tooltipItemInfo.Slot2Const or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-		-- tooltip:AddDoubleLine("AutoGear: AGDIS returns:",
-		-- tostring(AutoGearDetermineItemScore(tooltipItemInfo, AutoGearCurrentWeighting) or "nil"),
-		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-		tooltip:AddDoubleLine("AutoGear: Pawn scale name:",
-		tostring(AutoGearGetPawnScaleName() or "nil"),
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-		-- tooltip:AddDoubleLine("AutoGear: Pawn value:",
-		-- tostring(PawnGetSingleValueFromItem(PawnGetItemData(tooltipItemInfo.link),AutoGearGetPawnScaleName()) or "nil"),
-		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		-- tooltip:AddDoubleLine(
+		-- 	"AutoGear: AGDIS returns:",
+		-- 	tostring(AutoGearDetermineItemScore(tooltipItemInfo, AutoGearCurrentWeighting) or "nil"),
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		-- )
+		tooltip:AddDoubleLine(
+			"AutoGear: Pawn scale name:",
+			tostring(AutoGearGetPawnScaleName() or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		-- tooltip:AddDoubleLine(
+		-- 	"AutoGear: Pawn value:",
+		-- 	tostring(PawnGetSingleValueFromItem(PawnGetItemData(tooltipItemInfo.link),AutoGearGetPawnScaleName()) or "nil"),
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		-- )
 		-- AutoGearPrint("tooltip item: "..tooltipItemInfo.link, 1)
 		-- AutoGearRecursivePrint(PawnGetItemData(tooltipItemInfo.link))
-		-- tooltip:AddDoubleLine("AutoGear: 2-handed?:",
-		-- tostring(AutoGearIsItemTwoHanded(tooltipItemInfo.id)),
-		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		-- HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-		tooltip:AddDoubleLine("AutoGear: weapon type:",
+		-- tooltip:AddDoubleLine(
+		-- 	"AutoGear: 2-handed?:",
+		-- 	tostring(AutoGearIsItemTwoHanded(tooltipItemInfo.id)),
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		-- )
+		tooltip:AddDoubleLine(
+			"AutoGear: weapon type:",
 			tostring(AutoGearGetWeaponType(tooltipItemInfo.link) or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		tooltip:AddDoubleLine(
+			"AutoGear: rarity:",
+			tostring(C_Item.GetItemQualityByID(tooltipItemInfo.link) or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
