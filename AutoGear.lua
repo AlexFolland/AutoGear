@@ -256,7 +256,7 @@ end)
 
 local E = 0.000001 --epsilon; non-zero value that's insignificantly different from 0, used here for the purpose of valuing gear that has higher stats that give the player "almost no benefit"
 -- regex for finding 0 in this block to replace with E: (?<=[^ ] = )0(?=[^\.0-9])
-if TOC_VERSION_CURRENT < TOC_VERSION_SL then
+if TOC_VERSION_CURRENT < TOC_VERSION_CATA then
 	AutoGearDefaultWeights = {
 		["DEATHKNIGHT"] = {
 			["None"] = {
@@ -392,7 +392,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_SL then
 				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.6, Spirit = 1.0,
 				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
 				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 3,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.1, Hit = 0, SpellHit = 0,
+				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.5, Hit = 0, SpellHit = 0,
 				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
 				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
 				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
@@ -1445,6 +1445,9 @@ function AutoGearSetStatWeights()
 	AutoGearItemInfoCache = {}
 	local localizedClass, class, spec = AutoGearGetClassAndSpec()
 	AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec] or nil
+	if TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK then
+		AutoGearCurrentWeighting.Crit = math.max(AutoGearCurrentWeighting.Crit or 0, AutoGearCurrentWeighting.SpellCrit or 0)
+	end
 	weapons = AutoGearCurrentWeighting.weapons or "any"
 	--AutoGearPrint("AutoGear: Stat weights set for \""..localizedClass..": "..spec.."\". Weapons: "..weapons, 3)
 end
@@ -2727,20 +2730,18 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				(string.find(text, "shadow spell damage") or string.find(text, "damage done by shadow spells and effects")) and (class=="WARLOCK") or
 				(string.find(text, "nature spell damage") or string.find(text, "damage done by nature spells and effects")) and (spec=="Balance" or class=="DRUID" and spec=="None") or
 				(string.find(text, "healing") and isHealer) or
-				(string.find(text, "increases healing done") and isHealer)) then info.SpellPower = (info.SpellPower or 0) + value end
+				(string.find(text, "increases healing done") and isHealer)) then info.SpellPower = (info.SpellPower or 0) + value
+			end
 			if TOC_VERSION_CURRENT < TOC_VERSION_WOTLK then
 				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike") or string.find(text, "spell critical rating")) then info.SpellCrit = (info.SpellCrit or 0) + value end
 				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
 				if (string.find(text, "hit with spells by") or string.find(text, "spell hit rating by")) then info.SpellHit = (info.SpellHit or 0) + value end
 				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
-			end
-			if TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK then
+			else
 				if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
 			end
 			if TOC_VERSION_CURRENT < TOC_VERSION_WOD then
 				if (string.find(text, "hit by") or string.find(text, "improves hit rating by") or string.find(text, "your hit rating by")) then info.Hit = (info.Hit or 0) + value end
-			else
-
 			end
 			if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
 			if (string.find(text, "mana per 5") or string.find(text, "mana every 5")) then info.Mp5 = (info.Mp5 or 0) + value end
