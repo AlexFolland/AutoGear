@@ -3494,10 +3494,12 @@ function AutoGearMain()
 			elseif (curAction.action == "simulateroll" and curAction.tooltip) then
 				if (GetTime() > curAction.t) then
 					AutoGearWouldRoll = (curAction.rollType == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (curAction.rollType == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll"))..FONT_COLOR_CODE_CLOSE
-					curAction.tooltip:AddDoubleLine("AutoGear: Would roll:",
-					AutoGearWouldRoll,
-					HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-					HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+					curAction.tooltip:AddDoubleLine(
+						"AutoGear: Would roll:",
+						AutoGearWouldRoll,
+						HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+						HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+					)
 					curAction.tooltip:Show()
 					table.remove(futureAction, i)
 				end
