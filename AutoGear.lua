@@ -187,11 +187,20 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		-- If they're feral, determine if they're a tank and call it Guardian.
 		if (highestSpec == "Feral" or highestSpec == "Feral Combat") then
 			local tankiness = 0
-			tankiness = tankiness + select(5, GetTalentInfo(2, 3)) * 1.0 --Feral Instinct
-			tankiness = tankiness + select(5, GetTalentInfo(2, 7)) * 5 --Feral Charge
-			tankiness = tankiness + select(5, GetTalentInfo(2, 5)) * 0.5 --Thick Hide
-			tankiness = tankiness + select(5, GetTalentInfo(2, 9)) * -100 --Improved Shred
-			tankiness = tankiness + select(5, GetTalentInfo(2, 12)) * 100 --Primal Fury
+			if TOC_VERSION_CURRENT < TOC_VERSION_WOTLK then
+				tankiness = tankiness + select(5, GetTalentInfo(2, 3)) * 1.0 --Feral Instinct
+				tankiness = tankiness + select(5, GetTalentInfo(2, 7)) * 5 --Feral Charge
+				tankiness = tankiness + select(5, GetTalentInfo(2, 5)) * 0.5 --Thick Hide
+				tankiness = tankiness + select(5, GetTalentInfo(2, 9)) * -100 --Improved Shred
+				tankiness = tankiness + select(5, GetTalentInfo(2, 12)) * 100 --Primal Fury
+			else
+				tankiness = tankiness + select(5, GetTalentInfo(2, 15)) * 3 --Survival Instincts
+				tankiness = tankiness + select(5, GetTalentInfo(2, 10)) * 1 --Feral Charge
+				tankiness = tankiness + select(5, GetTalentInfo(2, 22)) * 1 --Primal Precision
+				tankiness = tankiness + select(5, GetTalentInfo(2, 1)) * 1 --Thick Hide
+				tankiness = tankiness + select(5, GetTalentInfo(2, 19)) * -100 --Predatory Instincts
+				tankiness = tankiness + select(5, GetTalentInfo(2, 28)) * 100 --Protector of the Pack
+			end
 			if (tankiness >= 5) then return "Guardian" end
 		end
 
