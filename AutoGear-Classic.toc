@@ -3,6 +3,7 @@
 ## Notes: Automatically chooses loot and equips gear
 ## OptionalDeps: Pawn
 
+TaintLess.xml
 localization.core.lua
 localization.ru.lua
 AutoGear.lua
