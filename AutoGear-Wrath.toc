@@ -1,6 +1,7 @@
 ## Interface: 30400
 ## Title: AutoGear
 ## Notes: Automatically chooses loot and equips gear
+## Author: Synthetikaryote, BujuArena
 ## OptionalDeps: Pawn
 
 TaintLess.xml
