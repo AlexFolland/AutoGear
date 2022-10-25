@@ -3413,7 +3413,7 @@ function AutoGearTooltipHook(tooltip)
 		]]
 	end
 	if (AutoGearDB.DebugInfoInTooltips == true) then
-		-- AutoGearHandleLootRoll(tooltipItemInfo.link,1,1,tooltip)
+		AutoGearHandleLootRoll(tooltipItemInfo.link,1,1,tooltip)
 		tooltip:AddDoubleLine(
 			"AutoGear: item ID:",
 			tostring(tooltipItemInfo.id),
