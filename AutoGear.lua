@@ -105,10 +105,10 @@ function AutoGearStringHash(text)
 	local counter = 1
 	local len = string.len(text)
 	for i = 1, len, 3 do
-	  counter = math.fmod(counter*8161, 4294967279) +  -- 2^32 - 17: Prime!
-		  (string.byte(text,i)*16776193) +
-		  ((string.byte(text,i+1) or (len-i+256))*8372226) +
-		  ((string.byte(text,i+2) or (len-i+256))*3932164)
+		counter = math.fmod(counter*8161, 4294967279) +  -- 2^32 - 17: Prime!
+		(string.byte(text,i)*16776193) +
+		((string.byte(text,i+1) or (len-i+256))*8372226) +
+		((string.byte(text,i+2) or (len-i+256))*3932164)
 	end
 	return math.fmod(counter, 4294967291) -- 2^32 - 5: Prime (and different from the prime in the loop)
 end
@@ -251,7 +251,7 @@ AutoGearDBDefaults = {
 	OverridePawnScale = false,
 	PawnScale = "",
 	DebugInfoInTooltips = false,
-	AllowedVerbosity = 2,
+	AllowedVerbosity = 1,
 	LockGearSlots = true,
 	LockedGearSlots = {}
 }
@@ -2291,8 +2291,8 @@ function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 			if (wouldNeed and not canNeed) then
 				AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for "..rollItemInfo.link..".", 1)
 			end
-			local score = AutoGearDetermineItemScore(rollItemInfo)
-			AutoGearPrint("AutoGear: GREED for "..rollItemInfo.link.." with score "..score.." and info:\n"..AutoGearDump(rollItemInfo), 3)
+			-- local score = AutoGearDetermineItemScore(rollItemInfo)
+			-- AutoGearPrint("AutoGear: "..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.." for "..rollItemInfo.link.." with score "..score.." and info:\n"..AutoGearDump(rollItemInfo), 3)
 		end
 		if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: "..rollItemInfo.link.." will not be equipped.  "..reason, 1) end
 		if (roll) then
@@ -2362,14 +2362,16 @@ function AutoGearUpdateEquippedItems()
 end
 
 function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemInfo, noActions)
-	AutoGearSetStatWeights()
 	local anythingBetter = nil
 	local info
 
 	AutoGearUpdateEquippedItems()
 	--reset table of best items to reconsider all items
 	--set starting best scores from all equipped items
-	AutoGearBestItems = AutoGearEquippedItems
+	AutoGearBestItems = {}
+	for k, v in ipairs(AutoGearEquippedItems) do
+		AutoGearBestItems[k] = v
+	end
 
 	--pretend the tabard slot is a separate slot for 2-handers
 	AutoGearBestItems[INVSLOT_TABARD] = {}
@@ -2586,6 +2588,10 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
 			local lowestScoringValidGearSlot = firstValidGearSlot
 			local lowestScore = AutoGearBestItems[firstValidGearSlot].score
 			for _, v in ipairs(info.validGearSlots) do
+				if AutoGearBestItems[v].info.empty then
+					lowestScoringValidGearSlot = v
+					break
+				end
 				if AutoGearBestItems[v].score < lowestScore then
 					lowestScore = AutoGearBestItems[v].score
 					lowestScoringValidGearSlot = v
@@ -2692,33 +2698,39 @@ function AutoGearPrintItem(info)
 end
 
 function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex, link)
-	local info = {}
-	local cannotUse = nil
 	AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 	AutoGearTooltip:ClearLines()
+
+	local info = {}
+
 	if (inventoryID) then
 		-- AutoGearPrint("called with inventoryID: "..tostring(inventoryID or "nil"),3)
 		info.item = Item:CreateFromEquipmentSlot(inventoryID)
-		if info.item:IsItemEmpty() then return info end
-		link = info.item:GetItemLink()
-		info.guid = info.item:GetItemGUID()
+		if info.item:IsItemEmpty() then
+			info.empty = 1
+			return info
+		end
 		AutoGearTooltip:SetInventoryItem("player", inventoryID)
 	elseif (lootRollID) then
+		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(GetLootRollItemLink(lootRollID))))
 		-- AutoGearPrint("called with lootRollID: "..tostring(lootRollID or "nil"),3)
 		AutoGearTooltip:SetLootRollItem(lootRollID)
 	elseif (container and slot) then
 		-- AutoGearPrint("called with container and slot: "..tostring(container or "nil").." "..tostring(slot or "nil"),3)
 		info.item = Item:CreateFromBagAndSlot(container, slot)
-		if info.item:IsItemEmpty() then return info end
-		link = info.item:GetItemLink()
-		info.guid = info.item:GetItemGUID()
+		if info.item:IsItemEmpty() then
+			info.empty = 1
+			return info
+		end
 		AutoGearTooltip:SetBagItem(container, slot)
 	elseif (questRewardIndex) then
 		-- AutoGearPrint("called with questRewardIndex: "..tostring(questRewardIndex or "nil"),3)
+		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(GetQuestItemLink("choice", questRewardIndex))))
 		AutoGearTooltip:SetQuestItem("choice", questRewardIndex)
 	elseif (link)--[[ and (lastlink ~= link)]] then
 		-- AutoGearPrint("called with link: "..tostring(link or "nil"),3)
 		--AutoGearPrint("The new link, "..link..", is not the same as the last link, "..(lastlink or "[nothing]")..".",3)
+		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(link)))
 		AutoGearTooltip:SetHyperlink(link)
 		--lastlink = link
 	else
@@ -2733,19 +2745,22 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		)
 	end
 
-	local name
+	if (not info.item) or info.item:IsItemEmpty() then
+		info.empty = 1
+		return info
+	end
+
+	info.rarity = info.item:GetItemQuality()
+	info.rarityColor = info.item:GetItemQualityColor()
+
+	local name, cannotUse
 	if link == nil then
-		name, link = AutoGearTooltip:GetItem()
+		link = info.item:GetItemLink()
 	end
 	info.link = link
-	if link then
-		if not info.item then
-			info.linkString = select(3,ExtractHyperlinkString(link))
-			info.item = Item:CreateFromItemLink(info.linkString)
-		end
-		info.id, info.type, info.subType, info.equipLoc, info.icon, info.classID, info.subclassID = GetItemInfoInstant(info.item:GetItemID())
-		info.guid = info.item:GetItemGUID()
-	else
+	info.linkString = select(3,ExtractHyperlinkString(link))
+	info.id, info.type, info.subType, info.equipLoc, info.icon, info.classID, info.subclassID = GetItemInfoInstant(info.item:GetItemID())
+	if link == nil then
 		AutoGearPrint("Error: "..tostring(name or "nil").." doesn't have a link",3)
 		AutoGearPrint(
 			"inventoryID: "..tostring(inventoryID or "nil")..
@@ -2889,8 +2904,8 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			else
 				value = 0
 			end
-			if (string.find(text, "slot bag")) then
-				info.NumBagSlots = (info.NumBagSlots or 0) + value
+			if (value > 0 and string.find(text, " bag")) then
+				info.numBagSlots = (info.numBagSlots or 0) + value
 				break -- break early if it's a bag, since they don't have other stats
 			end
 			if (string.find(text, "unique")) then
@@ -2992,10 +3007,10 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	if (info.BlueSockets == 0) then info.BlueSockets = nil end
 	if (info.MetaSockets == 0) then info.MetaSockets = nil end
 
-	if ((info.gearType > 0) or (info.isMount)) then
+	if (info.isGear or info.isMount) then
 		info.shouldShowScoreInTooltip = 1
 	end
-	if (not cannotUse and ((info.gearType > 0) or (info.isMount))) then
+	if (not cannotUse and (info.isGear or info.isMount)) then
 		info.Usable = 1
 	elseif not info.isGear then
 		cannotUse = 1
@@ -3223,8 +3238,18 @@ function AutoGearGetWeaponType(itemClassID, itemSubClassID)
 end
 
 function AutoGearDetermineItemScore(itemInfo)
-	if itemInfo.isMount then return 999999 end
-	if itemInfo.gearType == 18 --[["INVTYPE_BAG"]] then return itemInfo.NumBagSlots end
+	if itemInfo.empty then return 0 end
+	if itemInfo.isMount and
+	(C_MountJournal and (not select(11,C_MountJournal.GetMountInfoByID(C_MountJournal.GetMountFromItem(itemInfo.id)))) or true) then
+		return math.huge
+	end
+	if itemInfo.classID == 1 --[[ container ]] then
+		if itemInfo.subclassID == 0 then -- generic (typical) bag
+			return itemInfo.numBagSlots
+		else
+			return itemInfo.numBagSlots * E -- specialized bags suck, so consider them only better than nothing
+		end
+	end
 
 	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
 		local PawnItemData = PawnGetItemData(itemInfo.link)
@@ -3235,7 +3260,6 @@ function AutoGearDetermineItemScore(itemInfo)
 		end
 		--else AutoGearPrint("AutoGear: PawnItemData was nil in AutoGearReadItemInfo", 3)
 	end
-
 
 	local score = (AutoGearCurrentWeighting.Strength or 0) * (itemInfo.Strength or 0) +
 		(AutoGearCurrentWeighting.Agility or 0) * (itemInfo.Agility or 0) +
@@ -3413,7 +3437,7 @@ function AutoGearTooltipHook(tooltip)
 		]]
 	end
 	if (AutoGearDB.DebugInfoInTooltips == true) then
-		AutoGearHandleLootRoll(tooltipItemInfo.link,1,1,tooltip)
+		-- AutoGearHandleLootRoll(tooltipItemInfo.link,1,1,tooltip)
 		tooltip:AddDoubleLine(
 			"AutoGear: item ID:",
 			tostring(tooltipItemInfo.id),
@@ -3464,14 +3488,20 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
-		local tooltipItemRarityColor = tooltipItemInfo.item:GetItemQualityColor()
+		local tooltipItemRarityColor = tooltipItemInfo.rarityColor
 		tooltip:AddDoubleLine(
 			"AutoGear: rarity:",
 			tostring(tooltipItemInfo.item:GetItemQuality() or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			tooltipItemRarityColor.r, tooltipItemRarityColor.g, tooltipItemRarityColor.b
 		)
-		local lowestScoringEquippedItemRarityColor = lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.item:GetItemQualityColor() or HIGHLIGHT_FONT_COLOR
+		-- tooltip:AddDoubleLine(
+		-- 	"AutoGear: guid:",
+		-- 	tostring(tooltipItemInfo.guid or "nil"),
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		-- )
+		local lowestScoringEquippedItemRarityColor = lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.rarityColor or HIGHLIGHT_FONT_COLOR
 		tooltip:AddDoubleLine(
 			"AutoGear: lowest-scoring equipped item:",
 			lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.Name or "nil",
