@@ -143,13 +143,76 @@ if (not AutoGearDB) then AutoGearDB = {} end
 
 --fill class lists for lookups later
 AutoGearClassList = {}
-FillLocalizedClassList(AutoGearClassList)
+local playerIsFemale = (C_PlayerInfo.GetSex(PlayerLocation:CreateFromUnit("player")) == 1)
+FillLocalizedClassList(AutoGearClassList, playerIsFemale)
 if not AutoGearClassList["DEATHKNIGHT"] then AutoGearClassList["DEATHKNIGHT"] = "Death Knight" end
 if not AutoGearClassList["DEMONHUNTER"] then AutoGearClassList["DEMONHUNTER"] = "Demon Hunter" end
+if not AutoGearClassList["EVOKER"] then AutoGearClassList["EVOKER"] = "Evoker" end
 if not AutoGearClassList["MONK"] then AutoGearClassList["MONK"] = "Monk" end
 AutoGearReverseClassList = {}
 for k, v in pairs(AutoGearClassList) do
 	AutoGearReverseClassList[v] = k
+end
+
+AutoGearClassIDList = {
+	[1] = {
+		fileName="WARRIOR",
+		localizedName=AutoGearClassList["WARRIOR"]
+	},
+	[2] = {
+		fileName="PALADIN",
+		localizedName=AutoGearClassList["PALADIN"]
+	},
+	[3] = {
+		fileName="HUNTER",
+		localizedName=AutoGearClassList["HUNTER"]
+	},
+	[4] = {
+		fileName="ROGUE",
+		localizedName=AutoGearClassList["ROGUE"]
+	},
+	[5] = {
+		fileName="PRIEST",
+		localizedName=AutoGearClassList["PRIEST"]
+	},
+	[6] = {
+		fileName="DEATHKNIGHT",
+		localizedName=AutoGearClassList["DEATHKNIGHT"]
+	},
+	[7] = {
+		fileName="SHAMAN",
+		localizedName=AutoGearClassList["SHAMAN"]
+	},
+	[8] = {
+		fileName="MAGE",
+		localizedName=AutoGearClassList["MAGE"]
+	},
+	[9] = {
+		fileName="WARLOCK",
+		localizedName=AutoGearClassList["WARLOCK"]
+	},
+	[10] = {
+		fileName="MONK",
+		localizedName=AutoGearClassList["MONK"]
+	},
+	[11] = {
+		fileName="DRUID",
+		localizedName=AutoGearClassList["DRUID"]
+	},
+	[12] = {
+		fileName="DEMONHUNTER",
+		localizedName=AutoGearClassList["DEMONHUNTER"]
+	},
+	[13] = {
+		fileName="EVOKER",
+		localizedName=AutoGearClassList["EVOKER"]
+	}
+}
+AutoGearReverseClassIDList = {}
+for k, v in pairs(AutoGearClassIDList) do
+	AutoGearReverseClassIDList[v.fileName] = {}
+	AutoGearReverseClassIDList[v.fileName].id = k
+	AutoGearReverseClassIDList[v.fileName].localizedName = v.localizedName
 end
 
 --initialize missing saved variables with default values; call only after PLAYER_ENTERING_WORLD
@@ -166,7 +229,7 @@ end
 -- Specializations appeared only in Mists Of Pandaria. We also have make changes to Cataclysm with preferred talent tree
 -- later
 if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
-	function AutoGearGetSpec()
+	function AutoGearDetectSpec()
 		-- GetSpecialization() doesn't exist until MoP
 		-- Instead, this finds the talent tree where the most points are allocated.
 		local highestSpec = nil
@@ -209,7 +272,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		return highestSpec
 	end
 else
-	function AutoGearGetSpec()
+	function AutoGearDetectSpec()
 		local currentSpec = GetSpecialization()
 		local currentSpecName = currentSpec and select(2, GetSpecializationInfo(currentSpec)) or "None"
 		if (currentSpec == 5) then
@@ -222,7 +285,7 @@ end
 
 function AutoGearGetDefaultOverrideSpec()
 	local className = UnitClass("player")
-	local spec = AutoGearGetSpec()
+	local spec = AutoGearDetectSpec()
 	if spec then
 		return className..": "..spec
 	end
@@ -273,543 +336,543 @@ if TOC_VERSION_CURRENT < TOC_VERSION_CATA then
 	AutoGearDefaultWeights = {
 		["DEATHKNIGHT"] = {
 			["None"] = {
-				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = 0,
+				Strength = 1.05, Agility = E, Stamina = 0.5, Intellect = E, Spirit = E,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = E,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1.2, Damage = 0.8
 			},
 			["Blood"] = {
 				weapons = "2h",
-				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = 0,
+				Strength = 1.05, Agility = E, Stamina = 0.5, Intellect = E, Spirit = E,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = E,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1, Damage = 1
 			},
 			["Frost"] = {
 				weapons = "dual wield",
-				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = 0,
+				Strength = 1.05, Agility = E, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.22, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = E,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1.2, Damage = 0.8
 			},
 			["Unholy"] = {
 				weapons = "2h",
-				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = 0,
+				Strength = 1.05, Agility = E, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, SpellCrit = 1, Hit = 0.15, SpellHit = E,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1.33333, Damage = 0.66667
 			}
 		},
 		["DEMONHUNTER"] = {
 			["None"] = {
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 0,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = E,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 3.075
 			},
 			["Havoc"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 0,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = E,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 3.075
 			},
 			["Vengeance"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 0.3, SpellHit = 0,
+				Strength = E, Agility = 1.05, Stamina = 1, Intellect = E, Spirit = E,
+				Armor = 0.8, Dodge = 0.4, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = 1.1, Hit = 0.3, SpellHit = E,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 2
 			}
 		},
 		["DRUID"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 0.5,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, SpellCrit = 0.9, Hit = 0.9, SpellHit = 0.9,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.26, Spirit = 0.5,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.5, SpellPenetration = E, Haste = 0.5, Mp5 = 0.05,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.9, SpellCrit = 0.9, Hit = 0.9, SpellHit = 0.9,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 1
 			},
 			["Balance"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 0.1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.26, Spirit = 0.1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
 				SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.1, SpellCrit = 1, Hit = 0.1, SpellHit = 1,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.1, SpellCrit = 1, Hit = 0.1, SpellHit = 1,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Feral"] = {
 				Strength = 0.3, Agility = 1.05, Stamina = 1, Intellect = 0.1, Spirit = 0.2,
-				Armor = 0.08, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0.05,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.3, SpellHit = 0,
+				Armor = 0.08, Dodge = 0.4, Parry = E, Block = E, Defense = 0.05,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = E, Hit = 0.3, SpellHit = E,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 0.8
 			},
 			["Feral Combat"] = { -- Classic spec name
 				Strength = 0.3, Agility = 1.05, Stamina = 1, Intellect = 0.1, Spirit = 0.2,
-				Armor = 0.08, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0.05,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.3, SpellHit = 0,
+				Armor = 0.08, Dodge = 0.4, Parry = E, Block = E, Defense = 0.05,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = E, Hit = 0.3, SpellHit = E,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 0.8
 			},
 			["Guardian"] = {
-				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-				Armor = 0.08, Dodge = 0.4, Parry = 0, Block = 0, Defense = 1.33,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.3, SpellHit = 0,
+				Strength = E, Agility = 1.05, Stamina = 1, Intellect = E, Spirit = E,
+				Armor = 0.08, Dodge = 0.4, Parry = E, Block = E, Defense = 1.33,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = E, Hit = 0.3, SpellHit = E,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 0.8
 			},
 			["Restoration"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.6, Spirit = 1.0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 3,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.5, Hit = 0, SpellHit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.6, Spirit = 1.0,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.85, SpellPenetration = E, Haste = 0.8, Mp5 = 3,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 0.5, Hit = E, SpellHit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["HUNTER"] = {
 			["None"] = {
-				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, SpellCrit = 0, Hit = 0.4, SpellHit = 0,
-				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
+				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = E, Spirit = 0.2,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, SpellCrit = E, Hit = 0.4, SpellHit = E,
+				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = E, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1.0, DamageSpellProc = E, MeleeProc = E, RangedProc = 1,
 				DPS = 2
 			},
 			["Beast Mastery"] = {
-				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0.8, Crit = 2, SpellCrit = 0, Hit = 1.4, SpellHit = 0,
+				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = E, Spirit = 0.2,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.9, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = 0.8, Crit = 2, SpellCrit = E, Hit = 1.4, SpellHit = E,
 				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1.0, DamageSpellProc = E, MeleeProc = E, RangedProc = 1,
 				DPS = 2
 			},
 			["Marksmanship"] = {
-				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, SpellCrit = 0, Hit = 3.49, SpellHit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = E, Spirit = 0.2,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.61, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.66, SpellCrit = E, Hit = 3.49, SpellHit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Survival"] = {
-				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = 0, Spirit = 0.2,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, SpellCrit = 0, Hit = 3.19, SpellHit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = 0.3, Agility = 1.05, Stamina = 0.15, Intellect = E, Spirit = 0.2,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.33, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.37, SpellCrit = E, Hit = 3.19, SpellHit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			}
 		},
 		["MAGE"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 0.9,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.40, Spirit = 0.9,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
 				SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.3, Hit = 0, SpellHit = 1.25,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 1.3, Hit = E, SpellHit = 1.25,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Arcane"] = {
-				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 0.40, Spirit = 0.9,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1.1, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.3, Hit = 0, SpellHit = 1.25,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				Strength = E, Agility = E, Stamina = 0.01, Intellect = 0.40, Spirit = 0.9,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 1.1, SpellPenetration = 0.2, Haste = 0.5, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 1.3, Hit = E, SpellHit = 1.25,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
 				RedSockets = 10, YellowSockets = 8, BlueSockets = 7, MetaSockets = 20,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Fire"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.9,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1.1, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 2.4, Hit = 0, SpellHit = 1.75,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 0.9,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 1.1, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 2.4, Hit = E, SpellHit = 1.75,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Frost"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.40, Spirit = 0.8,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.3, Hit = 0, SpellHit = 1.25,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.40, Spirit = 0.8,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 1, SpellPenetration = 0.3, Haste = 0.8, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 1.3, Hit = E, SpellHit = 1.25,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["MONK"] = {
 			["None"] = {
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 1.75,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 3.075
 			},
 			["Brewmaster"] = {
 				weapons = "2h",
-				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 0.3, SpellHit = 0.3,
+				Strength = E, Agility = 1.05, Stamina = 1, Intellect = E, Spirit = E,
+				Armor = 0.8, Dodge = 0.4, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = 1.1, Hit = 0.3, SpellHit = 0.3,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 1, Damage = 1
 			},
 			["Windwalker"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 1.75,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 3.075
 			},
 			["Mistweaver"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 0.60,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, SpellCrit = 0.6, Hit = 0, SpellHit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.26, Spirit = 0.60,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.85, SpellPenetration = E, Haste = 0.8, Mp5 = 0.05,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.6, SpellCrit = 0.6, Hit = E, SpellHit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.13333, Damage = 0.06667
 			}
 		},
 		["PALADIN"] = {
 			["None"] = {
-				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, SpellCrit = 0.98, Hit = 1.77, SpellHit = 0.77,
+				Strength = 2.33, Agility = E, Stamina = 0.05, Intellect = E, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.79, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 0.98, SpellCrit = 0.98, Hit = 1.77, SpellHit = 0.77,
 				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1.33333, Damage = 0.66667
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.1, Hit = 0, SpellHit = 0.1,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.7, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 0.1, Hit = E, SpellHit = 0.1,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Protection"] = {
 				weapons = "weapon and shield",
 				Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.1, Spirit = 0.3,
 				Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, Defense = 3,
-				SpellPower = 0.05, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0.4, ArmorPenetration = 0.1, Crit = 0.25, SpellCrit = 0, Hit = 0,
+				SpellPower = 0.05, SpellPenetration = E, Haste = 0.5, Mp5 = E,
+				AttackPower = 0.4, ArmorPenetration = 0.1, Crit = 0.25, SpellCrit = E, Hit = E,
 				Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
 				MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
 				DPS = 1.33333, Damage = 0.66667
 			},
 			["Retribution"] = {
 				weapons = "2h",
-				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0.1, Spirit = 0.3,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, SpellCrit = 0.1, Hit = 1.77, SpellHit = 0.1,
+				Strength = 2.33, Agility = E, Stamina = 0.05, Intellect = 0.1, Spirit = 0.3,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.79, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 0.98, SpellCrit = 0.1, Hit = 1.77, SpellHit = 0.1,
 				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1, Damage = 1
 			}
 		},
 		["PRIEST"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 4,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1.6, Hit = 0, SpellHit = 1.95,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 2.75, SpellPenetration = E, Haste = 2, Mp5 = 4,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 1.6, Hit = E, SpellHit = 1.95,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Discipline"] = {
-				Strength = 0, Agility = 0, Stamina = 0, Intellect = 0.26, Spirit = 1,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 4,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.25, Hit = 0, SpellHit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = E, Intellect = 0.26, Spirit = 1,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.8, SpellPenetration = E, Haste = 1, Mp5 = 4,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 0.25, Hit = E, SpellHit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1.8,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.47, Mp5 = 4,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 0.47, Hit = 0, SpellHit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.26, Spirit = 1.8,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.7, SpellPenetration = E, Haste = 0.47, Mp5 = 4,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 0.47, Hit = E, SpellHit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Shadow"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 3,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 1, Hit = 0, SpellHit = 1,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0.3, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 1, SpellPenetration = E, Haste = 1, Mp5 = 3,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 1, Hit = E, SpellHit = 1,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 0.3, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["ROGUE"] = {
 			["None"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 1.75, SpellHit = 0,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = E, Hit = 1.75, SpellHit = E,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 3.075
 			},
 			["Assassination"] = {
 				weapons = "dagger and any",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 1.75, SpellHit = 0,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = E, Hit = 1.75, SpellHit = E,
 				Expertise = 1.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.3, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Outlaw"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 1.75, SpellHit = 0,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = E, Hit = 1.75, SpellHit = E,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 3.075
 			},
 			["Combat"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 1.75, SpellHit = 0,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, SpellCrit = E, Hit = 1.75, SpellHit = E,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 3.075
 			},
 			["Subtlety"] = {
 				weapons = "dagger and any",
-				Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, SpellCrit = 0, Hit = 0.6, SpellHit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.5, Mp5 = E,
+				AttackPower = 0.4, ArmorPenetration = E, Crit = 1.1, SpellCrit = E, Hit = 0.6, SpellHit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 2
 			}
 		},
 		["SHAMAN"] = {
 			["None"] = {
-				Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
+				Strength = E, Agility = 1, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, SpellCrit = 1.11, Hit = 2.7, SpellHit = 2.7,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1.2, Damage = 0.8
 			},
 			["Elemental"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, SpellCrit = 0.9, Hit = 0, SpellHit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.9, SpellCrit = 0.9, Hit = E, SpellHit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 0.13333, Damage = 0.06667
 			},
 			["Enhancement"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
+				Strength = E, Agility = 1.05, Stamina = 0.1, Intellect = E, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.95, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, SpellCrit = 1, Hit = 0.8, SpellHit = 0.8,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 1.2, Damage = 0.8
 			},
 			["Restoration"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, SpellCrit = 0.4, Hit = 0, SpellHit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.26, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.75, SpellPenetration = E, Haste = 0.6, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.4, SpellCrit = 0.4, Hit = E, SpellHit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["WARLOCK"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 4, Hit = 0, SpellHit = 7,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.32, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 4, Hit = E, SpellHit = 7,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Affliction"] = {
-				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				Strength = E, Agility = E, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 1.5,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 4, Hit = 0, SpellHit = 7,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 4, Hit = E, SpellHit = 7,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Demonology"] = {
-				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				Strength = E, Agility = E, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 1.5,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 4, Hit = 0, SpellHit = 7,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 4, Hit = E, SpellHit = 7,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Destruction"] = {
-				Strength = 0, Agility = 0, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				Strength = E, Agility = E, Stamina = 0.4, Intellect = 0.2, Spirit = 0.7,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
 				SpellPower = 1, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 1.5,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0, SpellCrit = 6, Hit = 0, SpellHit = 7,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				AttackPower = E, ArmorPenetration = E, Crit = E, SpellCrit = 6, Hit = E, SpellHit = 7,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["WARRIOR"] = {
 			["None"] = {
-				Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0.5, Defense = 4,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, SpellCrit = 0, Hit = 2, SpellHit = 0,
+				Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = 0.5, Defense = 4,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 0.88, ArmorPenetration = E, Crit = 1.34, SpellCrit = E, Hit = 2, SpellHit = E,
 				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1.33333, Damage = 0.66667
 			},
 			["Arms"] = {
 				weapons = "2h",
-				Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, SpellCrit = 0, Hit = 2, SpellHit = 0,
+				Strength = 2.02, Agility = 0.5, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 0.88, ArmorPenetration = E, Crit = 1.34, SpellCrit = E, Hit = 2, SpellHit = E,
 				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1, Damage = 1
 			},
 			["Fury"] = {
 				weapons = "dual wield",
-				Strength = 2.98, Agility = 0.5, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
-				AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, SpellCrit = 0, Hit = 2.47, SpellHit = 0,
+				Strength = 2.98, Agility = 0.5, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.37, Mp5 = E,
+				AttackPower = 1.36, ArmorPenetration = E, Crit = 1.98, SpellCrit = E, Hit = 2.47, SpellHit = E,
 				Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1.2, Damage = 0.8
 			},
 			["Protection"] = {
 				weapons = "weapon and shield",
-				Strength = 1.2, Agility = 0.5, Stamina = 1.5, Intellect = 0, Spirit = 0,
+				Strength = 1.2, Agility = 0.5, Stamina = 1.5, Intellect = E, Spirit = E,
 				Armor = 0.13, Dodge = 1, Parry = 1.03, Block = 0.5, Defense = 4,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, SpellCrit = 0, Hit = 0.02, SpellHit = 0,
+				SpellPower = E, SpellPenetration = E, Haste = E, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.4, SpellCrit = E, Hit = 0.02, SpellHit = E,
 				Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1.33333, Damage = 0.66667
 			}
 		}
@@ -818,535 +881,535 @@ else
 	AutoGearDefaultWeights = {
 		["DEATHKNIGHT"] = {
 			["None"] = {
-				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				Strength = 1.05, Agility = E, Stamina = 0.5, Intellect = E, Spirit = E,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Blood"] = {
 				weapons = "2h",
-				Strength = 1.05, Agility = 0, Stamina = 0.5, Intellect = 0, Spirit = 0,
-				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				Strength = 1.05, Agility = E, Stamina = 0.5, Intellect = E, Spirit = E,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Frost"] = {
 				weapons = "dual wield",
-				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.22, Mp5 = 0,
+				Strength = 1.05, Agility = E, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.22, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Unholy"] = {
 				weapons = "2h",
-				Strength = 1.05, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				Strength = 1.05, Agility = E, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 1, Dodge = 0.5, Parry = 0.5, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 0.005, Crit = 1, Hit = 0.15,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			}
 		},
 		["DEMONHUNTER"] = {
 			["None"] = {
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 1.75,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 3.075
 			},
 			["Havoc"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 1.75,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 3.075
 			},
 			["Vengeance"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3,
+				Strength = E, Agility = 1.05, Stamina = 1, Intellect = E, Spirit = E,
+				Armor = 0.8, Dodge = 0.4, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 0.3,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 2
 			}
 		},
 		["DRUID"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0.5, SpellPenetration = 0, Haste = 0.5, Mp5 = 0.05,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.9,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 0.5,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = 0.5, SpellPenetration = E, Haste = 0.5, Mp5 = 0.05,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.9, Hit = 0.9,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.45, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 1
 			},
 			["Balance"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
 				SpellPower = 0.8, SpellPenetration = 0.1, Haste = 0.8, Mp5 = 0.01,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.05,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = 0, RangedProc = 0,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.4, Hit = 0.05,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.6, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1.0, DamageSpellProc = 1.0, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Feral"] = {
-				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3,
+				Strength = E, Agility = 1.05, Stamina = 1, Intellect = E, Spirit = E,
+				Armor = 0.8, Dodge = 0.4, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 0.3,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 0.8
 			},
 			["Guardian"] = {
-				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3,
+				Strength = E, Agility = 1.05, Stamina = 1, Intellect = E, Spirit = E,
+				Armor = 0.8, Dodge = 0.4, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 0.3,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 0.8
 			},
 			["Restoration"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = 0.85, SpellPenetration = E, Haste = 0.8, Mp5 = 0.05,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.6, Hit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["HUNTER"] = {
 			["None"] = {
 				weapons = "ranged",
-				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
+				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = E, Spirit = E,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 0.8, Crit = 0.8, Hit = 0.4,
-				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 0, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
+				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = E, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1.0, DamageSpellProc = E, MeleeProc = E, RangedProc = 1,
 				DPS = 2
 			},
 			["Beast Mastery"] = {
 				weapons = "ranged",
-				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.9, Mp5 = 0,
+				Strength = 0.5, Agility = 1.05, Stamina = 0.1, Intellect = E, Spirit = E,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.9, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 0.8, Crit = 1.1, Hit = 0.4,
 				Expertise = 0.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1.0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 1,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1.0, DamageSpellProc = E, MeleeProc = E, RangedProc = 1,
 				DPS = 2
 			},
 			["Marksmanship"] = {
 				weapons = "ranged",
-				Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.61, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.66, Hit = 3.49,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = 1.05, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.005, Dodge = E, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.61, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.66, Hit = 3.49,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.38, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Survival"] = {
-				Strength = 0, Agility = 1.05, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.005, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.33, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.37, Hit = 3.19,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = 1.05, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.005, Dodge = E, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.33, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.37, Hit = 3.19,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.27, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			}
 		},
 		["MAGE"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 5.16, Spirit = 0.05,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
 				SpellPower = 2.8, SpellPenetration = 0.005, Haste = 1.28, Mp5 = .005,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.34, Hit = 3.21,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				AttackPower = E, ArmorPenetration = E, Crit = 1.34, Hit = 3.21,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Arcane"] = {
-				Strength = 0, Agility = 0, Stamina = 0.01, Intellect = 1, Spirit = 0,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0.7,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.01, Intellect = 1, Spirit = E,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.6, SpellPenetration = 0.2, Haste = 0.5, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.9, Hit = 0.7,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Fire"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.8, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.2, Hit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.8, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1.2, Hit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Frost"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.8, Hit = 0.7,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 0.05,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.9, SpellPenetration = 0.3, Haste = 0.8, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.8, Hit = 0.7,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["MONK"] = {
 			["None"] = {
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 1.75,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 3.075
 			},
 			["Brewmaster"] = {
 				weapons = "2h",
-				Strength = 0, Agility = 1.05, Stamina = 1, Intellect = 0, Spirit = 0,
-				Armor = 0.8, Dodge = 0.4, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 0.3,
+				Strength = E, Agility = 1.05, Stamina = 1, Intellect = E, Spirit = E,
+				Armor = 0.8, Dodge = 0.4, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 0.3,
 				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 2
 			},
 			["Windwalker"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 1.75,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 3.075
 			},
 			["Mistweaver"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.85, SpellPenetration = 0, Haste = 0.8, Mp5 = 0.05,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.6, Hit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 0.60,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.85, SpellPenetration = E, Haste = 0.8, Mp5 = 0.05,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.6, Hit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.65, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 1
 			}
 		},
 		["PALADIN"] = {
 			["None"] = {
-				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77,
+				Strength = 2.33, Agility = E, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.79, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 0.98, Hit = 1.77,
 				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0.7, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 0.8, Spirit = 0.9,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = 0.7, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1, Hit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.3, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Protection"] = {
 				weapons = "weapon and shield",
-				Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = 0,
+				Strength = 1, Agility = 0.3, Stamina = 0.65, Intellect = 0.05, Spirit = E,
 				Armor = 0.05, Dodge = 0.8, Parry = 0.75, Block = 0.8, SpellPower = 0.05,
 				AttackPower = 0.4, Haste = 0.5, ArmorPenetration = 0.1,
-				Crit = 0.25, Hit = 0, Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
+				Crit = 0.25, Hit = E, Expertise = 0.2, Versatility = 0.8, Multistrike = 1, Mastery = 0.05, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
 				MeleeProc = 1.0, SpellProc = 0.5, DamageProc = 1.0,
 				DPS = 2
 			},
 			["Retribution"] = {
 				weapons = "2h",
-				Strength = 2.33, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.79, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 0.98, Hit = 1.77,
+				Strength = 2.33, Agility = E, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.79, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 0.98, Hit = 1.77,
 				Expertise = 1.3, Versatility = 0.8, Multistrike = 1, Mastery = 1.13, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			}
 		},
 		["PRIEST"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 2.75, SpellPenetration = 0, Haste = 2, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.6, Hit = 1.95,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = 2.75, SpellPenetration = E, Haste = 2, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1.6, Hit = 1.95,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.7, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Discipline"] = {
-				Strength = 0, Agility = 0, Stamina = 0, Intellect = 1, Spirit = 1,
-				Armor = 0.0001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0.8, SpellPenetration = 0, Haste = 1, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.25, Hit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = E, Intellect = 1, Spirit = 1,
+				Armor = 0.0001, Dodge = E, Parry = E, Block = E,
+				SpellPower = 0.8, SpellPenetration = E, Haste = 1, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.25, Hit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.5, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1.0, DamageProc = 0.5, DamageSpellProc = 0.5, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Holy"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 1, SpellPenetration = 0, Haste = 0.47, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.47, Hit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 1, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = 1, SpellPenetration = E, Haste = 0.47, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.47, Hit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.36, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = 1, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Shadow"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 1, SpellPenetration = 0, Haste = 1, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1, Hit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 0.1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = 1, SpellPenetration = E, Haste = 1, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1, Hit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["ROGUE"] = {
 			["None"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 1.75,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 3.075
 			},
 			["Assassination"] = {
 				weapons = "dagger",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 1.75,
 				Expertise = 1.1, Versatility = 0.8, Multistrike = 1, Mastery = 1.3, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Outlaw"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 1.75,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 3.075
 			},
 			["Combat"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.1, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.05, Mp5 = 0,
-				AttackPower = 1, ArmorPenetration = 0, Crit = 1.1, Hit = 1.75,
+				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 1.75,
 				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 3.075
 			},
 			["Subtlety"] = {
 				weapons = "dagger and any",
-				Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.5, Mp5 = 0,
-				AttackPower = 0.4, ArmorPenetration = 0, Crit = 1.1, Hit = 0.6,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				Strength = 0.3, Agility = 1.1, Stamina = 0.2, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = 0.1, Parry = 0.1, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.5, Mp5 = E,
+				AttackPower = 0.4, ArmorPenetration = E, Crit = 1.1, Hit = 0.6,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 2
 			}
 		},
 		["SHAMAN"] = {
 			["None"] = {
-				Strength = 0, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = 0,
+				Strength = E, Agility = 1, Stamina = 0.05, Intellect = 1, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 1, SpellPenetration = 1, Haste = 1, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 1, Crit = 1.11, Hit = 2.7,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.62, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Elemental"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 1,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.9, Hit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 1, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 1,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.6, SpellPenetration = 0.1, Haste = 0.9, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.9, Hit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 1, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Enhancement"] = {
 				weapons = "dual wield",
-				Strength = 0, Agility = 1.05, Stamina = 0.1, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.95, Mp5 = 0,
+				Strength = E, Agility = 1.05, Stamina = 0.1, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.95, Mp5 = E,
 				AttackPower = 1, ArmorPenetration = 0.4, Crit = 1, Hit = 0.8,
 				Expertise = 0.3, Versatility = 0.8, Multistrike = 0.95, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 1, DamageSpellProc = 0, MeleeProc = 1, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 2
 			},
 			["Restoration"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0.75, SpellPenetration = 0, Haste = 0.6, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1, Spirit = 0.65,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 0.75, SpellPenetration = E, Haste = 0.6, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.4, Hit = E,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 0.55, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["WARLOCK"] = {
 			["None"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1.79, Hit = 2.78,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Affliction"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.79, Hit = 2.78,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 3.68, Spirit = 0.005,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 2.81, SpellPenetration = 0.05, Haste = 2.32, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1.79, Hit = 2.78,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.24, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Demonology"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.79, Spirit = 0.005,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 2.91, SpellPenetration = 0.05, Haste = 2.37, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.95, Hit = 3.74,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 3.79, Spirit = 0.005,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 2.91, SpellPenetration = 0.05, Haste = 2.37, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1.95, Hit = 3.74,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 2.57, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			},
 			["Destruction"] = {
-				Strength = 0, Agility = 0, Stamina = 0.05, Intellect = 3.3, Spirit = 0.005,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 2.62, SpellPenetration = 0.05, Haste = 2.08, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 1.4, Hit = 2.83,
-				Expertise = 0, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 3.3, Spirit = 0.005,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 2.62, SpellPenetration = 0.05, Haste = 2.08, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1.4, Hit = 2.83,
+				Expertise = E, Versatility = 0.8, Multistrike = 1, Mastery = 1.4, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 0.01
 			}
 		},
 		["WARRIOR"] = {
 			["None"] = {
-				Strength = 2.02, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2,
+				Strength = 2.02, Agility = E, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 0.88, ArmorPenetration = E, Crit = 1.34, Hit = 2,
 				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Arms"] = {
 				weapons = "2h",
-				Strength = 2.02, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0, Defense = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0.8, Mp5 = 0,
-				AttackPower = 0.88, ArmorPenetration = 0, Crit = 1.34, Hit = 2,
+				Strength = 2.02, Agility = E, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 0.88, ArmorPenetration = E, Crit = 1.34, Hit = 2,
 				Expertise = 1.46, Versatility = 0.8, Multistrike = 1, Mastery = 0.9, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Fury"] = {
-				weapons = "2hDW", --Alitiwn: creating new weapons class for unique Fury handling
-				Strength = 2.98, Agility = 0, Stamina = 0.05, Intellect = 0, Spirit = 0,
-				Armor = 0.001, Dodge = 0, Parry = 0, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 1.37, Mp5 = 0,
-				AttackPower = 1.36, ArmorPenetration = 0, Crit = 1.98, Hit = 2.47,
+				weapons = "2hDW",
+				Strength = 2.98, Agility = E, Stamina = 0.05, Intellect = E, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 1.37, Mp5 = E,
+				AttackPower = 1.36, ArmorPenetration = E, Crit = 1.98, Hit = 2.47,
 				Expertise = 2.47, Versatility = 0.8, Multistrike = 1, Mastery = 1.57, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			},
 			["Protection"] = {
 				weapons = "weapon and shield",
-				Strength = 1.2, Agility = 0, Stamina = 1.5, Intellect = 0, Spirit = 0,
-				Armor = 0.16, Dodge = 1, Parry = 1.03, Block = 0,
-				SpellPower = 0, SpellPenetration = 0, Haste = 0, Mp5 = 0,
-				AttackPower = 0, ArmorPenetration = 0, Crit = 0.4, Hit = 0.02,
+				Strength = 1.2, Agility = E, Stamina = 1.5, Intellect = E, Spirit = E,
+				Armor = 0.16, Dodge = 1, Parry = 1.03, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = E, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 0.4, Hit = 0.02,
 				Expertise = 0.04, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
-				RedSockets = 0, YellowSockets = 0, BlueSockets = 0, MetaSockets = 0,
-				HealingProc = 0, DamageProc = 0, DamageSpellProc = 0, MeleeProc = 0, RangedProc = 0,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
 				DPS = 2
 			}
 		}
@@ -1441,17 +1504,25 @@ function AutoGearGetOverrideSpecs()
 end
 
 function AutoGearGetClassAndSpec()
-	local localizedClass, class, spec
+	local localizedClass, class, spec, classID
 	if (AutoGearDB.Override and AutoGearDB.OverrideSpec) then
 		class, spec = string.match(AutoGearDB.OverrideSpec,"(.+): ?(.+)")
 		localizedClass = string.gsub(class, "%s+", "")
 		class = string.upper(localizedClass)
+		classID = AutoGearReverseClassIDList[class].id
 	end
-	if ((class == nil) or (spec == nil)) then
-		localizedClass, class = UnitClass("player")
-		spec = AutoGearGetSpec()
+	if ((localizedClass == nil) or (class == nil) or (spec == nil)) then
+		localizedClass, class, spec, classID = AutoGearDetectClassAndSpec()
 	end
-	return localizedClass, class, spec
+	return localizedClass, class, spec, classID
+end
+
+function AutoGearDetectClassAndSpec()
+	local localizedClass, class, spec, classID
+	class, classID = UnitClassBase("player")
+	localizedClass = AutoGearClassIDList[classID].localizedName
+	spec = AutoGearDetectSpec()
+	return localizedClass, class, spec, classID
 end
 
 function AutoGearSetStatWeights()
@@ -1660,6 +1731,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 		AutoGearInitializeDB(AutoGearDBDefaults)
 		AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID and ContainerIDToInventoryID(1) or (C_Container and (C_Container.ContainerIDToInventoryID and C_Container.ContainerIDToInventoryID(1) or 20) or 20)
 		AutoGearInitializeEquippableBagSlotsTable()
+		AutoGearUpdateEquippedItems()
 
 		--initialize options menu variables
 		AutoGearOptions = {
@@ -1824,7 +1896,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Override specialization with the specialization chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the spec detected automatically.",
 				["toggleDescriptionTrue"] = "Specialization overriding is now enabled.  AutoGear will use the specialization selected in the dropdown for evaluating gear.",
 				["toggleDescriptionFalse"] = "Specialization overriding is now disabled.  AutoGear will use your class and its detected specialization for evaluating gear.  Type \"/ag spec\" to check what specialization AutoGear detects for your character.",
-				["togglePostHook"] = function() AutoGearSetStatWeights() AutoGearConsiderAllItems(nil,nil,nil,true) end,
+				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,true) end,
 				["child"] = {
 					["option"] = "OverrideSpec",
 					["options"] = AutoGearGetOverrideSpecs(),
@@ -1877,8 +1949,8 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliCommands"] = { "lock", "lockslots", "lockgearslots" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Lock specified gear slots",
-				["description"] = "Lock the specified gear slots, so AutoGear will not remove or equip items in those slots.  If this is enabled and any slots are locked, AutoGear will still evaluate scores for items in all slots, but will not remove or equip items in the locked slots.",
+				["label"] = "("..RED_FONT_COLOR_CODE.."planned"..FONT_COLOR_CODE_CLOSE..") Lock specified gear slots",
+				["description"] = "Lock the specified gear slots, so AutoGear will not remove or equip items in those slots.  If this is enabled and any slots are locked, AutoGear will still evaluate scores for items in all slots, but will not remove or equip items in the locked slots.\n\n"..RED_FONT_COLOR_CODE.."Although you can toggle this option and your setting will be honored when this feature is implemented, this feature is not yet implemented."..FONT_COLOR_CODE_CLOSE,
 				["toggleDescriptionTrue"] = "Locking specified gear slots is now enabled.",
 				["toggleDescriptionFalse"] = "Locking specified gear slots is now disabled.",
 				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,true) end,
@@ -1918,7 +1990,7 @@ _G["SLASH_AutoGear1"] = "/AutoGear"
 _G["SLASH_AutoGear2"] = "/autogear"
 _G["SLASH_AutoGear3"] = "/ag"
 SlashCmdList["AutoGear"] = function(msg)
-	param1, param2, param3, param4, param5 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
+	local param1, param2, param3, param4, param5 = msg:match("([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*([^%s,]*)[%s,]*")
 	if (not param1) then param1 = "" end
 	if (not param2) then param2 = "" end
 	if (not param3) then param3 = "" end
@@ -1931,7 +2003,9 @@ SlashCmdList["AutoGear"] = function(msg)
 	elseif (param1 == "scan") then
 		AutoGearScan()
 	elseif (param1 == "spec") then
-		AutoGearPrint("AutoGear: Looks like you are "..AutoGearGetSpec().."."..((AutoGearDB.UsePawn or AutoGearDB.Override) and ("  However, AutoGear is using "..(AutoGearDB.UsePawn and "Pawn" or "\""..AutoGearDB.OverrideSpec.."\"").." for gear evaluation due to the \""..(AutoGearDB.UsePawn and "use Pawn to evaluate upgrades" or "override specialization").."\" option.") or ""), 0)
+		local localizedClass, class, spec, classID = AutoGearDetectClassAndSpec()
+		local usingPawn = AutoGearDB.UsePawn and PawnIsReady and PawnIsReady()
+		AutoGearPrint("AutoGear: Looks like you are a"..(spec:find("^[AEIOUaeiou]") and "n " or " ")..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).."."..((usingPawn or (AutoGearDB.Override and ((localizedClass..": "..spec) ~= AutoGearDB.OverrideSpec))) and ("  However, AutoGear is using "..(usingPawn and ("Pawn scale \""..PawnGetScaleColor(AutoGearDB.PawnScale)..AutoGearDB.PawnScale..FONT_COLOR_CODE_CLOSE) or ("\""..AutoGearDB.OverrideSpec)).."\" for gear evaluation due to the \""..(usingPawn and "Use Pawn to evaluate upgrades" or "Override specialization").."\" option.") or ""), 0)
 	elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
 		AutoGearSetAllowedVerbosity(param2)
 	elseif ((param1 == "setspec") or
@@ -1944,8 +2018,6 @@ SlashCmdList["AutoGear"] = function(msg)
 		--AutoGearPrint("AutoGear: param3 == \""..tostring(param3).."\"",3)
 		--AutoGearPrint("AutoGear: param4 == \""..tostring(param4).."\"",3)
 		--AutoGearPrint("AutoGear: params == \""..tostring(params).."\"",3)
-		AutoGearPrint("AutoGear: localizedClassName == \""..tostring(localizedClassName).."\"",3)
-		AutoGearPrint("AutoGear: spec == \""..tostring(spec).."\"",3)
 		local class = AutoGearReverseClassList[localizedClassName]
 		if class and AutoGearDefaultWeights[class][spec] then
 			local overridespec = localizedClassName..": "..spec
@@ -1953,7 +2025,7 @@ SlashCmdList["AutoGear"] = function(msg)
 			if AutoGearOverrideSpecDropdown then
 				AutoGearOverrideSpecDropdown:SetValue(overridespec)
 			end
-			AutoGearPrint("AutoGear: "..(AutoGearDB.Override and "" or "While \"Override specialization\" is enabled, ").."AutoGear will now use "..overridespec.." weights to evaluate gear.",0)
+			AutoGearPrint("AutoGear: "..(AutoGearDB.Override and "" or "While \"Override specialization\" is enabled, ").."AutoGear will now use "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(overridespec).." weights to evaluate gear.",0)
 		else
 			AutoGearPrint("AutoGear: Unrecognized command. Usage: \"/ag overridespec [class]: [spec]\" (example: \"/ag overridespec Hunter: Beast Mastery\")",0)
 		end
@@ -1962,21 +2034,25 @@ SlashCmdList["AutoGear"] = function(msg)
 	(param1 == "setscale") or
 	(param1 == "scaleoverride")) then
 		-- AutoGearItemInfoCache = {}
-		if PawnIsReady ~= nil and PawnIsReady() then
-			local ScaleName = param2..(string.len(param3)>0 and " "..param3 or "")..(string.len(param4)>0 and " "..param4 or "")..(string.len(param5)>0 and " "..param5 or "")
-			if string.len(ScaleName) == 0 then
-				AutoGearPrint("AutoGear: Usage: \"/ag pawnscale [Pawn scale name]\" (example: \"/ag pawnscale Hunter: Beast Mastery\")",0)
-			elseif PawnDoesScaleExist(ScaleName) then
-				AutoGearDB.PawnScale = ScaleName
-				if AutoGearPawnScaleDropdown then
-					UIDropDownMenu_SetText(AutoGearPawnScaleDropdown, AutoGearDB.PawnScale)
+		if PawnIsReady then
+			if PawnIsReady() then
+				local scaleName = param2..(string.len(param3)>0 and " "..param3 or "")..(string.len(param4)>0 and " "..param4 or "")..(string.len(param5)>0 and " "..param5 or "")
+				if string.len(scaleName) == 0 then
+					AutoGearPrint("AutoGear: Usage: \"/ag pawnscale [Pawn scale name]\" (example: \"/ag pawnscale Hunter: Beast Mastery\")",0)
+				elseif PawnDoesScaleExist(scaleName) then
+					AutoGearDB.PawnScale = scaleName
+					if AutoGearPawnScaleDropdown then
+						UIDropDownMenu_SetText(AutoGearPawnScaleDropdown, AutoGearDB.PawnScale)
+					end
+					AutoGearPrint("AutoGear: "..(AutoGearDB.UsePawn and "" or "While using Pawn is enabled, ").."AutoGear will now use the \""..PawnGetScaleColor(AutoGearDB.PawnScale)..AutoGearDB.PawnScale..FONT_COLOR_CODE_CLOSE.."\" Pawn scale to evaluate gear.",0)
+				else
+					AutoGearPrint("AutoGear: According to Pawn, a Pawn scale named \""..scaleName.."\" does not exist.",0)
 				end
-				AutoGearPrint("AutoGear: "..(AutoGearDB.UsePawn and "" or "While using Pawn is enabled, ").."AutoGear will now use the \""..PawnGetScaleColor(AutoGearDB.PawnScale)..AutoGearDB.PawnScale..FONT_COLOR_CODE_CLOSE.."\" Pawn scale to evaluate gear.",0)
 			else
-				AutoGearPrint("AutoGear: According to Pawn, a Pawn scale named \""..ScaleName.."\" does not exist.",0)
+				AutoGearPrint("AutoGear: Pawn is not ready yet.",0)
 			end
 		else
-			AutoGearPrint("AutoGear: Pawn is either not installed or not ready yet.",0)
+			AutoGearPrint("AutoGear: Pawn is not installed.",0)
 		end
 	elseif (param1 == "") then
 		-- This needs to be called twice to work properly; seems like a Blizzard bug.
@@ -2043,6 +2119,7 @@ AutoGearFrame:RegisterEvent("ITEM_PUSH")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when the player tries to equip a soulbound item that can still be traded to eligible players
 AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
+AutoGearFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")               --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
 AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")         --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
 AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")           --Fires when a quest is automatically completed (remote handin available)
@@ -2096,7 +2173,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					end
 				end
 			else
-				info = {GetGossipAvailableQuests()}
+				local info = {GetGossipAvailableQuests()}
 				for i = 1, GetNumGossipAvailableQuests() do
 					local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
 					if (not isTrivial) then
@@ -2137,7 +2214,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			GetQuestReward()
 		elseif (AutoGearDB.AutoCompleteItemQuests) then
 			--choose a quest reward
-			questRewardID = {}
+			local questRewardID = {}
 			for i = 1, rewards do
 				local itemLink = GetQuestItemLink("choice", i)
 				if (not itemLink) then AutoGearPrint("AutoGear: No item link received from the server.", 0) end
@@ -2169,6 +2246,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			-- AutoGearItemInfoCache = {}
 			AutoGearConsiderAllItems()
 		end
+	elseif (event == "PLAYER_EQUIPMENT_CHANGED") then
+		AutoGearUpdateEquippedItems()
 	elseif (event == "START_LOOT_ROLL") then
 		local link = GetLootRollItemLink(arg1)
 		AutoGearHandleLootRoll(link, arg1)
@@ -2179,8 +2258,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 	elseif (event == "ITEM_PUSH") then
 		--AutoGearPrint("AutoGear: Received an item.  Checking for gear upgrades.")
 		--make sure a fishing pole isn't replaced while fishing
-		local mainHandType = AutoGearGetMainHandType()
-		if ((mainHandType ~= "Fishing Pole") and (mainHandType ~= "Fishing Poles")) then
+		if (not AutoGearIsMainHandAFishingPole()) then
 			--check if there's already a scan action in queue
 			local scanFound = nil
 			for i, curAction in ipairs(futureAction) do
@@ -2217,7 +2295,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			for i = 0, NUM_BAG_SLOTS do
 				local slotMax = GetContainerNumSlots(i)
 				for j = 0, slotMax do
-					_, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
+					local _, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
 					if (link) then
 						local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
 						if (string.find(link,"|cff9d9d9d") and not locked and not AutoGearIsQuestItem(i,j)) then
@@ -2273,18 +2351,18 @@ end
 
 function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 	AutoGearSetStatWeights()
-	if (AutoGearCurrentWeighting) then
+	if AutoGearCurrentWeighting then
 		local roll = nil
 		reason = "(no reason set)"
-		local _, rollItemName, _, _, _, canNeed, canGreed, canDisenchant = GetLootRollItemInfo(lootRollID)
+		local canNeed = select(6,GetLootRollItemInfo(lootRollID))
 		local lootRollItemID = GetItemInfoInstant(link)
 		local rollItemInfo = AutoGearReadItemInfo(nil, nil, nil, nil, nil, link)
 		local wouldNeed = AutoGearConsiderAllItems(lootRollItemID, nil, rollItemInfo)
-		if (simulate) then canNeed = 1 end
-		if ((AutoGearDB.RollOnNonGearLoot == false) and (not (rollItemInfo.gearType > 0))) then
+		if simulate then canNeed = 1 end
+		if (AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.isGear) and (not rollItemInfo.isMount) then
 			AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 			--local roll is nil, so no roll
-		elseif ((wouldNeed or rollItemInfo.isMount) and canNeed) then
+		elseif wouldNeed and canNeed then
 			roll = 1 --need
 		else
 			roll = 2 --greed
@@ -2294,8 +2372,8 @@ function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 			-- local score = AutoGearDetermineItemScore(rollItemInfo)
 			-- AutoGearPrint("AutoGear: "..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.." for "..rollItemInfo.link.." with score "..score.." and info:\n"..AutoGearDump(rollItemInfo), 3)
 		end
-		if (not rollItemInfo.Usable) then AutoGearPrint("AutoGear: "..rollItemInfo.link.." will not be equipped.  "..reason, 1) end
-		if (roll) then
+		if rollItemInfo.unusable then AutoGearPrint("AutoGear: "..rollItemInfo.link.." will not be equipped.  "..reason, 1) end
+		if roll then
 			local newAction = {}
 			newAction.action = (simulate and "simulateroll" or "roll")
 			newAction.t = GetTime() --roll right away
@@ -2306,7 +2384,8 @@ function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 			table.insert(futureAction, newAction)
 		end
 	else
-		AutoGearPrint("AutoGear: No weighting set for this class.", 0)
+		local localizedClass, _, spec = AutoGearGetClassAndSpec()
+		AutoGearPrint("AutoGear: No weighting set for "..spec.." "..localizedClass..".", 0)
 	end
 end
 
@@ -2358,7 +2437,42 @@ function AutoGearUpdateEquippedItems()
 		AutoGearEquippedItems[invSlot].score = score
 		AutoGearEquippedItems[invSlot].equippedScore = score
 		AutoGearEquippedItems[invSlot].equipped = 1
+		AutoGearEquippedItems[invSlot].empty = info.empty
 	end
+
+	--pretend the tabard slot is a separate slot for 2-handers
+	if (AutoGearEquippedItems[INVSLOT_MAINHAND].info.is2hWeapon and (not ((weapons == "2hDW") and CanDualWield()))) then
+		AutoGearEquippedItems[INVSLOT_TABARD] = AutoGearDeepCopy(AutoGearEquippedItems[INVSLOT_MAINHAND])
+		AutoGearEquippedItems[INVSLOT_MAINHAND].info = { name = "nothing", empty = 1 }
+		AutoGearEquippedItems[INVSLOT_MAINHAND].empty = 1
+		AutoGearEquippedItems[INVSLOT_MAINHAND].score = 0
+		AutoGearEquippedItems[INVSLOT_MAINHAND].equipped = nil
+	else
+		AutoGearEquippedItems[INVSLOT_TABARD] = {}
+		AutoGearEquippedItems[INVSLOT_TABARD].info = { name = "nothing", empty = 1 }
+		AutoGearEquippedItems[INVSLOT_TABARD].empty = 1
+		AutoGearEquippedItems[INVSLOT_TABARD].score = 0
+		AutoGearEquippedItems[INVSLOT_TABARD].equipped = nil
+		-- AutoGearEquippedItems[INVSLOT_TABARD].info = { name = (AutoGearEquippedItems[INVSLOT_MAINHAND].info.link or AutoGearEquippedItems[INVSLOT_MAINHAND].info.name).." and "..(AutoGearEquippedItems[INVSLOT_OFFHAND].info.link or AutoGearEquippedItems[INVSLOT_OFFHAND].info.name) }
+		-- AutoGearEquippedItems[INVSLOT_TABARD].score = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND].score
+		-- AutoGearEquippedItems[INVSLOT_TABARD].equippedScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND].score
+		-- AutoGearEquippedItems[INVSLOT_TABARD].equipped = nil
+	end
+end
+
+function AutoGearDeepCopy(object)
+    local object_type = type(object)
+    local newObject
+    if object_type == 'table' then
+        newObject = {}
+        for orig_key, orig_value in next, object, nil do
+            newObject[AutoGearDeepCopy(orig_key)] = AutoGearDeepCopy(orig_value)
+        end
+        setmetatable(newObject, AutoGearDeepCopy(getmetatable(object)))
+    else -- number, string, boolean, etc
+        newObject = object
+    end
+    return newObject
 end
 
 function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemInfo, noActions)
@@ -2368,56 +2482,40 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 	AutoGearUpdateEquippedItems()
 	--reset table of best items to reconsider all items
 	--set starting best scores from all equipped items
-	AutoGearBestItems = {}
-	for k, v in ipairs(AutoGearEquippedItems) do
-		AutoGearBestItems[k] = v
+	AutoGearBestItems = AutoGearDeepCopy(AutoGearEquippedItems)
+
+	for passesDone = 0,1 do
+		--consider all items in bags
+		for bag = 0, NUM_BAG_SLOTS do
+			local slotMax = GetContainerNumSlots(bag)
+			for slot = 0, slotMax do
+				info = AutoGearReadItemInfo(nil, nil, bag, slot)
+				AutoGearConsiderItem(info, bag, slot, nil)
+			end
+		end
+		--consider item being rolled on (if any)
+		if (lootRollItemID) then
+			AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1)
+		end
+		--consider quest rewards (if any)
+		if (questRewardID) then
+			for i = 1, GetNumQuestChoices() do
+				info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
+				AutoGearConsiderItem(info, nil, nil, nil, i)
+			end
+		end
 	end
 
-	--pretend the tabard slot is a separate slot for 2-handers
-	AutoGearBestItems[INVSLOT_TABARD] = {}
-	if (AutoGearIsTwoHandEquipped() and (not ((weapons == "2hDW") and CanDualWield()))) then
-		AutoGearBestItems[INVSLOT_TABARD].info = AutoGearBestItems[INVSLOT_MAINHAND].info
-		AutoGearBestItems[INVSLOT_TABARD].score = AutoGearBestItems[INVSLOT_MAINHAND].score
-		AutoGearBestItems[INVSLOT_TABARD].equippedScore = AutoGearBestItems[INVSLOT_MAINHAND].equippedScore
-		AutoGearBestItems[INVSLOT_TABARD].equipped = 1
-		AutoGearBestItems[INVSLOT_MAINHAND].info = {Name = "nothing"}
-		AutoGearBestItems[INVSLOT_MAINHAND].score = 0
-		AutoGearBestItems[INVSLOT_MAINHAND].equipped = nil
-	else
-		AutoGearBestItems[INVSLOT_TABARD].info = {Name = "nothing"}
-		AutoGearBestItems[INVSLOT_TABARD].score = 0
-		AutoGearBestItems[INVSLOT_TABARD].equippedScore = AutoGearBestItems[INVSLOT_MAINHAND].equippedScore + AutoGearBestItems[INVSLOT_OFFHAND].equippedScore
-		AutoGearBestItems[INVSLOT_TABARD].equipped = nil
-	end
-	--consider all items in bags
-	for bag = 0, NUM_BAG_SLOTS do
-		local slotMax = GetContainerNumSlots(bag)
-		for slot = 0, slotMax do
-			info = AutoGearReadItemInfo(nil, nil, bag, slot)
-			AutoGearConsiderItem(info, bag, slot, nil)
-		end
-	end
-	--consider item being rolled on (if any)
-	if (lootRollItemID) then
-		AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1)
-	end
-	--consider quest rewards (if any)
-	if (questRewardID) then
-		for i = 1, GetNumQuestChoices() do
-			info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
-			AutoGearConsiderItem(info, nil, nil, nil, i)
-		end
-	end
 	--create all future equip actions required (only if not rolling currently)
 	if (not lootRollItemID and not questRewardID and not noActions) then
 		for invSlot = 1, 23 do
-			if invSlot == INVSLOT_MAINHAND or invSlot == INVSLOT_OFFHAND then
-				--skip for now
+			if invSlot == INVSLOT_MAINHAND or invSlot == INVSLOT_OFFHAND or invSlot == INVSLOT_TABARD then
+				--skip weapons for now
 			else
-				local equippedInfo = AutoGearReadItemInfo(invSlot)
-				local equippedScore = AutoGearBestItems[invSlot].equippedScore
-				if ((not AutoGearBestItems[invSlot].equipped) and AutoGearBestItems[invSlot].score > equippedScore) then
-					AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+				local equippedInfo = AutoGearEquippedItems[invSlot].info
+				local equippedScore = AutoGearEquippedItems[invSlot].score
+				if (not AutoGearBestItems[invSlot].equipped) then
+					AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or AutoGearBestItems[invSlot].info.name).." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or equippedInfo.name).." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
 					AutoGearPrintItem(AutoGearBestItems[invSlot].info)
 					AutoGearPrintItem(equippedInfo)
 					anythingBetter = 1
@@ -2433,12 +2531,12 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 				end
 			end
 		end
-		--handle main and off-hand
+		--handle weapons
 		if (AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score > AutoGearBestItems[INVSLOT_TABARD].score) then
 			local extraDelay = 0
 			local mainSwap, offSwap
 			--main hand
-			if (not AutoGearBestItems[INVSLOT_MAINHAND].equipped and AutoGearBestItems[INVSLOT_MAINHAND].info.Name ~= "nothing") then
+			if (not AutoGearBestItems[INVSLOT_MAINHAND].equipped) and (not AutoGearBestItems[INVSLOT_MAINHAND].info.empty) then
 				mainSwap = 1
 				local newAction = {}
 				newAction.action = "equip"
@@ -2452,7 +2550,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 				extraDelay = 0.5
 			end
 			--off-hand
-			if (not AutoGearBestItems[INVSLOT_OFFHAND].equipped) then
+			if (not AutoGearBestItems[INVSLOT_OFFHAND].equipped) and (not AutoGearBestItems[INVSLOT_OFFHAND].info.empty) then
 				offSwap = 1
 				local newAction = {}
 				newAction.action = "equip"
@@ -2467,19 +2565,17 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 			if (mainSwap or offSwap) then
 				anythingBetter = 1
 				if (mainSwap and offSwap) then
+					local equippedMain = AutoGearEquippedItems[INVSLOT_MAINHAND].info
+					local mainScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score
 					if (AutoGearIsTwoHandEquipped()) then
-						local equippedMain = AutoGearReadItemInfo(INVSLOT_MAINHAND)
-						local mainScore = AutoGearDetermineItemScore(equippedMain, AutoGearCurrentWeighting)
-						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or "nothing").." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or AutoGearBestItems[INVSLOT_MAINHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or AutoGearBestItems[INVSLOT_OFFHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_MAINHAND].info)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_OFFHAND].info)
 						AutoGearPrintItem(equippedMain)
 					else
-						local equippedMain = AutoGearReadItemInfo(INVSLOT_MAINHAND)
-						local mainScore = AutoGearDetermineItemScore(equippedMain, AutoGearCurrentWeighting)
-						local equippedOff = AutoGearReadItemInfo(INVSLOT_OFFHAND)
-						local offScore = AutoGearDetermineItemScore(equippedOff, AutoGearCurrentWeighting)
-						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.link or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						local equippedOff = AutoGearEquippedItems[INVSLOT_OFFHAND].info
+						local offScore = AutoGearEquippedItems[INVSLOT_OFFHAND].score
+						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or AutoGearBestItems[INVSLOT_MAINHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or AutoGearBestItems[INVSLOT_OFFHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.link or equippedOff.name).." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_MAINHAND].info)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_OFFHAND].info)
 						AutoGearPrintItem(equippedMain)
@@ -2488,20 +2584,20 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 				else
 					local invSlot = INVSLOT_MAINHAND
 					if (offSwap) then invSlot = INVSLOT_OFFHAND end
-					local equippedInfo = AutoGearReadItemInfo(invSlot)
-					local equippedScore = AutoGearDetermineItemScore(equippedInfo, AutoGearCurrentWeighting)
-					AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or "nothing").." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or "nothing").." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+					local equippedInfo = AutoGearEquippedItems[invSlot].info
+					local equippedScore = AutoGearEquippedItems[invSlot].score
+					AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or AutoGearBestItems[invSlot].info.name).." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or equippedInfo.name).." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
 					AutoGearPrintItem(AutoGearBestItems[invSlot].info)
 					AutoGearPrintItem(equippedInfo)
 				end
 			end
-		elseif (AutoGearBestItems[INVSLOT_TABARD].score > AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score) then
-			if (not AutoGearBestItems[INVSLOT_TABARD].equipped) then
-				local equippedMain = AutoGearReadItemInfo(INVSLOT_MAINHAND)
-				local mainScore = AutoGearDetermineItemScore(equippedMain, AutoGearCurrentWeighting)
-				local equippedOff = AutoGearReadItemInfo(INVSLOT_OFFHAND)
-				local offScore = AutoGearDetermineItemScore(equippedOff, AutoGearCurrentWeighting)
-				AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_TABARD].info.Name or "nothing").." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_TABARD].score)..") was determined to be better than "..(equippedMain.Name or "nothing").." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.Name or "nothing").." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+		elseif (AutoGearBestItems[INVSLOT_TABARD].score > (AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score)) then
+			if (not AutoGearBestItems[INVSLOT_TABARD].equipped) and (not AutoGearBestItems[INVSLOT_TABARD].info.empty) then
+				local equippedMain = AutoGearEquippedItems[INVSLOT_MAINHAND].info
+				local mainScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score
+				local equippedOff = AutoGearEquippedItems[INVSLOT_OFFHAND].info
+				local offScore = AutoGearEquippedItems[INVSLOT_OFFHAND].score
+				AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_TABARD].info.link or AutoGearBestItems[INVSLOT_TABARD].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_TABARD].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.link or equippedOff.name).." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
 				AutoGearPrintItem(AutoGearBestItems[INVSLOT_TABARD].info)
 				AutoGearPrintItem(equippedMain)
 				AutoGearPrintItem(equippedOff)
@@ -2519,7 +2615,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 		end
 	elseif (lootRollItemID) then
 		--decide whether to roll on the item or not
-		if info.isMount then return 1 end
+		if (info.isMount and (not info.alreadyKnown)) then return 1 end
 		for i = 1, 23 do
 			if (AutoGearBestItems[i].rollOn and
 			(i ~= INVSLOT_MAINHAND or i ~= INVSLOT_OFFHAND or AutoGearIs1hWorthwhile()) and
@@ -2575,29 +2671,46 @@ end
 
 --companion function to AutoGearConsiderAllItems
 function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
+	if info.empty then return end
 	local score
-	if info.isMount then return true end
-	if (info.Usable or (rollOn and info.Within5levels)) then
+	if (info.isMount and (not info.alreadyKnown)) then return true end
+	if (info.usable or (rollOn and info.Within5levels)) then
 		score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
 		if info.isGear then
 			if not info.validGearSlots then return end
 			--ignore it if it's a tabard
 			if (info.validGearSlots[1] == INVSLOT_TABARD) then return end
-			if (info.validGearSlots[1] == INVSLOT_MAINHAND and AutoGearIsItemTwoHanded(info.id)) then info.validGearSlots = { INVSLOT_MAINHAND, INVSLOT_TABARD } end
 			local firstValidGearSlot = info.validGearSlots[1]
 			local lowestScoringValidGearSlot = firstValidGearSlot
-			local lowestScore = AutoGearBestItems[firstValidGearSlot].score
-			for _, v in ipairs(info.validGearSlots) do
-				if AutoGearBestItems[v].info.empty then
-					lowestScoringValidGearSlot = v
-					break
-				end
-				if AutoGearBestItems[v].score < lowestScore then
-					lowestScore = AutoGearBestItems[v].score
-					lowestScoringValidGearSlot = v
+			local lowestScoringValidGearSlotScore = AutoGearBestItems[firstValidGearSlot].score
+			if info.is2hWeapon then
+				lowestScoringValidGearSlot = INVSLOT_TABARD
+				lowestScoringValidGearSlotScore = AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score
+			else
+				for _, gearSlot in ipairs(info.validGearSlots) do
+					if info.unique and AutoGearBestItems[gearSlot].info.unique and
+					(info.id == AutoGearBestItems[gearSlot].info.id) and
+					(GetItemCount(info.id, true) > 1) then
+						return
+					end
+					if (AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore) or
+					AutoGearBestItems[gearSlot].info.empty then
+						lowestScoringValidGearSlot = gearSlot
+						lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot].score
+					end
 				end
 			end
-			if (score > AutoGearBestItems[lowestScoringValidGearSlot].score) or (not AutoGearBestItems[lowestScoringValidGearSlot].info.Usable) then
+
+			-- AutoGearPrint((info.link or info.name).." score: "..(score or "nil"),3)
+			-- AutoGearPrint("lowest-scoring valid gear slot: "..(lowestScoringValidGearSlot or "nil").." with score "..tostring(lowestScoringValidGearSlotScore or 0),3)
+			-- AutoGearPrint("is lowest-scoring valid gear slot empty? "..(AutoGearBestItems[lowestScoringValidGearSlot].info.empty or "nil"),3)
+			-- AutoGearPrint("will this be added to AutoGearBestItems? "..tostring(((score > lowestScoringValidGearSlotScore) or
+			-- AutoGearBestItems[lowestScoringValidGearSlot].info.empty or
+			-- AutoGearBestItems[lowestScoringValidGearSlot].info.unusable) or "nil"),3)
+
+			if (score > lowestScoringValidGearSlotScore) or
+			AutoGearBestItems[lowestScoringValidGearSlot].info.empty or
+			AutoGearBestItems[lowestScoringValidGearSlot].info.unusable then
 				if not justLook then
 					AutoGearBestItems[lowestScoringValidGearSlot].info = info
 					AutoGearBestItems[lowestScoringValidGearSlot].score = score
@@ -2637,7 +2750,7 @@ function AutoGearGetValidGearSlotsForGearType(gearType, weapons)
 		--[["INVTYPE_FINGER"]]         [11] = { INVSLOT_FINGER1, INVSLOT_FINGER2 },
 		--[["INVTYPE_TRINKET"]]        [12] = { INVSLOT_TRINKET1, INVSLOT_TRINKET2 },
 		--[["INVTYPE_CLOAK"]]          [16] = { INVSLOT_BACK },
-		--[["INVTYPE_WEAPON"]]         [13] = CanDualWield() and { INVSLOT_MAINHAND, INVSLOT_OFFHAND} or { INVSLOT_MAINHAND },
+		--[["INVTYPE_WEAPON"]]         [13] = CanDualWield() and { INVSLOT_MAINHAND, INVSLOT_OFFHAND } or { INVSLOT_MAINHAND },
 		--[["INVTYPE_SHIELD"]]         [14] = { INVSLOT_OFFHAND },
 		--[["INVTYPE_2HWEAPON"]]       [17] = weapons == "2hDW" and { INVSLOT_MAINHAND, INVSLOT_OFFHAND } or { INVSLOT_MAINHAND },
 		--[["INVTYPE_WEAPONMAINHAND"]] [21] = { INVSLOT_MAINHAND },
@@ -2655,30 +2768,33 @@ function AutoGearGetValidGearSlotsForGearType(gearType, weapons)
 	return gearSlotTable[gearType]
 end
 
+function AutoGearIsInvTypeTwoHanded(invType)
+	if not invType then return nil end
+	return (invType == "INVTYPE_2HWEAPON") or (
+		(TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (
+			(invType == "INVTYPE_RANGED") or (
+				invType == "INVTYPE_RANGEDRIGHT"
+			)
+		)
+	)
+end
+
 function AutoGearIsItemTwoHanded(itemID)
-	if (not itemID) then return nil end
-	return (select(4,GetItemInfoInstant(itemID)) == "INVTYPE_2HWEAPON")
+	if not itemID then return nil end
+	return AutoGearIsInvTypeTwoHanded(select(4,GetItemInfoInstant(itemID)))
 end
 
 function AutoGearIsTwoHandEquipped()
-	return AutoGearIsItemTwoHanded(GetInventoryItemID("player", INVSLOT_MAINHAND)) --INVSLOT_MAINHAND = 16 = main hand
+	return AutoGearIsItemTwoHanded(GetInventoryItemID("player", INVSLOT_MAINHAND))
 end
 
-function AutoGearGetMainHandType()
-	local id = GetInventoryItemID("player", GetInventorySlotInfo("MainHandSlot"))
-	local mainHandType
-	if (id) then
-		mainHandType = select(3, GetItemInfoInstant(id))
-	end
-	if mainHandType then
-		return mainHandType
-	else
-		return ""
-	end
+function AutoGearIsMainHandAFishingPole()
+	local itemClassID, itemSubClassID = select(6, GetItemInfoInstant(GetInventoryItemID("player", INVSLOT_MAINHAND)))
+	return (itemClassID == LE_ITEM_CLASS_WEAPON) and (itemSubClassID == LE_ITEM_WEAPON_FISHINGPOLE)
 end
 
 function AutoGearPrintItem(info)
-	if (info and info.link) then AutoGearPrint("AutoGear:     "..info.link..":", 2) end
+	AutoGearPrint("AutoGear:     "..(info.link or info.name)..":", 2)
 	if AutoGearDB.UsePawn and PawnIsReady ~= nil and PawnIsReady() then
 		local pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
 		local pawnScaleColor = PawnGetScaleColor(pawnScaleName)
@@ -2703,11 +2819,21 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 
 	local info = {}
 
-	if (inventoryID) then
+	if (container and slot) then
+		-- AutoGearPrint("called with container and slot: "..tostring(container or "nil").." "..tostring(slot or "nil"),3)
+		info.item = Item:CreateFromBagAndSlot(container, slot)
+		if info.item:IsItemEmpty() then
+			info.empty = 1
+			info.name = "nothing"
+			return info
+		end
+		AutoGearTooltip:SetBagItem(container, slot)
+	elseif (inventoryID) then
 		-- AutoGearPrint("called with inventoryID: "..tostring(inventoryID or "nil"),3)
 		info.item = Item:CreateFromEquipmentSlot(inventoryID)
 		if info.item:IsItemEmpty() then
 			info.empty = 1
+			info.name = "nothing"
 			return info
 		end
 		AutoGearTooltip:SetInventoryItem("player", inventoryID)
@@ -2715,14 +2841,6 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(GetLootRollItemLink(lootRollID))))
 		-- AutoGearPrint("called with lootRollID: "..tostring(lootRollID or "nil"),3)
 		AutoGearTooltip:SetLootRollItem(lootRollID)
-	elseif (container and slot) then
-		-- AutoGearPrint("called with container and slot: "..tostring(container or "nil").." "..tostring(slot or "nil"),3)
-		info.item = Item:CreateFromBagAndSlot(container, slot)
-		if info.item:IsItemEmpty() then
-			info.empty = 1
-			return info
-		end
-		AutoGearTooltip:SetBagItem(container, slot)
 	elseif (questRewardIndex) then
 		-- AutoGearPrint("called with questRewardIndex: "..tostring(questRewardIndex or "nil"),3)
 		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(GetQuestItemLink("choice", questRewardIndex))))
@@ -2745,23 +2863,18 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		)
 	end
 
-	if (not info.item) or info.item:IsItemEmpty() then
-		info.empty = 1
-		return info
-	end
-
 	info.rarity = info.item:GetItemQuality()
 	info.rarityColor = info.item:GetItemQualityColor()
 
-	local name, cannotUse
 	if link == nil then
 		link = info.item:GetItemLink()
 	end
 	info.link = link
 	info.linkString = select(3,ExtractHyperlinkString(link))
-	info.id, info.type, info.subType, info.equipLoc, info.icon, info.classID, info.subclassID = GetItemInfoInstant(info.item:GetItemID())
+	info.id, info.type, info.subType, info.invType, info.icon, info.classID, info.subclassID = GetItemInfoInstant(info.item:GetItemID())
+	info.name = C_Item.GetItemNameByID(info.id)
 	if link == nil then
-		AutoGearPrint("Error: "..tostring(name or "nil").." doesn't have a link",3)
+		AutoGearPrint("Error: "..tostring(info.name or "nil").." doesn't have a link",3)
 		AutoGearPrint(
 			"inventoryID: "..tostring(inventoryID or "nil")..
 			"; lootRollID: "..tostring(lootRollID or "nil")..
@@ -2784,11 +2897,14 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.gearType = C_Item.GetItemInventoryTypeByID(info.id) or 0
 	info.isGear = info.gearType > 0
 
-	if ((info.classID == 15) and (info.subclassID == 5)) then
+	if ((info.classID == LE_ITEM_CLASS_MISCELLANEOUS) and
+	(info.subclassID == LE_ITEM_MISCELLANEOUS_MOUNT)) then
 		info.isMount = 1
-		return info
+		if AutoGearIsMountItemAlreadyCollected(info.id) then
+			info.alreadyKnown = 1
+		end
 	elseif (not info.isGear) then
-		return info -- return early if the item isn't gear
+		return info -- return early if the item isn't a mount or gear
 	end
 
 	info.RedSockets = 0
@@ -2800,132 +2916,145 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 
 	if info.isGear then
 		info.validGearSlots = AutoGearGetValidGearSlotsForGearType(info.gearType, weapons)
-	end
-	if (info.equipLoc == "INVTYPE_WEAPONMAINHAND") then
-		if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
-		elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
-		elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." needs a two-hand weapon)"
-		end
-	elseif (info.equipLoc == "INVTYPE_SHIELD") then
-		if (weapons ~= "weapon and shield") and (weapons ~= "any") then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." should not use a shield)"
-		end
-	elseif (info.equipLoc == "INVTYPE_2HWEAPON") then
-		if (weapons == "weapon and shield") then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." needs weapon and shield)"
-		elseif (weapons == "dual wield" and CanDualWield()) then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." should dual wield)"
-		elseif (weapons == "ranged") then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." should use a ranged weapon)"
-		end
-	elseif (info.equipLoc == "INVTYPE_HOLDABLE") then
-		if (weapons == "2h" or
-		(weapons == "dual wield" and CanDualWield()) or
-		weapons == "weapon and shield" or
-		weapons == "ranged") then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." needs the off-hand for a weapon or shield)"
-		end
-	elseif (info.equipLoc == "INVTYPE_WEAPONOFFHAND") then
-		if (weapons == "2h" or weapons == "ranged") then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." should use a two-hand weapon)"
-		elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." needs a dagger in the off-hand)"
-		elseif (weapons == "weapon and shield" and weaponType ~= LE_ITEM_ARMOR_SHIELD) then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." needs a shield in the off-hand)"
-		elseif (weapons == "dual wield" and CanDualWield() and weaponType == LE_ITEM_ARMOR_SHIELD) then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." should dual wield and not use a shield)"
-		end
-	elseif (info.equipLoc == "INVTYPE_WEAPON") then
-		if (weapons == "2h" or weapons == "2hDW" or ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (weapons == "ranged"))) then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." should use a two-handed weapon or dual wield two-handers)"
-		end
-		if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
-			cannotUse = 1
-			reason = "("..spec.." "..localizedClass.." needs a dagger in each hand)"
+		for _, v in pairs(info.validGearSlots) do
+			if v == INVSLOT_MAINHAND or v == INVSLOT_OFFHAND then
+				info.isWeaponOrOffHand = 1
+				if AutoGearIsInvTypeTwoHanded(info.invType) then
+					info.is2hWeapon = 1
+				end
+				break
+			end
 		end
 	end
 
-	if (TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and
-	(info.equipLoc == "INVTYPE_RANGED") and
-	(weapons ~= "ranged" and weaponType ~= LE_ITEM_WEAPON_WAND) then
-		cannotUse = 1
-		reason = "("..spec.." "..localizedClass.." should not use a ranged 2h weapon)"
+	if info.isWeaponOrOffHand then
+		if (info.invType == "INVTYPE_WEAPONMAINHAND") then
+			if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
+			elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
+			elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." needs a two-hand weapon)"
+			end
+		elseif (info.invType == "INVTYPE_SHIELD") then
+			if (weapons ~= "weapon and shield") and (weapons ~= "any") then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." should not use a shield)"
+			end
+		elseif (info.invType == "INVTYPE_2HWEAPON") then
+			if (weapons == "weapon and shield") then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." needs weapon and shield)"
+			elseif (weapons == "dual wield" and CanDualWield()) then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." should dual wield)"
+			elseif (weapons == "ranged") then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." should use a ranged weapon)"
+			end
+		elseif (info.invType == "INVTYPE_HOLDABLE") then
+			if (weapons == "2h" or
+			(weapons == "dual wield" and CanDualWield()) or
+			weapons == "weapon and shield" or
+			weapons == "ranged") then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." needs the off-hand for a weapon or shield)"
+			end
+		elseif (info.invType == "INVTYPE_WEAPONOFFHAND") then
+			if (weapons == "2h" or weapons == "ranged") then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." should use a two-hand weapon)"
+			elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." needs a dagger in the off-hand)"
+			elseif (weapons == "weapon and shield" and weaponType ~= LE_ITEM_ARMOR_SHIELD) then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." needs a shield in the off-hand)"
+			elseif (weapons == "dual wield" and CanDualWield() and weaponType == LE_ITEM_ARMOR_SHIELD) then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." should dual wield and not use a shield)"
+			end
+		elseif (info.invType == "INVTYPE_WEAPON") then
+			if (weapons == "2h" or weapons == "2hDW" or ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (weapons == "ranged"))) then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." should use a two-handed weapon or dual wield two-handers)"
+			end
+			if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+				info.unusable = 1
+				reason = "("..spec.." "..localizedClass.." needs a dagger in each hand)"
+			end
+		end
+
+		if (TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and
+		(info.invType == "INVTYPE_RANGED") and
+		(weapons ~= "ranged" and weaponType ~= LE_ITEM_WEAPON_WAND) then
+			info.unusable = 1
+			reason = "("..spec.." "..localizedClass.." should not use a ranged 2h weapon)"
+		end
 	end
 
-	info.equipped = IsEquippedItem(info.id)
+	info.equipped = not not inventoryID
 
 	for i = 1, AutoGearTooltip:NumLines() do
 		local mytext = getglobal("AutoGearTooltipTextLeft"..i)
-		if (mytext) then
+		if mytext then
 			local r, g, b, a = mytext:GetTextColor()
 			local text = select(1,string.gsub(mytext:GetText():lower(),",",""))
-			if (i==1) then
-				info.Name = mytext:GetText()
-				if (info.Name == "Retrieving item information") then
-					cannotUse = 1
+			if i==1 then
+				info.name = mytext:GetText()
+				if info.name == "Retrieving item information" then
+					info.unusable = 1
 					reason = "(this item's tooltip is not yet available)"
-					--AutoGearPrint("AutoGear: Item's name says \"Retrieving item information\"; cannotUse: "..tostring(cannotUse), 0)
+					--AutoGearPrint("AutoGear: Item's name says \"Retrieving item information\"; info.unusable: "..tostring(info.unusable), 0)
 				end
 			end
 			local multiplier = 1.0
-			if (string.find(text, "chance to") and not string.find(text, "improves")) then multiplier = multiplier/3.0 end
-			if (string.find(text, "use:")) then multiplier = multiplier/6.0 end
+			if string.find(text, "chance to") and not string.find(text, "improves") then multiplier = multiplier/3.0 end
+			if string.find(text, "use:") then multiplier = multiplier/6.0 end
 			-- don't count greyed out set bonus lines
-			if (r < 0.8 and g < 0.8 and b < 0.8 and string.find(text, "set:")) then multiplier = 0 end
+			if r < 0.8 and g < 0.8 and b < 0.8 and string.find(text, "set:") then multiplier = 0 end
 			-- note: these proc checks may not be correct for all cases
-			if (string.find(text, "deal damage")) then multiplier = multiplier * (AutoGearCurrentWeighting.DamageProc or 0) end
-			if (string.find(text, "damage and healing")) then multiplier = multiplier * math.max((AutoGearCurrentWeighting.HealingProc or 0), (AutoGearCurrentWeighting.DamageProc or 0))
-			elseif (string.find(text, "healing spells")) then multiplier = multiplier * (AutoGearCurrentWeighting.HealingProc or 0)
-			elseif (string.find(text, "damage spells")) then multiplier = multiplier * (AutoGearCurrentWeighting.DamageSpellProc or 0)
+			if string.find(text, "deal damage") then multiplier = multiplier * (AutoGearCurrentWeighting.DamageProc or 0) end
+			if string.find(text, "damage and healing") then multiplier = multiplier * math.max((AutoGearCurrentWeighting.HealingProc or 0), (AutoGearCurrentWeighting.DamageProc or 0))
+			elseif string.find(text, "healing spells") then multiplier = multiplier * (AutoGearCurrentWeighting.HealingProc or 0)
+			elseif string.find(text, "damage spells") then multiplier = multiplier * (AutoGearCurrentWeighting.DamageSpellProc or 0)
 			end
-			if (string.find(text, "melee and ranged")) then multiplier = multiplier * math.max((AutoGearCurrentWeighting.MeleeProc or 0), (AutoGearCurrentWeighting.RangedProc or 0))
-			elseif (string.find(text, "melee attacks")) then multiplier = multiplier * (AutoGearCurrentWeighting.MeleeProc or 0)
-			elseif (string.find(text, "ranged attacks")) then multiplier = multiplier * (AutoGearCurrentWeighting.RangedProc or 0)
+			if string.find(text, "melee and ranged") then multiplier = multiplier * math.max((AutoGearCurrentWeighting.MeleeProc or 0), (AutoGearCurrentWeighting.RangedProc or 0))
+			elseif string.find(text, "melee attacks") then multiplier = multiplier * (AutoGearCurrentWeighting.MeleeProc or 0)
+			elseif string.find(text, "ranged attacks") then multiplier = multiplier * (AutoGearCurrentWeighting.RangedProc or 0)
 			end
 			local value = tonumber(string.match(text, "-?[0-9]+%.?[0-9]*")) or 0
-			if (value) then
+			if value then
 				value = value * multiplier
 			else
 				value = 0
 			end
-			if (value > 0 and string.find(text, " bag")) then
+			if value > 0 and string.find(text, " bag") then
 				info.numBagSlots = (info.numBagSlots or 0) + value
-				break -- break early if it's a bag, since they don't have other stats
 			end
-			if (string.find(text, "unique")) then
-				if (info.equipped) then
-					cannotUse = 1
-					reason = "(this item is unique and you already have one)"
-				end
+			if string.find(text, "unique") then
+				info.unique = 1
+				-- if (info.equipped) then
+				-- 	info.unusable = 1
+				-- 	reason = "(this item is unique and you already have one)"
+				-- end
 			end
-			if (string.find(text, "already known")) then
-				cannotUse = 1
+			if string.find(text, "already known") then
+				info.alreadyKnown = 1
+				info.unusable = 1
 				reason = "(this item has been learned already)"
 			end
 			local isHealer = spec=="Holy" or spec=="Restoration" or spec=="Mistweaver" or spec=="Discipline"
-			if (string.find(text, L["strength"])) then info.Strength = (info.Strength or 0) + value end
-			if (string.find(text, L["agility"])) then info.Agility = (info.Agility or 0) + value end
-			if (string.find(text, L["intellect"])) then info.Intellect = (info.Intellect or 0) + value end
-			if (string.find(text, L["stamina"])) then info.Stamina = (info.Stamina or 0) + value end
-			if (string.find(text, L["spirit"])) then info.Spirit = (info.Spirit or 0) + value end
-			if (string.find(text, L["armor"]) and not (string.find(text, "lowers their armor"))) then info.Armor = (info.Armor or 0) + value end
-			if (string.find(text, "attack power")) and not string.find(text, "when fighting") and (not string.find(text, "forms only") or class=="DRUID") then info.AttackPower = (info.AttackPower or 0) + value end
+			if string.find(text, L["strength"]) then info.Strength = (info.Strength or 0) + value end
+			if string.find(text, L["agility"]) then info.Agility = (info.Agility or 0) + value end
+			if string.find(text, L["intellect"]) then info.Intellect = (info.Intellect or 0) + value end
+			if string.find(text, L["stamina"]) then info.Stamina = (info.Stamina or 0) + value end
+			if string.find(text, L["spirit"]) then info.Spirit = (info.Spirit or 0) + value end
+			if string.find(text, L["armor"]) and not string.find(text, "lowers their armor") then info.Armor = (info.Armor or 0) + value end
+			if string.find(text, "attack power") and not string.find(text, "when fighting") and (not string.find(text, "forms only") or class=="DRUID") then info.AttackPower = (info.AttackPower or 0) + value end
 			if ((string.find(text, "spell power") or string.find(text, "spell damage")) or
 				string.find(text, "damage and healing") or
 				(string.find(text, "frost spell damage") or string.find(text, "damage done by frost spells and effects")) and (spec=="Frost" or class=="MAGE" and spec=="None") or
@@ -2937,87 +3066,83 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				(string.find(text, "increases healing done") and isHealer)) then info.SpellPower = (info.SpellPower or 0) + value
 			end
 			if TOC_VERSION_CURRENT < TOC_VERSION_WOTLK then
-				if (string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike") or string.find(text, "spell critical rating")) then info.SpellCrit = (info.SpellCrit or 0) + value end
-				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
-				if (string.find(text, "hit with spells by") or string.find(text, "spell hit rating by")) then info.SpellHit = (info.SpellHit or 0) + value end
-				if (string.find(text, "critical strike by")) then info.Crit = (info.Crit or 0) + value end
+				if string.find(text, "critical strike with spells by") or string.find(text, "spell critical strike") or string.find(text, "spell critical rating") then info.SpellCrit = (info.SpellCrit or 0) + value end
+				if string.find(text, "critical strike by") then info.Crit = (info.Crit or 0) + value end
+				if string.find(text, "hit with spells by") or string.find(text, "spell hit rating by") then info.SpellHit = (info.SpellHit or 0) + value end
+				if string.find(text, "critical strike by") then info.Crit = (info.Crit or 0) + value end
 			else
-				if (string.find(text, "critical strike")) then info.Crit = (info.Crit or 0) + value end
+				if string.find(text, "critical strike") then info.Crit = (info.Crit or 0) + value end
 			end
 			if TOC_VERSION_CURRENT < TOC_VERSION_WOD then
-				if (string.find(text, "hit by") or string.find(text, "improves hit rating by") or string.find(text, "your hit rating by")) then info.Hit = (info.Hit or 0) + value end
+				if string.find(text, "hit by") or string.find(text, "improves hit rating by") or string.find(text, "your hit rating by") then info.Hit = (info.Hit or 0) + value end
 			end
-			if (string.find(text, "haste")) then info.Haste = (info.Haste or 0) + value end
-			if (string.find(text, "mana per 5") or string.find(text, "mana every 5")) then info.Mp5 = (info.Mp5 or 0) + value end
-			if (string.find(text, "meta socket")) then info.MetaSockets = info.MetaSockets + 1 end
-			if (string.find(text, "red socket")) then info.RedSockets = info.RedSockets + 1 end
-			if (string.find(text, "yellow socket")) then info.YellowSockets = info.YellowSockets + 1 end
-			if (string.find(text, "blue socket")) then info.BlueSockets = info.BlueSockets + 1 end
-			if (string.find(text, "dodge")) then info.Dodge = (info.Dodge or 0) + value end
-			if (string.find(text, "parry")) then info.Parry = (info.Parry or 0) + value end
-			if (string.find(text, L["block"])) then info.Block = (info.Block or 0) + value end
-			if (string.find(text, "defense")) then info.Defense = (info.Defense or 0) + value end
-			if (string.find(text, "mastery")) then info.Mastery = (info.Mastery or 0) + value end
-			if (string.find(text, "multistrike")) then info.Multistrike = (info.Multistrike or 0) + value end
-			if (string.find(text, "versatility")) then info.Versatility = (info.Versatility or 0) + value end
-			if (string.find(text, "experience gained")) then
-				if (UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) then
-					info.ExperienceGained = (info.ExperienceGained or 0) + value
-				end
-			end
+			if string.find(text, "haste") then info.Haste = (info.Haste or 0) + value end
+			if string.find(text, "mana per 5") or string.find(text, "mana every 5") then info.Mp5 = (info.Mp5 or 0) + value end
+			if string.find(text, "meta socket") then info.MetaSockets = info.MetaSockets + 1 end
+			if string.find(text, "red socket") then info.RedSockets = info.RedSockets + 1 end
+			if string.find(text, "yellow socket") then info.YellowSockets = info.YellowSockets + 1 end
+			if string.find(text, "blue socket") then info.BlueSockets = info.BlueSockets + 1 end
+			if string.find(text, "dodge") then info.Dodge = (info.Dodge or 0) + value end
+			if string.find(text, "parry") then info.Parry = (info.Parry or 0) + value end
+			if string.find(text, L["block"]) then info.Block = (info.Block or 0) + value end
+			if string.find(text, "defense") then info.Defense = (info.Defense or 0) + value end
+			if string.find(text, "mastery") then info.Mastery = (info.Mastery or 0) + value end
+			if string.find(text, "multistrike") then info.Multistrike = (info.Multistrike or 0) + value end
+			if string.find(text, "versatility") then info.Versatility = (info.Versatility or 0) + value end
+			if string.find(text, "experience gained") then info.ExperienceGained = (info.ExperienceGained or 0) + value end
 			if weaponType then
-				if (string.find(text, "damage per second")) then info.DPS = (info.DPS or 0) + value end
+				if string.find(text, "damage per second") then info.DPS = (info.DPS or 0) + value end
 				local minDamage, maxDamage = string.match(text, "([0-9]+%.?[0-9]*) ?%- ?([0-9]+%.?[0-9]*) damage")
-				if (minDamage and maxDamage) then
+				if minDamage and maxDamage then
 					info.Damage = (info.Damage or 0) + ((tonumber(minDamage) + tonumber(maxDamage))/2)
-					minDamage, maxDamage = nil
+					minDamage, maxDamage = nil, nil
 				end
 			end
 			--check for being a pattern or the like
-			if (string.find(text, "pattern:")) then cannotUse = 1 end
-			if (string.find(text, "plans:")) then cannotUse = 1 end
+			if string.find(text, "pattern:") then info.unusable = 1 end
+			if string.find(text, "plans:") then info.unusable = 1 end
 
 			--check for red text
 			local r, g, b, a = mytext:GetTextColor()
 			if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and mytext:GetText()) then --this is red text
 				--if Within5levels was already set but we found another red text, clear it, because we really can't use this
-				if (info.Within5levels) then info.Within5levels = nil end
+				if info.Within5levels then info.Within5levels = nil end
 				--if there's not already a reason we cannot use and this is just a required level, check if it's within 5 levels
-				if (not cannotUse and string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
+				if (not info.unusable and string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
 					info.Within5levels = 1
 				end
 				reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: \""..(mytext:GetText() or "nil").."\")"
-				cannotUse = 1
+				info.unusable = 1
 			end
 
 			--check for red text on the right side
-			rightText = getglobal("AutoGearTooltipTextRight"..i)
+			local rightText = getglobal("AutoGearTooltipTextRight"..i)
 			if (rightText) then
 				local r, g, b, a = rightText:GetTextColor()
 				if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and rightText:GetText()) then --this is red text
 					reason = "(found red text on the right.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: \""..(rightText:GetText() or "nil").."\")"
-					cannotUse = 1
+					info.unusable = 1
 				end
 			end
 		end
 	end
 
-	if (info.RedSockets == 0) then info.RedSockets = nil end
-	if (info.YellowSockets == 0) then info.YellowSockets = nil end
-	if (info.BlueSockets == 0) then info.BlueSockets = nil end
-	if (info.MetaSockets == 0) then info.MetaSockets = nil end
+	if info.RedSockets == 0 then info.RedSockets = nil end
+	if info.YellowSockets == 0 then info.YellowSockets = nil end
+	if info.BlueSockets == 0 then info.BlueSockets = nil end
+	if info.MetaSockets == 0 then info.MetaSockets = nil end
 
-	if (info.isGear or info.isMount) then
+	if info.isGear or info.isMount then
 		info.shouldShowScoreInTooltip = 1
 	end
-	if (not cannotUse and (info.isGear or info.isMount)) then
-		info.Usable = 1
-	elseif not info.isGear then
-		cannotUse = 1
-		reason = "(item can't be equipped. info.equipLoc = '".. tostring(info.equipLoc) .."')"
+	if (not info.unusable) and (info.isGear or info.isMount) then
+		info.usable = 1
+	elseif not (info.isGear or info.isMount) then
+		info.unusable = 1
+		reason = "(item can't be equipped. info.invType = '".. tostring(info.invType) .."')"
 	end
 
-	--if (cannotUse) then AutoGearPrint("Cannot use "..(info.link or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
+	--if (info.unusable) then AutoGearPrint("Cannot use "..(info.link or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
 	info.reason = reason
 
 	--caching did not show a performance benefit, so commented this out
@@ -3054,8 +3179,7 @@ end
 
 function AutoGearGetPawnScaleName()
 	local realClass, _, ClassID = UnitClass("player")
-
-	local realSpec = AutoGearGetSpec()
+	local realSpec = AutoGearDetectSpec()
 	local localizedOverrideClass, overrideClass, overrideSpec = AutoGearGetClassAndSpec()
 
 	-- Try to find the selected Pawn scale
@@ -3237,22 +3361,21 @@ function AutoGearGetWeaponType(itemClassID, itemSubClassID)
 	end
 end
 
-function AutoGearDetermineItemScore(itemInfo)
-	if itemInfo.empty then return 0 end
-	if itemInfo.isMount and
-	(C_MountJournal and (not select(11,C_MountJournal.GetMountInfoByID(C_MountJournal.GetMountFromItem(itemInfo.id)))) or true) then
+function AutoGearDetermineItemScore(info)
+	if info.empty then return 0 end
+	if info.isMount and (not info.alreadyKnown) then
 		return math.huge
 	end
-	if itemInfo.classID == 1 --[[ container ]] then
-		if itemInfo.subclassID == 0 then -- generic (typical) bag
-			return itemInfo.numBagSlots
+	if info.classID == 1 --[[ container ]] then
+		if info.subclassID == 0 then -- generic (typical) bag
+			return info.numBagSlots
 		else
-			return itemInfo.numBagSlots * E -- specialized bags suck, so consider them only better than nothing
+			return info.numBagSlots * E -- specialized bags suck, so consider them only better than nothing
 		end
 	end
 
 	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
-		local PawnItemData = PawnGetItemData(itemInfo.link)
+		local PawnItemData = PawnGetItemData(info.link)
 		--AutoGearRecursivePrint(PawnItemData)
 		if PawnItemData then
 			--AutoGearPrint(itemInfo.link.." value from Pawn is "..tostring(PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName())),3)
@@ -3261,38 +3384,56 @@ function AutoGearDetermineItemScore(itemInfo)
 		--else AutoGearPrint("AutoGear: PawnItemData was nil in AutoGearReadItemInfo", 3)
 	end
 
-	local score = (AutoGearCurrentWeighting.Strength or 0) * (itemInfo.Strength or 0) +
-		(AutoGearCurrentWeighting.Agility or 0) * (itemInfo.Agility or 0) +
-		(AutoGearCurrentWeighting.Stamina or 0) * (itemInfo.Stamina or 0) +
-		(AutoGearCurrentWeighting.Intellect or 0) * (itemInfo.Intellect or 0) +
-		(AutoGearCurrentWeighting.Spirit or 0) * (itemInfo.Spirit or 0) +
-		(AutoGearCurrentWeighting.Armor or 0) * (itemInfo.Armor or 0) +
-		(AutoGearCurrentWeighting.Dodge or 0) * (itemInfo.Dodge or 0) +
-		(AutoGearCurrentWeighting.Parry or 0) * (itemInfo.Parry or 0) +
-		(AutoGearCurrentWeighting.Block or 0) * (itemInfo.Block or 0) +
-		(AutoGearCurrentWeighting.Defense or 0) * (itemInfo.Defense or 0) +
-		(AutoGearCurrentWeighting.SpellPower or 0) * (itemInfo.SpellPower or 0) +
-		(AutoGearCurrentWeighting.SpellPenetration or 0) * (itemInfo.SpellPenetration or 0) +
-		(AutoGearCurrentWeighting.Haste or 0) * (itemInfo.Haste or 0) +
-		(AutoGearCurrentWeighting.Mp5 or 0) * (itemInfo.Mp5 or 0) +
-		(AutoGearCurrentWeighting.AttackPower or 0) * (itemInfo.AttackPower or 0) +
-		(AutoGearCurrentWeighting.ArmorPenetration or 0) * (itemInfo.ArmorPenetration or 0) +
-		(AutoGearCurrentWeighting.Crit or 0) * (itemInfo.Crit or 0) +
-		(AutoGearCurrentWeighting.SpellCrit or 0) * (itemInfo.SpellCrit or 0) +
-		(AutoGearCurrentWeighting.Hit or 0) * (itemInfo.Hit or 0) +
-		(AutoGearCurrentWeighting.SpellHit or 0) * (itemInfo.SpellHit or 0) +
-		(AutoGearCurrentWeighting.RedSockets or 0) * (itemInfo.RedSockets or 0) +
-		(AutoGearCurrentWeighting.YellowSockets or 0) * (itemInfo.YellowSockets or 0) +
-		(AutoGearCurrentWeighting.BlueSockets or 0) * (itemInfo.BlueSockets or 0) +
-		(AutoGearCurrentWeighting.MetaSockets or 0) * (itemInfo.MetaSockets or 0) +
-		(AutoGearCurrentWeighting.Mastery or 0) * (itemInfo.Mastery or 0) +
-		(AutoGearCurrentWeighting.Multistrike or 0) * (itemInfo.Multistrike or 0) +
-		(AutoGearCurrentWeighting.Versatility or 0) * (itemInfo.Versatility or 0) +
-		(AutoGearCurrentWeighting.ExperienceGained or 0) * (itemInfo.ExperienceGained or 0) +
-		(AutoGearCurrentWeighting.DPS or 0) * (itemInfo.DPS or 0) +
-		(AutoGearCurrentWeighting.Damage or 0) * (itemInfo.Damage or 0)
+	local score = (AutoGearCurrentWeighting.Strength or 0) * (info.Strength or 0) +
+		(AutoGearCurrentWeighting.Agility or 0) * (info.Agility or 0) +
+		(AutoGearCurrentWeighting.Stamina or 0) * (info.Stamina or 0) +
+		(AutoGearCurrentWeighting.Intellect or 0) * (info.Intellect or 0) +
+		(AutoGearCurrentWeighting.Spirit or 0) * (info.Spirit or 0) +
+		(AutoGearCurrentWeighting.Armor or 0) * (info.Armor or 0) +
+		(AutoGearCurrentWeighting.Dodge or 0) * (info.Dodge or 0) +
+		(AutoGearCurrentWeighting.Parry or 0) * (info.Parry or 0) +
+		(AutoGearCurrentWeighting.Block or 0) * (info.Block or 0) +
+		(AutoGearCurrentWeighting.Defense or 0) * (info.Defense or 0) +
+		(AutoGearCurrentWeighting.SpellPower or 0) * (info.SpellPower or 0) +
+		(AutoGearCurrentWeighting.SpellPenetration or 0) * (info.SpellPenetration or 0) +
+		(AutoGearCurrentWeighting.Haste or 0) * (info.Haste or 0) +
+		(AutoGearCurrentWeighting.Mp5 or 0) * (info.Mp5 or 0) +
+		(AutoGearCurrentWeighting.AttackPower or 0) * (info.AttackPower or 0) +
+		(AutoGearCurrentWeighting.ArmorPenetration or 0) * (info.ArmorPenetration or 0) +
+		(AutoGearCurrentWeighting.Crit or 0) * (info.Crit or 0) +
+		(AutoGearCurrentWeighting.SpellCrit or 0) * (info.SpellCrit or 0) +
+		(AutoGearCurrentWeighting.Hit or 0) * (info.Hit or 0) +
+		(AutoGearCurrentWeighting.SpellHit or 0) * (info.SpellHit or 0) +
+		(AutoGearCurrentWeighting.RedSockets or 0) * (info.RedSockets or 0) +
+		(AutoGearCurrentWeighting.YellowSockets or 0) * (info.YellowSockets or 0) +
+		(AutoGearCurrentWeighting.BlueSockets or 0) * (info.BlueSockets or 0) +
+		(AutoGearCurrentWeighting.MetaSockets or 0) * (info.MetaSockets or 0) +
+		(AutoGearCurrentWeighting.Mastery or 0) * (info.Mastery or 0) +
+		(AutoGearCurrentWeighting.Multistrike or 0) * (info.Multistrike or 0) +
+		(AutoGearCurrentWeighting.Versatility or 0) * (info.Versatility or 0) +
+		(AutoGearCurrentWeighting.DPS or 0) * (info.DPS or 0) +
+		(AutoGearCurrentWeighting.Damage or 0) * (info.Damage or 0) +
+		((UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) and
+		(AutoGearCurrentWeighting.ExperienceGained or 0) * (info.ExperienceGained or 0) or 0)
 	--AutoGearPrint(itemInfo.link.." value from AutoGear is "..tostring(score),3)
 	return score
+end
+
+function AutoGearIsMountItemAlreadyCollected(itemID)
+	if GetItemCount(itemID, true) > 0 or
+	IsSpellKnown(select(2,GetItemSpell(itemID))) or
+	(C_MountJournal and C_MountJournal.GetMountInfoByID and C_MountJournal.GetMountFromItem and
+	select(11,C_MountJournal.GetMountInfoByID(C_MountJournal.GetMountFromItem(itemID)))) then
+		return true
+	elseif GetNumCompanions then
+		local itemName = C_Item.GetItemNameByID(itemID)
+		local numCollectedMounts = GetNumCompanions("MOUNT")
+		for i = 1, numCollectedMounts do
+			if select(2,GetCompanionInfo("MOUNT", i)) == itemName then
+				return true
+			end
+		end
+	end
 end
 
 function AutoGearGetAllBagsNumFreeSlots()
@@ -3307,14 +3448,11 @@ function AutoGearGetAllBagsNumFreeSlots()
 end
 
 function AutoGearPutItemInEmptyBagSlot()
-	for i = 0, NUM_BAG_SLOTS do
+	if GetContainerNumFreeSlots(BACKPACK_CONTAINER) > 0 then PutItemInBackpack() end
+	for i = 1, NUM_BAG_SLOTS do
 		local freeSlots, bagType = GetContainerNumFreeSlots(i)
 		if (bagType == 0 and freeSlots > 0) then
-			if (i == 0) then
-				PutItemInBackpack()
-			else
-				PutItemInBag(23-i)
-			end
+			PutItemInBag(CONTAINER_BAG_OFFSET+i)
 		end
 	end
 end
@@ -3362,18 +3500,42 @@ function AutoGearDump(o)
     end
 end
 
-function AutoGearGetLowestScoringEquippedGearInfo(info)
-	if not info.validGearSlots then return end
+function AutoGearGetTooltipScoreComparisonInfo(info)
+	-- if not info.validGearSlots then return end
+	-- local firstValidGearSlot = info.validGearSlots[1]
+	-- local lowestScore = AutoGearEquippedItems[firstValidGearSlot].score
+	-- local lowestScoringValidGearSlot = firstValidGearSlot
+	-- for _, gearSlot in ipairs(info.validGearSlots) do
+	-- 	if AutoGearEquippedItems[gearSlot].score < lowestScore then
+	-- 		lowestScore = AutoGearEquippedItems[gearSlot].score
+	-- 		lowestScoringValidGearSlot = gearSlot
+	-- 	end
+	-- end
+	-- return AutoGearEquippedItems[lowestScoringValidGearSlot].info
+	if not info.validGearSlots then return nil, 0 end
+	--ignore it if it's a tabard
+	if (info.validGearSlots[1] == INVSLOT_TABARD) then return nil, 0 end
 	local firstValidGearSlot = info.validGearSlots[1]
-	local lowestScore = AutoGearEquippedItems[firstValidGearSlot].score
 	local lowestScoringValidGearSlot = firstValidGearSlot
-	for _, v in ipairs(info.validGearSlots) do
-		if AutoGearEquippedItems[v].score < lowestScore then
-			lowestScore = AutoGearEquippedItems[v].score
-			lowestScoringValidGearSlot = v
+	local lowestScoringValidGearSlotScore = AutoGearEquippedItems[firstValidGearSlot].score
+	if info.is2hWeapon then
+		lowestScoringValidGearSlot = INVSLOT_MAINHAND
+		lowestScoringValidGearSlotScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND].score
+	else
+		for _, gearSlot in ipairs(info.validGearSlots) do
+			if info.unique and AutoGearEquippedItems[gearSlot].info.unique and
+			(info.id == AutoGearEquippedItems[gearSlot].info.id) and
+			(GetItemCount(info.id, true) > 1) then
+				return
+			end
+			if (AutoGearEquippedItems[gearSlot].score < lowestScoringValidGearSlotScore) or
+			AutoGearEquippedItems[gearSlot].info.empty then
+				lowestScoringValidGearSlot = gearSlot
+				lowestScoringValidGearSlotScore = AutoGearEquippedItems[gearSlot].score
+			end
 		end
 	end
-	return AutoGearEquippedItems[lowestScoringValidGearSlot].info
+	return AutoGearEquippedItems[lowestScoringValidGearSlot].info, lowestScoringValidGearSlotScore
 end
 
 function AutoGearTooltipHook(tooltip)
@@ -3397,8 +3559,7 @@ function AutoGearTooltipHook(tooltip)
 	local lowestScoringEquippedItemScore
 	local scoreColor = HIGHLIGHT_FONT_COLOR
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
-		lowestScoringEquippedItemInfo = AutoGearGetLowestScoringEquippedGearInfo(tooltipItemInfo)
-		lowestScoringEquippedItemScore = AutoGearDetermineItemScore(lowestScoringEquippedItemInfo, AutoGearCurrentWeighting)
+		lowestScoringEquippedItemInfo, lowestScoringEquippedItemScore = AutoGearGetTooltipScoreComparisonInfo(tooltipItemInfo)
 		--AutoGearPrint("AutoGear: This tooltip is \""..tooltip:GetName().."\".",1)
 		local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
 		local isAnyComparisonTooltipVisible = ItemRefTooltip:IsVisible() or ShoppingTooltip1:IsVisible() or ShoppingTooltip2:IsVisible()
@@ -3418,10 +3579,10 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
 		tooltip:AddDoubleLine((((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..((shouldShowComparisonLine and not isAComparisonTooltip) and " (this)" or "")..":",
-		(((tooltipItemInfo.Usable == 1) and "" or (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE))..score) or "nil",
+		(((tooltipItemInfo.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
-		if (AutoGearDB.ReasonsInTooltips == true) and (not tooltipItemInfo.Usable) then
+		if (AutoGearDB.ReasonsInTooltips == true) and tooltipItemInfo.unusable then
 			tooltip:AddDoubleLine("AutoGear: won't auto-equip",
 			tooltipItemInfo.reason,
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b,
@@ -3446,7 +3607,7 @@ function AutoGearTooltipHook(tooltip)
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: itemEquipLoc:",
-			tooltipItemInfo.equipLoc,
+			tooltipItemInfo.invType,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
@@ -3504,7 +3665,7 @@ function AutoGearTooltipHook(tooltip)
 		local lowestScoringEquippedItemRarityColor = lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.rarityColor or HIGHLIGHT_FONT_COLOR
 		tooltip:AddDoubleLine(
 			"AutoGear: lowest-scoring equipped item:",
-			lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.Name or "nil",
+			lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.name or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			lowestScoringEquippedItemRarityColor.r, lowestScoringEquippedItemRarityColor.g, lowestScoringEquippedItemRarityColor.b
 		)
@@ -3577,13 +3738,13 @@ function AutoGearMain()
 				if (GetTime() > curAction.t) then
 					if ((AutoGearDB.Enabled ~= nil) and (AutoGearDB.Enabled == true)) then
 						if (not curAction.messageAlready) then
-							AutoGearPrint("AutoGear: Equipping "..curAction.info.link..".", 2)
+							AutoGearPrint("AutoGear: Equipping "..(curAction.info.link or curAction.info.name)..".", 2)
 							curAction.messageAlready = 1
 						end
 						if (curAction.removeMainHandFirst) then
 							if (AutoGearGetAllBagsNumFreeSlots() > 0) then
 								AutoGearPrint("AutoGear: Removing the two-hander to equip the off-hand", 1)
-								PickupInventoryItem(GetInventorySlotInfo("MainHandSlot"))
+								PickupInventoryItem(INVSLOT_MAINHAND)
 								AutoGearPutItemInEmptyBagSlot()
 								curAction.removeMainHandFirst = nil
 								curAction.waitingOnEmptyMainHand = 1
@@ -3591,8 +3752,8 @@ function AutoGearMain()
 								AutoGearPrint("AutoGear: Cannot equip the off-hand because bags are too full to remove the two-hander", 0)
 								table.remove(futureAction, i)
 							end
-						elseif (curAction.waitingOnEmptyMainHand and GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
-						elseif (curAction.waitingOnEmptyMainHand and not GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))) then
+						elseif (curAction.waitingOnEmptyMainHand and not AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
+						elseif (curAction.waitingOnEmptyMainHand and AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
 							AutoGearPrint("AutoGear: Main hand detected to be clear.  Equipping now.", 1)
 							curAction.waitingOnEmptyMainHand = nil
 						elseif (curAction.ensuringEquipped) then
@@ -3605,6 +3766,7 @@ function AutoGearMain()
 								table.remove(futureAction, i)
 							end
 						else
+							-- AutoGearPrint((curAction.info.link or curAction.info.name).." "..tostring(curAction.container or "nil").." "..tostring(curAction.slot or "nil"),3)
 							PickupContainerItem(curAction.container, curAction.slot)
 							EquipCursorItem(curAction.replaceSlot)
 							curAction.ensuringEquipped = 1
