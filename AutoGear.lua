@@ -1533,7 +1533,6 @@ function AutoGearSetStatWeights()
 		AutoGearCurrentWeighting.Crit = math.max(AutoGearCurrentWeighting.Crit or 0, AutoGearCurrentWeighting.SpellCrit or 0)
 	end
 	weapons = AutoGearCurrentWeighting.weapons or "any"
-	--AutoGearPrint("AutoGear: Stat weights set for \""..localizedClass..": "..spec.."\". Weapons: "..weapons, 3)
 end
 
 local function newCheckbox(dbname, label, description, onClick, optionsMenu)
@@ -1720,6 +1719,7 @@ end
 local optionsMenu = CreateFrame("Frame", "AutoGearOptionsPanel", InterfaceOptionsFramePanelContainer)
 optionsMenu.name = "AutoGear"
 InterfaceOptions_AddCategory(optionsMenu)
+InterfaceAddOnsList_Update()
 
 --handle PLAYER_ENTERING_WORLD events for initializing GUI options menu widget states at the right time
 --UI reload doesn't seem to fire ADDON_LOADED
@@ -1959,7 +1959,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 					["options"] = (function() return AutoGearGetLockedGearSlots() end)(),
 					["label"] = "Gear slots to lock",
 					["description"] = "Choose which gear slots to lock in this dropdown.",
-					["shouldUse"] = (AutoGearDB.LockGearSlots)
+					["shouldUse"] = AutoGearDB.LockGearSlots
 				}
 			},
 			{
@@ -2014,10 +2014,6 @@ SlashCmdList["AutoGear"] = function(msg)
 	(param1 == "specoverride")) then
 		local params = param2..(string.len(param3)>0 and " "..param3 or "")..(string.len(param4)>0 and " "..param4 or "")..(string.len(param5)>0 and " "..param5 or "")
 		local localizedClassName, spec = string.match(params, "^\"?([^:\"]-): ([^:\"]+)\"?$")
-		--AutoGearPrint("AutoGear: param2 == \""..tostring(param2).."\"",3)
-		--AutoGearPrint("AutoGear: param3 == \""..tostring(param3).."\"",3)
-		--AutoGearPrint("AutoGear: param4 == \""..tostring(param4).."\"",3)
-		--AutoGearPrint("AutoGear: params == \""..tostring(params).."\"",3)
 		local class = AutoGearReverseClassList[localizedClassName]
 		if class and AutoGearDefaultWeights[class][spec] then
 			local overridespec = localizedClassName..": "..spec
@@ -2055,8 +2051,6 @@ SlashCmdList["AutoGear"] = function(msg)
 			AutoGearPrint("AutoGear: Pawn is not installed.",0)
 		end
 	elseif (param1 == "") then
-		-- This needs to be called twice to work properly; seems like a Blizzard bug.
-		InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 		InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 	else
 		shouldPrintHelp = true
@@ -2119,7 +2113,7 @@ AutoGearFrame:RegisterEvent("ITEM_PUSH")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when the player tries to equip a soulbound item that can still be traded to eligible players
 AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
-AutoGearFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+AutoGearFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")     --Fires when equipment is equipped or unequipped from the player, including bags
 AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")               --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
 AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")         --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
 AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")           --Fires when a quest is automatically completed (remote handin available)
@@ -2139,7 +2133,6 @@ AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the pla
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
-	--AutoGearPrint("AutoGear: "..event..(arg1 and " "..tostring(arg1) or "")..(arg2 and " "..tostring(arg2) or "")..(arg3 and " "..tostring(arg3) or "")..(arg4 and " "..tostring(arg4) or ""), 0)
 
 	if (AutoGearDB.AutoAcceptQuests) then
 		if (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
@@ -2240,7 +2233,6 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 	if (event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player") then
 		--make sure this doesn't happen as part of logon
 		if (dataAvailable ~= nil) then
-			--AutoGearPrint("AutoGear: event: \""..event.."\"; arg1: \""..arg1.."\"", 0)
 			local localizedClass, class, spec = AutoGearGetClassAndSpec()
 			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..spec.." "..localizedClass..".", 2)
 			-- AutoGearItemInfoCache = {}
@@ -2256,7 +2248,6 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 	elseif (event == "CONFIRM_DISENCHANT_ROLL") then
 		ConfirmLootRoll(arg1, arg2)
 	elseif (event == "ITEM_PUSH") then
-		--AutoGearPrint("AutoGear: Received an item.  Checking for gear upgrades.")
 		--make sure a fishing pole isn't replaced while fishing
 		if (not AutoGearIsMainHandAFishingPole()) then
 			--check if there's already a scan action in queue
@@ -2382,8 +2373,6 @@ function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 			if (wouldNeed and not canNeed) then
 				AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for "..rollItemInfo.link..".", 1)
 			end
-			-- local score = AutoGearDetermineItemScore(rollItemInfo)
-			-- AutoGearPrint("AutoGear: "..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.." for "..rollItemInfo.link.." with score "..score.." and info:\n"..AutoGearDump(rollItemInfo), 3)
 		end
 		if rollItemInfo.unusable then AutoGearPrint("AutoGear: "..rollItemInfo.link.." will not be equipped.  "..reason, 1) end
 		if roll then
@@ -2714,13 +2703,6 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
 				end
 			end
 
-			-- AutoGearPrint((info.link or info.name).." score: "..(score or "nil"),3)
-			-- AutoGearPrint("lowest-scoring valid gear slot: "..(lowestScoringValidGearSlot or "nil").." with score "..tostring(lowestScoringValidGearSlotScore or 0),3)
-			-- AutoGearPrint("is lowest-scoring valid gear slot empty? "..(AutoGearBestItems[lowestScoringValidGearSlot].info.empty or "nil"),3)
-			-- AutoGearPrint("will this be added to AutoGearBestItems? "..tostring(((score > lowestScoringValidGearSlotScore) or
-			-- AutoGearBestItems[lowestScoringValidGearSlot].info.empty or
-			-- AutoGearBestItems[lowestScoringValidGearSlot].info.unusable) or "nil"),3)
-
 			if (score > lowestScoringValidGearSlotScore) or
 			AutoGearBestItems[lowestScoringValidGearSlot].info.empty or
 			AutoGearBestItems[lowestScoringValidGearSlot].info.unusable then
@@ -2832,38 +2814,36 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 
 	local info = {}
 
-	if (container and slot) then
-		-- AutoGearPrint("called with container and slot: "..tostring(container or "nil").." "..tostring(slot or "nil"),3)
+	if container and slot then
 		info.item = Item:CreateFromBagAndSlot(container, slot)
 		if info.item:IsItemEmpty() then
 			info.empty = 1
 			info.name = "nothing"
 			return info
 		end
+		info.link = info.item:GetItemLink()
 		AutoGearTooltip:SetBagItem(container, slot)
-	elseif (inventoryID) then
-		-- AutoGearPrint("called with inventoryID: "..tostring(inventoryID or "nil"),3)
+	elseif inventoryID then
 		info.item = Item:CreateFromEquipmentSlot(inventoryID)
 		if info.item:IsItemEmpty() then
 			info.empty = 1
 			info.name = "nothing"
 			return info
 		end
+		info.link = info.item:GetItemLink()
 		AutoGearTooltip:SetInventoryItem("player", inventoryID)
-	elseif (lootRollID) then
-		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(GetLootRollItemLink(lootRollID))))
-		-- AutoGearPrint("called with lootRollID: "..tostring(lootRollID or "nil"),3)
+	elseif lootRollID then
+		info.link = GetLootRollItemLink(lootRollID)
+		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(info.link)))
 		AutoGearTooltip:SetLootRollItem(lootRollID)
-	elseif (questRewardIndex) then
-		-- AutoGearPrint("called with questRewardIndex: "..tostring(questRewardIndex or "nil"),3)
-		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(GetQuestItemLink("choice", questRewardIndex))))
+	elseif questRewardIndex then
+		info.link = GetQuestItemLink("choice", questRewardIndex)
+		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(info.link)))
 		AutoGearTooltip:SetQuestItem("choice", questRewardIndex)
-	elseif (link)--[[ and (lastlink ~= link)]] then
-		-- AutoGearPrint("called with link: "..tostring(link or "nil"),3)
-		--AutoGearPrint("The new link, "..link..", is not the same as the last link, "..(lastlink or "[nothing]")..".",3)
-		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(link)))
-		AutoGearTooltip:SetHyperlink(link)
-		--lastlink = link
+	elseif link then
+		info.link = link
+		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(info.link)))
+		AutoGearTooltip:SetHyperlink(info.link)
 	else
 		AutoGearPrint(
 			"inventoryID: "..tostring(inventoryID or "nil")..
@@ -2876,18 +2856,12 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		)
 	end
 
-	info.rarity = info.item:GetItemQuality()
-	info.rarityColor = info.item:GetItemQualityColor()
-
-	if link == nil then
-		link = info.item:GetItemLink()
-	end
-	info.link = link
-	info.linkString = select(3,ExtractHyperlinkString(link))
 	info.id = info.item:GetItemID()
 	info.classID, info.subclassID = select(6,GetItemInfoInstant(info.id))
 	info.name = C_Item.GetItemNameByID(info.id)
-	if link == nil then
+	info.rarity = info.item:GetItemQuality()
+	info.rarityColor = info.item:GetItemQualityColor()
+	if info.link == nil then
 		AutoGearPrint("Error: "..tostring(info.name or "nil").." doesn't have a link",3)
 		AutoGearPrint(
 			"inventoryID: "..tostring(inventoryID or "nil")..
@@ -2895,7 +2869,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			"; container: "..tostring(container or "nil")..
 			"; slot: "..tostring(slot or "nil")..
 			"; questRewardIndex: "..tostring(questRewardIndex or "nil")..
-			"; link: "..tostring(link or "nil"),
+			"; link: "..tostring(info.link or "nil"),
 			3
 		)
 		return info
@@ -3030,7 +3004,6 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				if info.name == "Retrieving item information" then
 					info.unusable = 1
 					reason = "(this item's tooltip is not yet available)"
-					--AutoGearPrint("AutoGear: Item's name says \"Retrieving item information\"; info.unusable: "..tostring(info.unusable), 0)
 				end
 			end
 			local multiplier = 1.0
@@ -3164,7 +3137,6 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		reason = "(item can't be equipped. info.invType = '".. tostring(info.invType) .."')"
 	end
 
-	--if (info.unusable) then AutoGearPrint("Cannot use "..(info.link or (inventoryID and "inventoryID "..inventoryID or "(nil)")).." "..reason, 3) end
 	info.reason = reason
 
 	--caching did not show a performance benefit, so commented this out
@@ -3349,7 +3321,6 @@ function AutoGearGetPawnScaleName()
 		and realClassAndSpec == ScaleName
 		and Scale.Values
 		and next(Scale.Values) then
-			-- AutoGearPrint("got the matching visible real spec and class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3360,7 +3331,6 @@ function AutoGearGetPawnScaleName()
 		and realClassAndSpec == Scale.LocalizedName
 		and Scale.Values
 		and next(Scale.Values) then
-			-- AutoGearPrint("got the matching visible localized real spec and class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3372,7 +3342,6 @@ function AutoGearGetPawnScaleName()
 		and string.find(Scale.LocalizedName, realSpec)
 		and Scale.Values
 		and next(Scale.Values) then
-			-- AutoGearPrint("got the matching visible real spec name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3383,7 +3352,6 @@ function AutoGearGetPawnScaleName()
 		and realSpec == ScaleName
 		and Scale.Values
 		and next(Scale.Values) then
-			-- AutoGearPrint("got the matching visible real spec name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3394,7 +3362,6 @@ function AutoGearGetPawnScaleName()
 		and realLocalizedClass == ScaleName
 		and Scale.Values
 		and next(Scale.Values) then
-			-- AutoGearPrint("got the matching visible real class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3404,7 +3371,6 @@ function AutoGearGetPawnScaleName()
 		if realClassAndSpec == ScaleName
 		and Scale.Values
 		and next(Scale.Values) then
-			-- AutoGearPrint("got the matching class and spec: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3414,7 +3380,6 @@ function AutoGearGetPawnScaleName()
 		if realClassAndSpec == Scale.LocalizedName
 		and Scale.Values
 		and next(Scale.Values) then
-			-- AutoGearPrint("got the matching visible localized real spec and class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3424,7 +3389,6 @@ function AutoGearGetPawnScaleName()
 		if realSpec == ScaleName
 		and Scale.Values
 		and next(Scale.Values) then
-			-- AutoGearPrint("got the matching real spec name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3434,7 +3398,6 @@ function AutoGearGetPawnScaleName()
 		if realLocalizedClass == ScaleName
 		and Scale.Values
 		and next(Scale.Values) then
-			-- AutoGearPrint("got the matching real class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3461,7 +3424,6 @@ function AutoGearGetPawnScaleName()
 	-- Use the first visible
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if PawnIsScaleVisible(ScaleName) and Scale.Values and next(Scale.Values) then
-			--AutoGearPrint("got the first visible: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3469,7 +3431,6 @@ function AutoGearGetPawnScaleName()
 	-- Just use the first one
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if Scale.Values and next(Scale.Values) then
-			--AutoGearPrint("got the first one: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3487,8 +3448,8 @@ function AutoGearDetermineItemScore(info)
 	if info.isMount and (not info.alreadyKnown) then
 		return math.huge
 	end
-	if info.classID == 1 --[[ container ]] then
-		if info.subclassID == 0 then -- generic (typical) bag
+	if info.classID == Enum.ItemClass.Container then
+		if info.subclassID == 0 then -- generic (typical) bag; there's no Enum.ItemContainerSubclass
 			return info.numBagSlots
 		else
 			return info.numBagSlots * E -- specialized bags suck, so consider them only better than nothing
@@ -3497,12 +3458,9 @@ function AutoGearDetermineItemScore(info)
 
 	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
 		local PawnItemData = PawnGetItemData(info.link)
-		--AutoGearRecursivePrint(PawnItemData)
 		if PawnItemData then
-			--AutoGearPrint(itemInfo.link.." value from Pawn is "..tostring(PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName())),3)
 			return PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName())
 		end
-		--else AutoGearPrint("AutoGear: PawnItemData was nil in AutoGearReadItemInfo", 3)
 	end
 
 	local score = (AutoGearCurrentWeighting.Strength or 0) * (info.Strength or 0) +
@@ -3536,7 +3494,6 @@ function AutoGearDetermineItemScore(info)
 		(AutoGearCurrentWeighting.Damage or 0) * (info.Damage or 0) +
 		((UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) and
 		(AutoGearCurrentWeighting.ExperienceGained or 0) * (info.ExperienceGained or 0) or 0)
-	--AutoGearPrint(itemInfo.link.." value from AutoGear is "..tostring(score),3)
 	return score
 end
 
@@ -3681,7 +3638,6 @@ function AutoGearTooltipHook(tooltip)
 	local scoreColor = HIGHLIGHT_FONT_COLOR
 	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
 		lowestScoringEquippedItemInfo, lowestScoringEquippedItemScore = AutoGearGetTooltipScoreComparisonInfo(tooltipItemInfo)
-		--AutoGearPrint("AutoGear: This tooltip is \""..tooltip:GetName().."\".",1)
 		local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
 		local isAnyComparisonTooltipVisible = ItemRefTooltip:IsVisible() or ShoppingTooltip1:IsVisible() or ShoppingTooltip2:IsVisible()
 		local shouldShowComparisonLine = (not isAComparisonTooltip and (not isAnyComparisonTooltipVisible or AutoGearDB.AlwaysShowScoreComparisons)) and not tooltipItemInfo.equipped
@@ -3738,39 +3694,27 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
-		-- tooltip:AddDoubleLine(
-		-- 	"AutoGear: AGDIS returns:",
-		-- 	tostring(AutoGearDetermineItemScore(tooltipItemInfo, AutoGearCurrentWeighting) or "nil"),
-		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
-		-- )
-		local pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
-		tooltip:AddDoubleLine(
-			"AutoGear: Pawn scale name:",
-			(pawnScaleName or "nil"),
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
-		)
-		tooltip:AddDoubleLine(
-			"AutoGear: Pawn scale localized name:",
-			(pawnScaleLocalizedName or "nil"),
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
-		)
-		-- tooltip:AddDoubleLine(
-		-- 	"AutoGear: Pawn value:",
-		-- 	tostring(PawnGetSingleValueFromItem(PawnGetItemData(tooltipItemInfo.link),AutoGearGetPawnScaleName()) or "nil"),
-		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
-		-- )
-		-- AutoGearPrint("tooltip item: "..tooltipItemInfo.link, 1)
-		-- AutoGearRecursivePrint(PawnGetItemData(tooltipItemInfo.link))
-		-- tooltip:AddDoubleLine(
-		-- 	"AutoGear: 2-handed?:",
-		-- 	tostring(AutoGearIsItemTwoHanded(tooltipItemInfo.id)),
-		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
-		-- )
+		if PawnIsReady and PawnIsReady() then
+			local pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
+			tooltip:AddDoubleLine(
+				"AutoGear: Pawn scale name:",
+				(pawnScaleName or "nil"),
+				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+			)
+			tooltip:AddDoubleLine(
+				"AutoGear: Pawn scale localized name:",
+				(pawnScaleLocalizedName or "nil"),
+				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+			)
+			tooltip:AddDoubleLine(
+				"AutoGear: Pawn value:",
+				tostring((tooltipItemInfo.link and (PawnCanItemHaveStats(tooltipItemInfo.link) and PawnGetSingleValueFromItem(PawnGetItemData(tooltipItemInfo.link),AutoGearGetPawnScaleName()) or "item can't have stats") or "nil item data") or "nil"),
+				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+			)
+		end
 		tooltip:AddDoubleLine(
 			"AutoGear: item class ID:",
 			tostring(tooltipItemInfo.classID or "nil"),
@@ -3795,12 +3739,6 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			tooltipItemInfo.rarityColor.r, tooltipItemInfo.rarityColor.g, tooltipItemInfo.rarityColor.b
 		)
-		-- tooltip:AddDoubleLine(
-		-- 	"AutoGear: guid:",
-		-- 	tostring(tooltipItemInfo.guid or "nil"),
-		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
-		-- )
 		local lowestScoringEquippedItemRarityColor = lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.rarityColor or HIGHLIGHT_FONT_COLOR
 		tooltip:AddDoubleLine(
 			"AutoGear: lowest-scoring equipped item:",
@@ -3820,29 +3758,6 @@ GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
---GameTooltip:HookScript("OnShow", AutoGearTooltipHook)
---ShoppingTooltip1:HookScript("OnShow", AutoGearTooltipHook)
---ShoppingTooltip2:HookScript("OnShow", AutoGearTooltipHook)
---ItemRefTooltip:HookScript("OnShow", AutoGearTooltipHook)
-
---[[
-local function printsetitem(self)
-	print(GetTime().."SetItem")
-end
-
-local function printcleared(self)
-	print(GetTime().."Cleared")
-end
-
-GameTooltip:HookScript("OnTooltipSetItem", printsetitem)
-GameTooltip:HookScript("OnTooltipCleared", printcleared)
---ShoppingTooltip1:HookScript("OnTooltipSetItem", printsetitem)
---ShoppingTooltip1:HookScript("OnTooltipCleared", printcleared)
---ShoppingTooltip2:HookScript("OnTooltipSetItem", printsetitem)
---ShoppingTooltip2:HookScript("OnTooltipCleared", printcleared)
---ItemRefTooltip:HookScript("OnTooltipSetItem", printsetitem)
---ItemRefTooltip:HookScript("OnTooltipCleared", printcleared)
-]]
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
@@ -3905,7 +3820,6 @@ function AutoGearMain()
 								table.remove(futureAction, i)
 							end
 						else
-							-- AutoGearPrint((curAction.info.link or curAction.info.name).." "..tostring(curAction.container or "nil").." "..tostring(curAction.slot or "nil"),3)
 							PickupContainerItem(curAction.container, curAction.slot)
 							EquipCursorItem(curAction.replaceSlot)
 							curAction.ensuringEquipped = 1
