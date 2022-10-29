@@ -2044,7 +2044,7 @@ SlashCmdList["AutoGear"] = function(msg)
 					if AutoGearPawnScaleDropdown then
 						UIDropDownMenu_SetText(AutoGearPawnScaleDropdown, AutoGearDB.PawnScale)
 					end
-					AutoGearPrint("AutoGear: "..(AutoGearDB.UsePawn and "" or "While using Pawn is enabled, ").."AutoGear will now use the \""..PawnGetScaleColor(AutoGearDB.PawnScale)..AutoGearDB.PawnScale..FONT_COLOR_CODE_CLOSE.."\" Pawn scale to evaluate gear.",0)
+					AutoGearPrint("AutoGear: "..(AutoGearDB.UsePawn and "" or "While using Pawn is enabled, ").."AutoGear will now use the \""..PawnGetScaleColor(AutoGearDB.PawnScale)..((PawnCommon.Scales[scaleName] and PawnCommon.Scales[scaleName].LocalizedName) or scaleName)..FONT_COLOR_CODE_CLOSE.."\" Pawn scale to evaluate gear.",0)
 				else
 					AutoGearPrint("AutoGear: According to Pawn, a Pawn scale named \""..scaleName.."\" does not exist.",0)
 				end
@@ -2359,11 +2359,24 @@ function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 		local rollItemInfo = AutoGearReadItemInfo(nil, nil, nil, nil, nil, link)
 		local wouldNeed = AutoGearConsiderAllItems(lootRollItemID, nil, rollItemInfo)
 		if simulate then canNeed = 1 end
-		if (AutoGearDB.RollOnNonGearLoot == false) and (not rollItemInfo.isGear) and (not rollItemInfo.isMount) then
+		if (AutoGearDB.RollOnNonGearLoot == false)
+		and (not rollItemInfo.isGear)
+		and (not rollItemInfo.isMount) then
 			AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 			--local roll is nil, so no roll
 		elseif wouldNeed and canNeed then
-			roll = 1 --need
+			if rollItemInfo.Within5levels then
+				local maxNumberOfCopiesAllowedToNeed = rollItemInfo.unique and 1 or #rollItemInfo.validGearSlots
+				local numberOfCopiesOwned = GetItemCount(rollItemInfo.id, true)
+				if numberOfCopiesOwned >= maxNumberOfCopiesAllowedToNeed then
+					AutoGearPrint("AutoGear: "..rollItemInfo.link.." is an upgrade usable within 5 levels, but you already have "..tostring(numberOfCopiesOwned).." cop"..(numberOfCopiesOwned == 1 and "y" or "ies")..", so rolling "..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE..".",3)
+					roll = 2 --greed
+				else
+					roll = 1 --need
+				end
+			else
+				roll = 1 --need
+			end
 		else
 			roll = 2 --greed
 			if (wouldNeed and not canNeed) then
@@ -2732,48 +2745,48 @@ function AutoGearInitializeEquippableBagSlotsTable()
 	end
 end
 
-function AutoGearGetValidGearSlotsForGearType(gearType, weapons)
+function AutoGearGetValidGearSlotsForInvType(invType, weapons)
 	local gearSlotTable = {
-		--[["INVTYPE_NON_EQUIP"]]      [0]  = nil,
-		--[["INVTYPE_AMMO"]]           [24] = { INVSLOT_AMMO },
-		--[["INVTYPE_HEAD"]]           [1]  = { INVSLOT_HEAD },
-		--[["INVTYPE_NECK"]]           [2]  = { INVSLOT_NECK },
-		--[["INVTYPE_SHOULDER"]]       [3]  = { INVSLOT_SHOULDER },
-		--[["INVTYPE_BODY"]]           [4]  = { INVSLOT_BODY },
-		--[["INVTYPE_CHEST"]]          [5]  = { INVSLOT_CHEST },
-		--[["INVTYPE_ROBE"]]           [20] = { INVSLOT_CHEST },
-		--[["INVTYPE_WAIST"]]          [6]  = { INVSLOT_WAIST },
-		--[["INVTYPE_LEGS"]]           [7]  = { INVSLOT_LEGS },
-		--[["INVTYPE_FEET"]]           [8]  = { INVSLOT_FEET },
-		--[["INVTYPE_WRIST"]]          [9]  = { INVSLOT_WRIST },
-		--[["INVTYPE_HAND"]]           [10] = { INVSLOT_HAND },
-		--[["INVTYPE_FINGER"]]         [11] = { INVSLOT_FINGER1, INVSLOT_FINGER2 },
-		--[["INVTYPE_TRINKET"]]        [12] = { INVSLOT_TRINKET1, INVSLOT_TRINKET2 },
-		--[["INVTYPE_CLOAK"]]          [16] = { INVSLOT_BACK },
-		--[["INVTYPE_WEAPON"]]         [13] = CanDualWield() and { INVSLOT_MAINHAND, INVSLOT_OFFHAND } or { INVSLOT_MAINHAND },
-		--[["INVTYPE_SHIELD"]]         [14] = { INVSLOT_OFFHAND },
-		--[["INVTYPE_2HWEAPON"]]       [17] = weapons == "2hDW" and { INVSLOT_MAINHAND, INVSLOT_OFFHAND } or { INVSLOT_MAINHAND },
-		--[["INVTYPE_WEAPONMAINHAND"]] [21] = { INVSLOT_MAINHAND },
-		--[["INVTYPE_WEAPONOFFHAND"]]  [22] = { INVSLOT_OFFHAND },
-		--[["INVTYPE_HOLDABLE"]]       [23] = { INVSLOT_OFFHAND },
-		--[["INVTYPE_RANGED"]]         [15] = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or { INVSLOT_MAINHAND },
-		--[["INVTYPE_THROWN"]]         [25] = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or { INVSLOT_MAINHAND },
-		--[["INVTYPE_RANGEDRIGHT"]]    [26] = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or { INVSLOT_MAINHAND },
-		--[["INVTYPE_RELIC"]]          [28] = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or nil,
-		--[["INVTYPE_TABARD"]]         [19] = { INVSLOT_TABARD },
-		--[["INVTYPE_BAG"]]            [18] = AutoGearEquippableBagSlots,
-		--[["INVTYPE_QUIVER"]]         [27] = AutoGearEquippableBagSlots
+		[Enum.InventoryType.IndexNonEquipType]       = nil,
+		[Enum.InventoryType.IndexAmmoType]           = { INVSLOT_AMMO },
+		[Enum.InventoryType.IndexHeadType]           = { INVSLOT_HEAD },
+		[Enum.InventoryType.IndexNeckType]           = { INVSLOT_NECK },
+		[Enum.InventoryType.IndexShoulderType]       = { INVSLOT_SHOULDER },
+		[Enum.InventoryType.IndexBodyType]           = { INVSLOT_BODY },
+		[Enum.InventoryType.IndexChestType]          = { INVSLOT_CHEST },
+		[Enum.InventoryType.IndexRobeType]           = { INVSLOT_CHEST },
+		[Enum.InventoryType.IndexWaistType]          = { INVSLOT_WAIST },
+		[Enum.InventoryType.IndexLegsType]           = { INVSLOT_LEGS },
+		[Enum.InventoryType.IndexFeetType]           = { INVSLOT_FEET },
+		[Enum.InventoryType.IndexWristType]          = { INVSLOT_WRIST },
+		[Enum.InventoryType.IndexHandType]           = { INVSLOT_HAND },
+		[Enum.InventoryType.IndexFingerType]         = { INVSLOT_FINGER1, INVSLOT_FINGER2 },
+		[Enum.InventoryType.IndexTrinketType]        = { INVSLOT_TRINKET1, INVSLOT_TRINKET2 },
+		[Enum.InventoryType.IndexCloakType]          = { INVSLOT_BACK },
+		[Enum.InventoryType.IndexWeaponType]         = CanDualWield() and { INVSLOT_MAINHAND, INVSLOT_OFFHAND } or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexShieldType]         = { INVSLOT_OFFHAND },
+		[Enum.InventoryType.Index2HweaponType]       = weapons == "2hDW" and { INVSLOT_MAINHAND, INVSLOT_OFFHAND } or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexWeaponmainhandType] = { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexWeaponoffhandType]  = { INVSLOT_OFFHAND },
+		[Enum.InventoryType.IndexHoldableType]       = { INVSLOT_OFFHAND },
+		[Enum.InventoryType.IndexRangedType]         = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexThrownType]         = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexRangedrightType]    = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexRelicType]          = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or nil,
+		[Enum.InventoryType.IndexTabardType]         = { INVSLOT_TABARD },
+		[Enum.InventoryType.IndexBagType]            = AutoGearEquippableBagSlots,
+		[Enum.InventoryType.IndexQuiverType]         = AutoGearEquippableBagSlots
 	}
 	
-	return gearSlotTable[gearType]
+	return gearSlotTable[invType]
 end
 
 function AutoGearIsInvTypeTwoHanded(invType)
 	if not invType then return nil end
-	return (invType == "INVTYPE_2HWEAPON") or (
+	return (invType == Enum.InventoryType.Index2HweaponType) or (
 		(TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (
-			(invType == "INVTYPE_RANGED") or (
-				invType == "INVTYPE_RANGEDRIGHT"
+			(invType == Enum.InventoryType.IndexRangedType) or (
+				invType == Enum.InventoryType.IndexRangedrightType
 			)
 		)
 	)
@@ -2781,7 +2794,7 @@ end
 
 function AutoGearIsItemTwoHanded(itemID)
 	if not itemID then return nil end
-	return AutoGearIsInvTypeTwoHanded(select(4,GetItemInfoInstant(itemID)))
+	return AutoGearIsInvTypeTwoHanded(C_Item.GetItemInventoryTypeByID(itemID))
 end
 
 function AutoGearIsTwoHandEquipped()
@@ -2790,7 +2803,7 @@ end
 
 function AutoGearIsMainHandAFishingPole()
 	local itemClassID, itemSubClassID = select(6, GetItemInfoInstant(GetInventoryItemID("player", INVSLOT_MAINHAND)))
-	return (itemClassID == LE_ITEM_CLASS_WEAPON) and (itemSubClassID == LE_ITEM_WEAPON_FISHINGPOLE)
+	return (itemClassID == Enum.ItemClass.Weapon) and (itemSubClassID == Enum.ItemWeaponSubclass.Fishingpole)
 end
 
 function AutoGearPrintItem(info)
@@ -2871,7 +2884,8 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	end
 	info.link = link
 	info.linkString = select(3,ExtractHyperlinkString(link))
-	info.id, info.type, info.subType, info.invType, info.icon, info.classID, info.subclassID = GetItemInfoInstant(info.item:GetItemID())
+	info.id = info.item:GetItemID()
+	info.classID, info.subclassID = select(6,GetItemInfoInstant(info.id))
 	info.name = C_Item.GetItemNameByID(info.id)
 	if link == nil then
 		AutoGearPrint("Error: "..tostring(info.name or "nil").." doesn't have a link",3)
@@ -2894,11 +2908,11 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	-- local cachediteminfo = AutoGearItemInfoCache[tooltipitemhash]
 	-- if cachediteminfo ~= nil then return cachediteminfo end
 
-	info.gearType = C_Item.GetItemInventoryTypeByID(info.id) or 0
-	info.isGear = info.gearType > 0
+	info.invType = C_Item.GetItemInventoryTypeByID(info.id) or 0
+	info.isGear = info.invType > 0
 
-	if ((info.classID == LE_ITEM_CLASS_MISCELLANEOUS) and
-	(info.subclassID == LE_ITEM_MISCELLANEOUS_MOUNT)) then
+	if ((info.classID == Enum.ItemClass.Miscellaneous) and
+	(info.subclassID == Enum.ItemMiscellaneousSubclass.Mount)) then
 		info.isMount = 1
 		if AutoGearIsMountItemAlreadyCollected(info.id) then
 			info.alreadyKnown = 1
@@ -2912,10 +2926,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.BlueSockets = 0
 	info.MetaSockets = 0
 	local localizedClass, class, spec = AutoGearGetClassAndSpec()
-	local weaponType = AutoGearGetWeaponType(info.classID, info.subclassID)
 
 	if info.isGear then
-		info.validGearSlots = AutoGearGetValidGearSlotsForGearType(info.gearType, weapons)
+		info.validGearSlots = AutoGearGetValidGearSlotsForInvType(info.invType, weapons)
 		for _, v in pairs(info.validGearSlots) do
 			if v == INVSLOT_MAINHAND or v == INVSLOT_OFFHAND then
 				info.isWeaponOrOffHand = 1
@@ -2928,34 +2941,35 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	end
 
 	if info.isWeaponOrOffHand then
-		if (info.invType == "INVTYPE_WEAPONMAINHAND") then
-			if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+		if (info.invType == Enum.InventoryType.IndexWeaponmainhandType) then
+			if (weapons == "dagger" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
-			elseif (weapons == "dagger and any" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+			elseif (weapons == "dagger and any" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
 			elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." needs a two-hand weapon)"
 			end
-		elseif (info.invType == "INVTYPE_SHIELD") then
+		elseif (info.invType == Enum.InventoryType.IndexShieldType) then
 			if (weapons ~= "weapon and shield") and (weapons ~= "any") then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." should not use a shield)"
 			end
-		elseif (info.invType == "INVTYPE_2HWEAPON") then
+		elseif (info.invType == Enum.InventoryType.Index2HweaponType) then
 			if (weapons == "weapon and shield") then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." needs weapon and shield)"
 			elseif (weapons == "dual wield" and CanDualWield()) then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." should dual wield)"
-			elseif (weapons == "ranged") then
+				reason = "("..spec.." "..localizedClass.." should dual wield one-handers)"
+			elseif ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
+			and weapons == "ranged") then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." should use a ranged weapon)"
 			end
-		elseif (info.invType == "INVTYPE_HOLDABLE") then
+		elseif (info.invType == Enum.InventoryType.IndexHoldableType) then
 			if (weapons == "2h" or
 			(weapons == "dual wield" and CanDualWield()) or
 			weapons == "weapon and shield" or
@@ -2963,34 +2977,41 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." needs the off-hand for a weapon or shield)"
 			end
-		elseif (info.invType == "INVTYPE_WEAPONOFFHAND") then
+		elseif (info.invType == Enum.InventoryType.IndexWeaponoffhandType) then
 			if (weapons == "2h" or weapons == "ranged") then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." should use a two-hand weapon)"
-			elseif (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+			elseif (weapons == "dagger" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." needs a dagger in the off-hand)"
-			elseif (weapons == "weapon and shield" and weaponType ~= LE_ITEM_ARMOR_SHIELD) then
+			elseif (weapons == "weapon and shield"
+			and (info.classID ~= Enum.ItemClass.Armor)
+			and (info.subclassID ~= Enum.ItemArmorSubclass.Shield)) then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." needs a shield in the off-hand)"
-			elseif (weapons == "dual wield" and CanDualWield() and weaponType == LE_ITEM_ARMOR_SHIELD) then
+			elseif (weapons == "dual wield"
+			and CanDualWield()
+			and (info.classID == Enum.ItemClass.Armor)
+			and (info.subclassID == Enum.ItemArmorSubclass.Shield)) then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." should dual wield and not use a shield)"
 			end
-		elseif (info.invType == "INVTYPE_WEAPON") then
-			if (weapons == "2h" or weapons == "2hDW" or ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (weapons == "ranged"))) then
+		elseif (info.invType == Enum.InventoryType.IndexWeaponType) then
+			if (weapons == "2h"
+			or weapons == "2hDW"
+			or ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (weapons == "ranged"))) then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." should use a two-handed weapon or dual wield two-handers)"
 			end
-			if (weapons == "dagger" and weaponType ~= LE_ITEM_WEAPON_DAGGER) then
+			if (weapons == "dagger" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
 				info.unusable = 1
 				reason = "("..spec.." "..localizedClass.." needs a dagger in each hand)"
 			end
 		end
 
 		if (TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and
-		(info.invType == "INVTYPE_RANGED") and
-		(weapons ~= "ranged" and weaponType ~= LE_ITEM_WEAPON_WAND) then
+		(info.invType == Enum.InventoryType.IndexRangedType) and
+		(weapons ~= "ranged" and info.subclassID ~= Enum.ItemWeaponSubclass.Wand) then
 			info.unusable = 1
 			reason = "("..spec.." "..localizedClass.." should not use a ranged 2h weapon)"
 		end
@@ -2999,12 +3020,13 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.equipped = not not inventoryID
 
 	for i = 1, AutoGearTooltip:NumLines() do
-		local mytext = getglobal("AutoGearTooltipTextLeft"..i)
-		if mytext then
-			local r, g, b, a = mytext:GetTextColor()
-			local text = select(1,string.gsub(mytext:GetText():lower(),",",""))
+		local textLeft = getglobal("AutoGearTooltipTextLeft"..i)
+		if textLeft then
+			local r, g, b = textLeft:GetTextColor()
+			local textLeftText = textLeft:GetText()
+			local text = select(1,string.gsub(textLeftText:lower(),",",""))
 			if i==1 then
-				info.name = mytext:GetText()
+				info.name = textLeft:GetText()
 				if info.name == "Retrieving item information" then
 					info.unusable = 1
 					reason = "(this item's tooltip is not yet available)"
@@ -3090,7 +3112,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if string.find(text, "multistrike") then info.Multistrike = (info.Multistrike or 0) + value end
 			if string.find(text, "versatility") then info.Versatility = (info.Versatility or 0) + value end
 			if string.find(text, "experience gained") then info.ExperienceGained = (info.ExperienceGained or 0) + value end
-			if weaponType then
+			if info.classID == Enum.ItemClass.Weapon then
 				if string.find(text, "damage per second") then info.DPS = (info.DPS or 0) + value end
 				local minDamage, maxDamage = string.match(text, "([0-9]+%.?[0-9]*) ?%- ?([0-9]+%.?[0-9]*) damage")
 				if minDamage and maxDamage then
@@ -3102,25 +3124,25 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if string.find(text, "pattern:") then info.unusable = 1 end
 			if string.find(text, "plans:") then info.unusable = 1 end
 
-			--check for red text
-			local r, g, b, a = mytext:GetTextColor()
-			if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and mytext:GetText()) then --this is red text
+			--check for red text on the left
+			if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and textLeftText) then --this is red text
 				--if Within5levels was already set but we found another red text, clear it, because we really can't use this
 				if info.Within5levels then info.Within5levels = nil end
 				--if there's not already a reason we cannot use and this is just a required level, check if it's within 5 levels
 				if (not info.unusable and string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
 					info.Within5levels = 1
 				end
-				reason = "(found red text on the left.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: \""..(mytext:GetText() or "nil").."\")"
+				reason = "(found red text: \""..textLeftText.."\")"
 				info.unusable = 1
 			end
 
 			--check for red text on the right side
-			local rightText = getglobal("AutoGearTooltipTextRight"..i)
-			if (rightText) then
-				local r, g, b, a = rightText:GetTextColor()
-				if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and rightText:GetText()) then --this is red text
-					reason = "(found red text on the right.  color: "..string.format("%0.2f", r)..", "..string.format("%0.2f", g)..", "..string.format("%0.2f", b).."  text: \""..(rightText:GetText() or "nil").."\")"
+			local textRight = getglobal("AutoGearTooltipTextRight"..i)
+			if textRight then
+				local r, g, b = textRight:GetTextColor()
+				local textRightText = textRight:GetText()
+				if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and textRightText) then --this is red text
+					reason = "(found red text: \""..textRightText.."\")"
 					info.unusable = 1
 				end
 			end
@@ -3178,9 +3200,8 @@ function AutoGearGetLockedGearSlots()
 end
 
 function AutoGearGetPawnScaleName()
-	local realClass, _, ClassID = UnitClass("player")
-	local realSpec = AutoGearDetectSpec()
-	local localizedOverrideClass, overrideClass, overrideSpec = AutoGearGetClassAndSpec()
+	local realLocalizedClass, realClass, realSpec, realClassID = AutoGearDetectClassAndSpec()
+	local overrideLocalizedClass, overrideClass, overrideSpec, overrideClassID = AutoGearGetClassAndSpec()
 
 	-- Try to find the selected Pawn scale
 	if AutoGearDB.OverridePawnScale and AutoGearDB.PawnScale then
@@ -3188,6 +3209,10 @@ function AutoGearGetPawnScaleName()
 		local scaleNameToFind = AutoGearDB.PawnScale
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
 			if scaleNameToFind == ScaleName then
+				if (not Scale.Values)
+				or (not next(Scale.Values)) then
+					AutoGearPrint("AutoGear: Warning: Pawn override scale "..ScaleName.." has no values.  AutoGear will still try to use it, but it will not determine gear scores until you fix it.  You can fix your scale in Pawn's menus by typing \"/pawn\".",0)
+				end
 				return ScaleName, Scale.LocalizedName
 			end
 		end
@@ -3195,69 +3220,135 @@ function AutoGearGetPawnScaleName()
 
 	if AutoGearDB.Override then
 
-		-- Try to find a visible scale matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
+		-- Try to find a visible scale with name matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if PawnIsScaleVisible(ScaleName) and AutoGearDB.OverrideSpec and AutoGearDB.OverrideSpec == ScaleName and Scale.Values and next(Scale.Values) then
+			if PawnIsScaleVisible(ScaleName)
+			and AutoGearDB.OverrideSpec
+			and AutoGearDB.OverrideSpec == ScaleName
+			and Scale.Values
+			and next(Scale.Values) then
 				return ScaleName, Scale.LocalizedName
 			end
 		end
 
 		-- Try to find a visible scale with localized name matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if PawnIsScaleVisible(ScaleName) and AutoGearDB.OverrideSpec and AutoGearDB.OverrideSpec == Scale.LocalizedName and Scale.Values and next(Scale.Values) then
+			if PawnIsScaleVisible(ScaleName)
+			and AutoGearDB.OverrideSpec
+			and AutoGearDB.OverrideSpec == Scale.LocalizedName
+			and Scale.Values
+			and next(Scale.Values) then
+				return ScaleName, Scale.LocalizedName
+			end
+		end
+
+		-- Try to find a visible scale with class ID matching the override class ID and override spec name found in the override spec name (example: "Protection")
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if PawnIsScaleVisible(ScaleName)
+			and AutoGearDB.OverrideSpec
+			and overrideClassID == Scale.ClassID
+			and string.find(Scale.LocalizedName, overrideSpec)
+			and Scale.Values and next(Scale.Values) then
 				return ScaleName, Scale.LocalizedName
 			end
 		end
 
 		-- Try to find a visible scale matching just the override spec name (example: "Protection")
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if PawnIsScaleVisible(ScaleName) and overrideSpec == ScaleName and Scale.Values and next(Scale.Values) then
+			if PawnIsScaleVisible(ScaleName)
+			and overrideSpec == ScaleName
+			and Scale.Values
+			and next(Scale.Values) then
 				return ScaleName, Scale.LocalizedName
 			end
 		end
 
-		-- Try to find a visible scale matching just the override class name (example: "Paladin")
+		-- Try to find a visible scale with name matching just the override localized class name (example: "Paladin")
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if PawnIsScaleVisible(ScaleName) and overrideClass == ScaleName and Scale.Values and next(Scale.Values) then
+			if PawnIsScaleVisible(ScaleName)
+			and overrideLocalizedClass == ScaleName
+			and Scale.Values
+			and next(Scale.Values) then
 				return ScaleName, Scale.LocalizedName
 			end
 		end
 
 		-- Try to find any scale matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if AutoGearDB.OverrideSpec and AutoGearDB.OverrideSpec == ScaleName and Scale.Values and next(Scale.Values) then
+			if AutoGearDB.OverrideSpec
+			and AutoGearDB.OverrideSpec == ScaleName
+			and Scale.Values
+			and next(Scale.Values) then
 				return ScaleName, Scale.LocalizedName
 			end
 		end
 
 		-- Try to find any scale with localized name matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if AutoGearDB.OverrideSpec and AutoGearDB.OverrideSpec == Scale.LocalizedName and Scale.Values and next(Scale.Values) then
+			if AutoGearDB.OverrideSpec
+			and AutoGearDB.OverrideSpec == Scale.LocalizedName
+			and Scale.Values
+			and next(Scale.Values) then
 				return ScaleName, Scale.LocalizedName
 			end
 		end
 
-		-- Try to find any scale matching just the override spec name (example: "Protection")
+		-- Try to find any scale with class ID matching the override class ID and name containing the override spec name (example: "Protection")
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if overrideSpec == ScaleName and Scale.Values and next(Scale.Values) then
+			if Scale.ClassID == overrideClassID
+			and string.find(ScaleName, overrideSpec)
+			and Scale.Values
+			and next(Scale.Values) then
 				return ScaleName, Scale.LocalizedName
 			end
 		end
 
-		-- Try to find any scale matching just the override class name (example: "Paladin")
+		-- Try to find any scale with name containing just the override spec name (example: "Protection")
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if overrideClass == ScaleName and Scale.Values and next(Scale.Values) then
+			if string.find(ScaleName, overrideSpec)
+			and Scale.Values
+			and next(Scale.Values) then
+				return ScaleName, Scale.LocalizedName
+			end
+		end
+
+		-- Try to find any scale with class ID matching override class ID
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if Scale.ClassID == overrideClassID
+			and Scale.Values
+			and next(Scale.Values) then
+				return ScaleName, Scale.LocalizedName
+			end
+		end
+
+		-- Try to find any scale with name containing just the override localized class name (example: "Paladin")
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if string.find(ScaleName, overrideLocalizedClass)
+			and Scale.Values
+			and next(Scale.Values) then
+				return ScaleName, Scale.LocalizedName
+			end
+		end
+
+		-- Try to find any scale with name containing just the override class name (example: "PALADIN")
+		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+			if string.find(ScaleName, overrideClass)
+			and Scale.Values
+			and next(Scale.Values) then
 				return ScaleName, Scale.LocalizedName
 			end
 		end
 
 	end
 
-	local realClassAndSpec = realClass..": "..realSpec
+	local realClassAndSpec = realLocalizedClass..": "..realSpec
 
 	-- Try to find a visible scale matching the real class and spec string (example: "Warrior: Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName) and realClassAndSpec == ScaleName and Scale.Values and next(Scale.Values) then
+		if PawnIsScaleVisible(ScaleName)
+		and realClassAndSpec == ScaleName
+		and Scale.Values
+		and next(Scale.Values) then
 			-- AutoGearPrint("got the matching visible real spec and class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
@@ -3265,15 +3356,33 @@ function AutoGearGetPawnScaleName()
 
 	-- Try to find a visible scale matching the real localized class and spec string (example: "Warrior: Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName) and realClassAndSpec == Scale.LocalizedName and Scale.Values and next(Scale.Values) then
+		if PawnIsScaleVisible(ScaleName)
+		and realClassAndSpec == Scale.LocalizedName
+		and Scale.Values
+		and next(Scale.Values) then
 			-- AutoGearPrint("got the matching visible localized real spec and class name: "..ScaleName, 3)
+			return ScaleName, Scale.LocalizedName
+		end
+	end
+
+	-- Try to find a visible scale with matching real class ID and with localized name containing the real spec name (example: "Arms")
+	for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(ScaleName)
+		and Scale.ClassID == realClassID
+		and string.find(Scale.LocalizedName, realSpec)
+		and Scale.Values
+		and next(Scale.Values) then
+			-- AutoGearPrint("got the matching visible real spec name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
 
 	-- Try to find a visible scale matching just the real spec name (example: "Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName) and realSpec == ScaleName and Scale.Values and next(Scale.Values) then
+		if PawnIsScaleVisible(ScaleName)
+		and realSpec == ScaleName
+		and Scale.Values
+		and next(Scale.Values) then
 			-- AutoGearPrint("got the matching visible real spec name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
@@ -3281,7 +3390,10 @@ function AutoGearGetPawnScaleName()
 
 	-- Try to find a visible scale matching just the real class name (example: "Warrior")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName) and realClass == ScaleName and Scale.Values and next(Scale.Values) then
+		if PawnIsScaleVisible(ScaleName)
+		and realLocalizedClass == ScaleName
+		and Scale.Values
+		and next(Scale.Values) then
 			-- AutoGearPrint("got the matching visible real class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
@@ -3289,7 +3401,9 @@ function AutoGearGetPawnScaleName()
 
 	-- Try to find any scale matching the real class and spec string (example: "Warrior: Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if realClassAndSpec == ScaleName and Scale.Values and next(Scale.Values) then
+		if realClassAndSpec == ScaleName
+		and Scale.Values
+		and next(Scale.Values) then
 			-- AutoGearPrint("got the matching class and spec: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
@@ -3297,7 +3411,9 @@ function AutoGearGetPawnScaleName()
 
 	-- Try to find any scale matching the real localized class and spec string (example: "Warrior: Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if realClassAndSpec == Scale.LocalizedName and Scale.Values and next(Scale.Values) then
+		if realClassAndSpec == Scale.LocalizedName
+		and Scale.Values
+		and next(Scale.Values) then
 			-- AutoGearPrint("got the matching visible localized real spec and class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
@@ -3305,15 +3421,19 @@ function AutoGearGetPawnScaleName()
 
 	-- Try to find any scale matching just the real spec name (example: "Arms")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if realSpec == ScaleName and Scale.Values and next(Scale.Values) then
+		if realSpec == ScaleName
+		and Scale.Values
+		and next(Scale.Values) then
 			-- AutoGearPrint("got the matching real spec name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
 	end
 
-	-- Try to find any scale matching just the real class name (example: "Warrior")
+	-- Try to find any scale matching just the real localized class name (example: "Warrior")
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if realClass == ScaleName and Scale.Values and next(Scale.Values) then
+		if realLocalizedClass == ScaleName
+		and Scale.Values
+		and next(Scale.Values) then
 			-- AutoGearPrint("got the matching real class name: "..ScaleName, 3)
 			return ScaleName, Scale.LocalizedName
 		end
@@ -3321,18 +3441,19 @@ function AutoGearGetPawnScaleName()
 
 	-- Try to find the matching class with the matching spec
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName) and Scale.ClassID == ClassID and Scale.Values and next(Scale.Values) then
-			--AutoGearPrint("got the matching class with matching spec: \""..ScaleName.."\"; Scale.Values: ", 3)
-			--AutoGearRecursivePrint(Scale.Values)
+		if Scale.ClassID == realClassID
+		and string.find(Scale.LocalizedName, realSpec)
+		and Scale.Values
+		and next(Scale.Values) then
 			return ScaleName, Scale.LocalizedName
 		end
 	end
 
 	-- Try to find the matching class
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName) and Scale.ClassID == ClassID and Scale.Values and next(Scale.Values) then
-			--AutoGearPrint("got the matching class: \""..ScaleName.."\"; Scale.Values: ", 3)
-			--AutoGearRecursivePrint(Scale.Values)
+		if Scale.ClassID == realClassID
+		and Scale.Values
+		and next(Scale.Values) then
 			return ScaleName, Scale.LocalizedName
 		end
 	end
@@ -3356,7 +3477,7 @@ end
 
 function AutoGearGetWeaponType(itemClassID, itemSubClassID)
 	--ask WoW what type of weapon it is
-	if (itemClassID == LE_ITEM_CLASS_WEAPON) or ((itemClassID == LE_ITEM_CLASS_ARMOR) and (itemSubClassID == LE_ITEM_ARMOR_SHIELD)) then
+	if (itemClassID == Enum.ItemClass.Weapon) or ((itemClassID == Enum.ItemClass.Armor) and (itemSubClassID == Enum.ItemArmorSubclass.Shield)) then
 		return itemSubClassID
 	end
 end
@@ -3550,7 +3671,7 @@ function AutoGearTooltipHook(tooltip)
 	local pawnScaleName
 	local pawnScaleLocalizedName
 	local pawnScaleColor
-	if AutoGearDB.UsePawn and PawnIsReady ~= nil and PawnIsReady() then
+	if AutoGearDB.UsePawn and PawnIsReady and PawnIsReady() then
 		pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
 		pawnScaleColor = PawnGetScaleColor(pawnScaleName)
 	end
@@ -3606,8 +3727,14 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
-			"AutoGear: itemEquipLoc:",
-			tooltipItemInfo.invType,
+			"AutoGear: item level:",
+			tostring(GetDetailedItemLevelInfo(tooltipItemInfo.link)),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		tooltip:AddDoubleLine(
+			"AutoGear: InventoryType:",
+			tostring(tooltipItemInfo.invType or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
@@ -3617,9 +3744,16 @@ function AutoGearTooltipHook(tooltip)
 		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		-- )
+		local pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
 		tooltip:AddDoubleLine(
 			"AutoGear: Pawn scale name:",
-			tostring(AutoGearGetPawnScaleName() or "nil"),
+			(pawnScaleName or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		tooltip:AddDoubleLine(
+			"AutoGear: Pawn scale localized name:",
+			(pawnScaleLocalizedName or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
@@ -3638,8 +3772,14 @@ function AutoGearTooltipHook(tooltip)
 		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		-- )
 		tooltip:AddDoubleLine(
-			"AutoGear: weapon type:",
-			tostring(AutoGearGetWeaponType(tooltipItemInfo.classID, tooltipItemInfo.subclassID) or "nil"),
+			"AutoGear: item class ID:",
+			tostring(tooltipItemInfo.classID or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		tooltip:AddDoubleLine(
+			"AutoGear: item subclass ID:",
+			tostring(tooltipItemInfo.subclassID or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
@@ -3649,12 +3789,11 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
-		local tooltipItemRarityColor = tooltipItemInfo.rarityColor
 		tooltip:AddDoubleLine(
 			"AutoGear: rarity:",
-			tostring(tooltipItemInfo.item:GetItemQuality() or "nil"),
+			tostring(tooltipItemInfo.rarity or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			tooltipItemRarityColor.r, tooltipItemRarityColor.g, tooltipItemRarityColor.b
+			tooltipItemInfo.rarityColor.r, tooltipItemInfo.rarityColor.g, tooltipItemInfo.rarityColor.b
 		)
 		-- tooltip:AddDoubleLine(
 		-- 	"AutoGear: guid:",
