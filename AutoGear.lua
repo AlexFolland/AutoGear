@@ -69,6 +69,7 @@ local shouldPrintHelp = false
 local maxPlayerLevel = GetMaxLevelForExpansionLevel(GetExpansionLevel())
 local L = T.Localization
 AutoGearWouldRoll = "nil"
+AutoGearIsItemDataMissing = nil
 AutoGearFirstEquippableBagSlot = 0
 AutoGearEquippableBagSlots = {}
 
@@ -2230,24 +2231,33 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		end
 	end
 
-	if (event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player") then
+	if event == "GET_ITEM_INFO_RECEIVED" then
+		if not AutoGearIsItemDataMissing then
+			-- no local update in the queue, so add a new one
+			table.insert(futureAction, { action = "localupdate", t = GetTime() })
+			AutoGearIsItemDataMissing = 1
+		end
+		if not dataAvailable then
+			dataAvailable = 1
+		end
+	elseif event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player" then
 		--make sure this doesn't happen as part of logon
-		if (dataAvailable ~= nil) then
+		if dataAvailable then
 			local localizedClass, class, spec = AutoGearGetClassAndSpec()
 			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..spec.." "..localizedClass..".", 2)
 			-- AutoGearItemInfoCache = {}
 			AutoGearConsiderAllItems()
 		end
-	elseif (event == "PLAYER_EQUIPMENT_CHANGED") then
+	elseif event == "PLAYER_EQUIPMENT_CHANGED" then
 		AutoGearUpdateEquippedItems()
-	elseif (event == "START_LOOT_ROLL") then
+	elseif event == "START_LOOT_ROLL" then
 		local link = GetLootRollItemLink(arg1)
 		AutoGearHandleLootRoll(link, arg1)
-	elseif (event == "CONFIRM_LOOT_ROLL") then
+	elseif event == "CONFIRM_LOOT_ROLL" then
 		ConfirmLootRoll(arg1, arg2)
-	elseif (event == "CONFIRM_DISENCHANT_ROLL") then
+	elseif event == "CONFIRM_DISENCHANT_ROLL" then
 		ConfirmLootRoll(arg1, arg2)
-	elseif (event == "ITEM_PUSH") then
+	elseif event == "ITEM_PUSH" then
 		--make sure a fishing pole isn't replaced while fishing
 		if (not AutoGearIsMainHandAFishingPole()) then
 			--check if there's already a scan action in queue
@@ -2268,9 +2278,9 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				table.insert(futureAction, newAction)
 			end
 		end
-	elseif ((event == "EQUIP_BIND_CONFIRM") or
+	elseif (event == "EQUIP_BIND_CONFIRM") or
 	(event == "EQUIP_BIND_REFUNDABLE_CONFIRM") or
-	(event == "EQUIP_BIND_TRADEABLE_CONFIRM")) then
+	(event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
 		local rarity = Item:CreateFromItemLocation(C_Cursor.GetCursorItem()):GetItemQuality()
 		if rarity == nil then return end
 		if ((rarity ~= 3) and (rarity ~= 4) and (AutoGearDB.AutoConfirmBinding == true)) or
@@ -2278,7 +2288,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		((rarity == 4) and (AutoGearDB.AutoConfirmBindingEpics == true)) then
 			EquipPendingItem(arg1)
 		end
-	elseif (event == "MERCHANT_SHOW") then
+	elseif event == "MERCHANT_SHOW" then
 		if (AutoGearDB.AutoSellGreys == true) then
 			-- sell all grey items
 			local soldSomething = nil
@@ -2325,10 +2335,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 		end
-	elseif (event == "GET_ITEM_INFO_RECEIVED") then
-		dataAvailable = 1
-		AutoGearFrame:UnregisterEvent(event)
-	elseif (event ~= "ADDON_LOADED") then
+	elseif event ~= "ADDON_LOADED" then
 		AutoGearPrint("AutoGear: event fired: "..event, 3)
 	end
 end)
@@ -2455,10 +2462,6 @@ function AutoGearUpdateEquippedItems()
 		AutoGearEquippedItems[INVSLOT_TABARD].empty = 1
 		AutoGearEquippedItems[INVSLOT_TABARD].score = 0
 		AutoGearEquippedItems[INVSLOT_TABARD].equipped = nil
-		-- AutoGearEquippedItems[INVSLOT_TABARD].info = { name = (AutoGearEquippedItems[INVSLOT_MAINHAND].info.link or AutoGearEquippedItems[INVSLOT_MAINHAND].info.name).." and "..(AutoGearEquippedItems[INVSLOT_OFFHAND].info.link or AutoGearEquippedItems[INVSLOT_OFFHAND].info.name) }
-		-- AutoGearEquippedItems[INVSLOT_TABARD].score = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND].score
-		-- AutoGearEquippedItems[INVSLOT_TABARD].equippedScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND].score
-		-- AutoGearEquippedItems[INVSLOT_TABARD].equipped = nil
 	end
 end
 
@@ -3002,6 +3005,10 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if i==1 then
 				info.name = textLeft:GetText()
 				if info.name == "Retrieving item information" then
+					if not AutoGearIsItemDataMissing then
+						table.insert(futureAction, { action = "localupdate", t = GetTime() + 0.5 })
+						AutoGearIsItemDataMissing = 1
+					end
 					info.unusable = 1
 					reason = "(this item's tooltip is not yet available)"
 				end
@@ -3764,75 +3771,87 @@ function AutoGearMain()
 		tUpdate = GetTime()
 		--future actions
 		for i, curAction in ipairs(futureAction) do
-			if (curAction.action == "roll") then
-				if (GetTime() > curAction.t) then
-					if (curAction.rollType == 1) then
-						AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ")..GREEN_FONT_COLOR_CODE.."NEED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
-					elseif (curAction.rollType == 2) then
-						AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ")..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
-					end
-					if ((AutoGearDB.AutoLootRoll ~= nil) and (AutoGearDB.AutoLootRoll == true)) then
-						RollOnLoot(curAction.rollID, curAction.rollType)
-					end
-					table.remove(futureAction, i)
-				end
-			elseif (curAction.action == "simulateroll" and curAction.tooltip) then
-				if (GetTime() > curAction.t) then
-					AutoGearWouldRoll = (curAction.rollType == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (curAction.rollType == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll"))..FONT_COLOR_CODE_CLOSE
-					curAction.tooltip:AddDoubleLine(
-						"AutoGear: Would roll:",
-						AutoGearWouldRoll,
-						HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-						HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
-					)
-					curAction.tooltip:Show()
-					table.remove(futureAction, i)
-				end
-			elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
-				if (GetTime() > curAction.t) then
-					if ((AutoGearDB.Enabled ~= nil) and (AutoGearDB.Enabled == true)) then
-						if (not curAction.messageAlready) then
-							AutoGearPrint("AutoGear: Equipping "..(curAction.info.link or curAction.info.name)..".", 2)
-							curAction.messageAlready = 1
-						end
-						if (curAction.removeMainHandFirst) then
-							if (AutoGearGetAllBagsNumFreeSlots() > 0) then
-								AutoGearPrint("AutoGear: Removing the two-hander to equip the off-hand", 1)
-								PickupInventoryItem(INVSLOT_MAINHAND)
-								AutoGearPutItemInEmptyBagSlot()
-								curAction.removeMainHandFirst = nil
-								curAction.waitingOnEmptyMainHand = 1
-							else
-								AutoGearPrint("AutoGear: Cannot equip the off-hand because bags are too full to remove the two-hander", 0)
-								table.remove(futureAction, i)
-							end
-						elseif (curAction.waitingOnEmptyMainHand and not AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
-						elseif (curAction.waitingOnEmptyMainHand and AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
-							AutoGearPrint("AutoGear: Main hand detected to be clear.  Equipping now.", 1)
-							curAction.waitingOnEmptyMainHand = nil
-						elseif (curAction.ensuringEquipped) then
-							-- AutoGearPrint("checking whether equipped: "..curAction.info.link,3)
-							if (GetInventoryItemID("player", curAction.replaceSlot) == curAction.info.id) then
-								curAction.ensuringEquipped = nil
-								if (not futureAction[i+1]) or (not futureAction[i+1].ensuringEquipped) then
-									AutoGearUpdateEquippedItems()
-								end
-								table.remove(futureAction, i)
-							end
-						else
-							PickupContainerItem(curAction.container, curAction.slot)
-							EquipCursorItem(curAction.replaceSlot)
-							curAction.ensuringEquipped = 1
-							-- AutoGearItemInfoCache = {}
-						end
-					else
+			-- if there's any item data missing, don't do anything that matters and instead try updating again
+			if AutoGearIsItemDataMissing then
+				if curAction.action == "localupdate" then
+					if GetTime() > curAction.t then
+						AutoGearIsItemDataMissing = nil
+						AutoGearPrint("AutoGear: An item was not yet ready on the client side when updating AutoGear's local item info, so updating AutoGear's table of equipped items again.",3)
+						AutoGearUpdateEquippedItems() -- this will set AutoGearIsItemDataMissing again if necessary
 						table.remove(futureAction, i)
 					end
 				end
-			elseif (curAction.action == "scan") then
-				if (GetTime() > curAction.t) then
-					AutoGearConsiderAllItems()
-					table.remove(futureAction, i)
+			else
+				if curAction.action == "roll" then
+					if GetTime() > curAction.t then
+						if curAction.rollType == 1 then
+							AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ")..GREEN_FONT_COLOR_CODE.."NEED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
+						elseif curAction.rollType == 2 then
+							AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ")..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
+						end
+						if (AutoGearDB.AutoLootRoll ~= nil) and (AutoGearDB.AutoLootRoll == true) then
+							RollOnLoot(curAction.rollID, curAction.rollType)
+						end
+						table.remove(futureAction, i)
+					end
+				elseif (curAction.action == "simulateroll") and curAction.tooltip then
+					if GetTime() > curAction.t then
+						AutoGearWouldRoll = (curAction.rollType == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (curAction.rollType == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll"))..FONT_COLOR_CODE_CLOSE
+						curAction.tooltip:AddDoubleLine(
+							"AutoGear: Would roll:",
+							AutoGearWouldRoll,
+							HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+							HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+						)
+						curAction.tooltip:Show()
+						table.remove(futureAction, i)
+					end
+				elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
+					if (GetTime() > curAction.t) then
+						if ((AutoGearDB.Enabled ~= nil) and (AutoGearDB.Enabled == true)) then
+							if (not curAction.messageAlready) then
+								AutoGearPrint("AutoGear: Equipping "..(curAction.info.link or curAction.info.name)..".", 2)
+								curAction.messageAlready = 1
+							end
+							if (curAction.removeMainHandFirst) then
+								if (AutoGearGetAllBagsNumFreeSlots() > 0) then
+									AutoGearPrint("AutoGear: Removing the two-hander to equip the off-hand", 1)
+									PickupInventoryItem(INVSLOT_MAINHAND)
+									AutoGearPutItemInEmptyBagSlot()
+									curAction.removeMainHandFirst = nil
+									curAction.waitingOnEmptyMainHand = 1
+								else
+									AutoGearPrint("AutoGear: Cannot equip the off-hand because bags are too full to remove the two-hander", 0)
+									table.remove(futureAction, i)
+								end
+							elseif (curAction.waitingOnEmptyMainHand and not AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
+							elseif (curAction.waitingOnEmptyMainHand and AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
+								AutoGearPrint("AutoGear: Main hand detected to be clear.  Equipping now.", 1)
+								curAction.waitingOnEmptyMainHand = nil
+							elseif (curAction.ensuringEquipped) then
+								-- AutoGearPrint("checking whether equipped: "..curAction.info.link,3)
+								if (GetInventoryItemID("player", curAction.replaceSlot) == curAction.info.id) then
+									curAction.ensuringEquipped = nil
+									if (not futureAction[i+1]) or (not futureAction[i+1].ensuringEquipped) then
+										AutoGearUpdateEquippedItems()
+									end
+									table.remove(futureAction, i)
+								end
+							else
+								PickupContainerItem(curAction.container, curAction.slot)
+								EquipCursorItem(curAction.replaceSlot)
+								curAction.ensuringEquipped = 1
+								-- AutoGearItemInfoCache = {}
+							end
+						else
+							table.remove(futureAction, i)
+						end
+					end
+				elseif (curAction.action == "scan") then
+					if (GetTime() > curAction.t) then
+						AutoGearConsiderAllItems()
+						table.remove(futureAction, i)
+					end
 				end
 			end
 		end
