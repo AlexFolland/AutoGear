@@ -1527,7 +1527,6 @@ function AutoGearDetectClassAndSpec()
 end
 
 function AutoGearSetStatWeights()
-	-- AutoGearItemInfoCache = {}
 	local localizedClass, class, spec = AutoGearGetClassAndSpec()
 	AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec] or nil
 	if TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK then
@@ -1537,7 +1536,7 @@ function AutoGearSetStatWeights()
 end
 
 local function newCheckbox(dbname, label, description, onClick, optionsMenu)
-	local check = CreateFrame("CheckButton", "AutoGear" .. dbname .. "CheckButton", optionsMenu, "InterfaceOptionsCheckButtonTemplate")
+	local check = CreateFrame("CheckButton", "AutoGear"..dbname.."CheckButton", optionsMenu, "InterfaceOptionsCheckButtonTemplate")
 	check:SetScript("OnClick", function(self)
 		local tick = self:GetChecked()
 		onClick(self, tick and true or false)
@@ -1547,7 +1546,7 @@ local function newCheckbox(dbname, label, description, onClick, optionsMenu)
 			PlaySound(857) -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF
 		end
 	end)
-	check.label = _G[check:GetName() .. "Text"]
+	check.label = _G[check:GetName().."Text"]
 	check.label:SetText(label)
 	check.tooltipText = label
 	check.tooltipRequirement = description
@@ -1574,6 +1573,7 @@ local function optionsSetup(optionsMenu)
 			end
 			AutoGearDB[v["option"]] = value
 			AutoGearPrint("AutoGear: "..(AutoGearDB[v["option"]] and v["toggleDescriptionTrue"] or v["toggleDescriptionFalse"]), 3)
+			AutoGearPrint("AutoGear: AutoGearDB."..v["option"].." is "..(AutoGearDB[v["option"]] and "true" or "false")..".",3)
 		end
 
 		--function to run when toggling this option via command-line interface
@@ -1720,7 +1720,7 @@ end
 local optionsMenu = CreateFrame("Frame", "AutoGearOptionsPanel", InterfaceOptionsFramePanelContainer)
 optionsMenu.name = "AutoGear"
 InterfaceOptions_AddCategory(optionsMenu)
-InterfaceAddOnsList_Update()
+if InterfaceAddOnsList_Update then InterfaceAddOnsList_Update() end
 
 --handle PLAYER_ENTERING_WORLD events for initializing GUI options menu widget states at the right time
 --UI reload doesn't seem to fire ADDON_LOADED
@@ -2004,9 +2004,10 @@ SlashCmdList["AutoGear"] = function(msg)
 	elseif (param1 == "scan") then
 		AutoGearScan()
 	elseif (param1 == "spec") then
-		local localizedClass, class, spec, classID = AutoGearDetectClassAndSpec()
+		local localizedRealClass, realClass, realSpec, realClassID = AutoGearDetectClassAndSpec()
+		local localizedOverrideClass, overrideClass, overrideSpec, overrideClassID = AutoGearGetClassAndSpec()
 		local usingPawn = AutoGearDB.UsePawn and PawnIsReady and PawnIsReady()
-		AutoGearPrint("AutoGear: Looks like you are a"..(spec:find("^[AEIOUaeiou]") and "n " or " ")..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).."."..((usingPawn or (AutoGearDB.Override and ((localizedClass..": "..spec) ~= AutoGearDB.OverrideSpec))) and ("  However, AutoGear is using "..(usingPawn and ("Pawn scale \""..PawnGetScaleColor(AutoGearDB.PawnScale)..AutoGearDB.PawnScale..FONT_COLOR_CODE_CLOSE) or ("\""..AutoGearDB.OverrideSpec)).."\" for gear evaluation due to the \""..(usingPawn and "Use Pawn to evaluate upgrades" or "Override specialization").."\" option.") or ""), 0)
+		AutoGearPrint("AutoGear: Looks like you are a"..(realSpec:find("^[AEIOUaeiou]") and "n " or " ")..RAID_CLASS_COLORS[realClass]:WrapTextInColorCode(realSpec.." "..localizedRealClass).."."..((usingPawn or (AutoGearDB.Override and ((realClassID ~= overrideClassID) or (realSpec ~= overrideSpec)))) and ("  However, AutoGear is using "..(usingPawn and ("Pawn scale \""..PawnGetScaleColor(AutoGearDB.PawnScale)..AutoGearDB.PawnScale..FONT_COLOR_CODE_CLOSE.."\"") or (RAID_CLASS_COLORS[overrideClass]:WrapTextInColorCode(overrideSpec.." "..localizedOverrideClass).." weights")).." for gear evaluation due to the \""..(usingPawn and "Use Pawn to evaluate upgrades" or "Override specialization").."\" option.") or ""), 0)
 	elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
 		AutoGearSetAllowedVerbosity(param2)
 	elseif ((param1 == "setspec") or
@@ -2052,6 +2053,9 @@ SlashCmdList["AutoGear"] = function(msg)
 			AutoGearPrint("AutoGear: Pawn is not installed.",0)
 		end
 	elseif (param1 == "") then
+		if not InterfaceAddOnsList_Update then
+			InterfaceOpInterfaceOptionsFrame_OpenToCategory(optionsMenu)
+		end
 		InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 	else
 		shouldPrintHelp = true
@@ -2231,21 +2235,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		end
 	end
 
-	if event == "GET_ITEM_INFO_RECEIVED" then
-		if not AutoGearIsItemDataMissing then
-			-- no local update in the queue, so add a new one
-			table.insert(futureAction, { action = "localupdate", t = GetTime() })
-			AutoGearIsItemDataMissing = 1
-		end
-		if not dataAvailable then
-			dataAvailable = 1
-		end
-	elseif event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player" then
+	if event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player" then
 		--make sure this doesn't happen as part of logon
 		if dataAvailable then
 			local localizedClass, class, spec = AutoGearGetClassAndSpec()
 			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..spec.." "..localizedClass..".", 2)
-			-- AutoGearItemInfoCache = {}
 			AutoGearConsiderAllItems()
 		end
 	elseif event == "PLAYER_EQUIPMENT_CHANGED" then
@@ -2334,6 +2328,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					AutoGearPrint("AutoGear: Not enough money to repair all items ("..cashString..").", 0)
 				end
 			end
+		end
+	elseif event == "GET_ITEM_INFO_RECEIVED" then
+		if not dataAvailable then
+			dataAvailable = 1
+			AutoGearFrame:UnregisterEvent(event)
 		end
 	elseif event ~= "ADDON_LOADED" then
 		AutoGearPrint("AutoGear: event fired: "..event, 3)
@@ -2436,6 +2435,7 @@ end
 
 function AutoGearUpdateEquippedItems()
 	AutoGearSetStatWeights()
+	-- AutoGearItemInfoCache = {}
 	AutoGearEquippedItems = {}
 	local info, score
 	for invSlot = 1, 23 do
@@ -2488,7 +2488,8 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 	--reset table of best items to reconsider all items
 	--set starting best scores from all equipped items
 	AutoGearBestItems = AutoGearDeepCopy(AutoGearEquippedItems)
-
+	
+	AutoGearBestItemsAlreadyAdded = {}
 	for passesDone = 0,1 do
 		--consider all items in bags
 		for bag = 0, NUM_BAG_SLOTS do
@@ -2635,7 +2636,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 		local bestRewardIndex
 		local bestRewardScoreDelta
 		for i = 1, 23 do
-			if (AutoGearBestItems[i].chooseReward and (i ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff(AutoGearBestItems))) then
+			if (AutoGearBestItems[i].chooseReward and (i ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff())) then
 				local delta = AutoGearBestItems[i].score - AutoGearBestItems[i].equippedScore
 				if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
 					bestRewardScoreDelta = delta
@@ -2676,15 +2677,19 @@ end
 
 --companion function to AutoGearConsiderAllItems
 function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
-	if info.empty then return end
+	if info.empty
+	or (info.linkHash and AutoGearBestItemsAlreadyAdded[info.linkHash]) then
+		return
+	end
 	local score
 	if (info.isMount and (not info.alreadyKnown)) then return true end
 	if (info.usable or (rollOn and info.Within5levels)) then
 		score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
 		if info.isGear then
 			if not info.validGearSlots then return end
-			--ignore it if it's a tabard
+			--ignore it if it's a tabard or ammo
 			if (info.validGearSlots[1] == INVSLOT_TABARD) then return end
+			if (info.validGearSlots[1] == INVSLOT_AMMO) then return end
 			local firstValidGearSlot = info.validGearSlots[1]
 			local lowestScoringValidGearSlot = firstValidGearSlot
 			local lowestScoringValidGearSlotScore = AutoGearBestItems[firstValidGearSlot].score
@@ -2705,10 +2710,11 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
 					end
 				end
 			end
-
-			if (score > lowestScoringValidGearSlotScore) or
-			AutoGearBestItems[lowestScoringValidGearSlot].info.empty or
-			AutoGearBestItems[lowestScoringValidGearSlot].info.unusable then
+			
+			if ((score > lowestScoringValidGearSlotScore)
+			or AutoGearBestItems[lowestScoringValidGearSlot].info.empty
+			or AutoGearBestItems[lowestScoringValidGearSlot].info.unusable) then
+				AutoGearBestItemsAlreadyAdded[info.linkHash] = 1
 				if not justLook then
 					AutoGearBestItems[lowestScoringValidGearSlot].info = info
 					AutoGearBestItems[lowestScoringValidGearSlot].score = score
@@ -2880,10 +2886,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 
 	-- EF: this might actually be breaking it as I think it's caching empty tooltips before they're fully loaded
 	-- caching did not show a performance benefit, so commented this and the below out
-	-- local tooltipitemhash
-	-- if link then tooltipitemhash = AutoGearStringHash(link) else return {} end
-	-- local cachediteminfo = AutoGearItemInfoCache[tooltipitemhash]
-	-- if cachediteminfo ~= nil then return cachediteminfo end
+	info.linkHash = AutoGearStringHash(info.link)
+	-- local cachediteminfo = AutoGearItemInfoCache[info.linkHash]
+	-- if cachediteminfo then return cachediteminfo end
 
 	info.invType = C_Item.GetItemInventoryTypeByID(info.id) or 0
 	info.isGear = info.invType > 0
@@ -3006,6 +3011,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				info.name = textLeft:GetText()
 				if info.name == "Retrieving item information" then
 					if not AutoGearIsItemDataMissing then
+						AutoGearPrint("AutoGear: An item was not yet ready on the client side when updating AutoGear's local item info, so updating AutoGear's table of equipped items again.",3)
 						table.insert(futureAction, { action = "localupdate", t = GetTime() + 0.5 })
 						AutoGearIsItemDataMissing = 1
 					end
@@ -3039,10 +3045,6 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			end
 			if string.find(text, "unique") then
 				info.unique = 1
-				-- if (info.equipped) then
-				-- 	info.unusable = 1
-				-- 	reason = "(this item is unique and you already have one)"
-				-- end
 			end
 			if string.find(text, "already known") then
 				info.alreadyKnown = 1
@@ -3147,7 +3149,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.reason = reason
 
 	--caching did not show a performance benefit, so commented this out
-	-- AutoGearItemInfoCache[tooltipitemhash] = info
+	-- if not AutoGearIsItemDataMissing then
+	-- 	AutoGearItemInfoCache[info.linkHash] = info
+	-- end
 
 	return info
 end
@@ -3226,7 +3230,7 @@ function AutoGearGetPawnScaleName()
 			if PawnIsScaleVisible(ScaleName)
 			and AutoGearDB.OverrideSpec
 			and overrideClassID == Scale.ClassID
-			and string.find(Scale.LocalizedName, overrideSpec)
+			and string.find(Scale.LocalizedName or ScaleName, overrideSpec)
 			and Scale.Values and next(Scale.Values) then
 				return ScaleName, Scale.LocalizedName
 			end
@@ -3776,7 +3780,6 @@ function AutoGearMain()
 				if curAction.action == "localupdate" then
 					if GetTime() > curAction.t then
 						AutoGearIsItemDataMissing = nil
-						AutoGearPrint("AutoGear: An item was not yet ready on the client side when updating AutoGear's local item info, so updating AutoGear's table of equipped items again.",3)
 						AutoGearUpdateEquippedItems() -- this will set AutoGearIsItemDataMissing again if necessary
 						table.remove(futureAction, i)
 					end
@@ -3841,7 +3844,6 @@ function AutoGearMain()
 								PickupContainerItem(curAction.container, curAction.slot)
 								EquipCursorItem(curAction.replaceSlot)
 								curAction.ensuringEquipped = 1
-								-- AutoGearItemInfoCache = {}
 							end
 						else
 							table.remove(futureAction, i)
