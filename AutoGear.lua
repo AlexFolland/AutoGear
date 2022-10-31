@@ -59,7 +59,6 @@ local TOC_VERSION_DF = 100000
 
 local _ --prevent taint when using throwaway variable
 local next = next -- bind next locally for speed
-local reason
 --local lastlink
 local futureAction = {}
 local weapons
@@ -2350,10 +2349,10 @@ function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 	AutoGearSetStatWeights()
 	if AutoGearCurrentWeighting then
 		local roll = nil
-		reason = "(no reason set)"
 		local canNeed = select(6,GetLootRollItemInfo(lootRollID))
 		local lootRollItemID = GetItemInfoInstant(link)
 		local rollItemInfo = AutoGearReadItemInfo(nil, nil, nil, nil, nil, link)
+		local reason = rollItemInfo.reason or "(no reason set)"
 		local wouldNeed = AutoGearConsiderAllItems(lootRollItemID, nil, rollItemInfo)
 		if simulate then canNeed = 1 end
 		if (AutoGearDB.RollOnNonGearLoot == false)
@@ -2572,14 +2571,16 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 			if (mainSwap or offSwap) then
 				anythingBetter = 1
 				if (mainSwap and offSwap) then
-					local equippedMain = AutoGearEquippedItems[INVSLOT_MAINHAND].info
-					local mainScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score
 					if (AutoGearIsTwoHandEquipped()) then
+						local equippedMain = AutoGearEquippedItems[INVSLOT_TABARD].info
+						local mainScore = AutoGearEquippedItems[INVSLOT_TABARD].score
 						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or AutoGearBestItems[INVSLOT_MAINHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or AutoGearBestItems[INVSLOT_OFFHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_MAINHAND].info)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_OFFHAND].info)
 						AutoGearPrintItem(equippedMain)
 					else
+						local equippedMain = AutoGearEquippedItems[INVSLOT_MAINHAND].info
+						local mainScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score
 						local equippedOff = AutoGearEquippedItems[INVSLOT_OFFHAND].info
 						local offScore = AutoGearEquippedItems[INVSLOT_OFFHAND].score
 						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or AutoGearBestItems[INVSLOT_MAINHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or AutoGearBestItems[INVSLOT_OFFHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.link or equippedOff.name).." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
@@ -2625,7 +2626,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 		if (info.isMount and (not info.alreadyKnown)) then return 1 end
 		for i = 1, 23 do
 			if (AutoGearBestItems[i].rollOn and
-			(i ~= INVSLOT_MAINHAND or i ~= INVSLOT_OFFHAND or AutoGearIs1hWorthwhile()) and
+			(i ~= INVSLOT_MAINHAND or i ~= INVSLOT_OFFHAND or AutoGearIs1hWorthwhile(i)) and
 			(i ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff(i))) then
 				return 1
 			end
@@ -2691,7 +2692,7 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
 			local lowestScoringValidGearSlot = firstValidGearSlot
 			local lowestScoringValidGearSlotScore = AutoGearBestItems[firstValidGearSlot].score
 			if info.is2hWeapon then
-				local oneHandedWeaponsScore = AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND]
+				local oneHandedWeaponsScore = AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score
 				if (oneHandedWeaponsScore < lowestScoringValidGearSlotScore)
 				or (AutoGearBestItems[INVSLOT_MAINHAND].info.empty
 				and AutoGearBestItems[INVSLOT_OFFHAND].info.empty) then
@@ -2700,7 +2701,7 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
 				elseif (AutoGearBestItems[INVSLOT_TABARD].score < lowestScoringValidGearSlotScore)
 				or AutoGearBestItems[INVSLOT_TABARD].info.empty then
 					lowestScoringValidGearSlot = INVSLOT_TABARD
-					lowestScoringValidGearSlotScore = AutoGearBestItems[INVSLOT_TABARD]
+					lowestScoringValidGearSlotScore = AutoGearBestItems[INVSLOT_TABARD].score
 				end
 			else
 				for _, gearSlot in pairs(info.validGearSlots) do
@@ -2964,17 +2965,19 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		info.validGearSlots = AutoGearGetValidGearSlotsForInvType(info.invType)
 		if info.validGearSlots then
 			for _, v in pairs(info.validGearSlots) do
-				if v == INVSLOT_MAINHAND or v == INVSLOT_OFFHAND then
+				if v == INVSLOT_MAINHAND or v == INVSLOT_OFFHAND or v == INVSLOT_TABARD then
 					info.isWeaponOrOffHand = 1
 					if AutoGearIsInvTypeTwoHanded(info.invType) then
 						info.is2hWeapon = 1
+					else
+						info.is1hWeaponOrOffHand = 1
 					end
 					break
 				end
 			end
 		else
 			info.unusable = 1
-			reason = "(invalid item for "..spec.." "..localizedClass..")"
+			info.reason = "(invalid item for "..spec.." "..localizedClass..")"
 		end
 	end
 
@@ -2982,30 +2985,30 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		if (info.invType == Enum.InventoryType.IndexWeaponmainhandType) then
 			if (weapons == "dagger" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
+				info.reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
 			elseif (weapons == "dagger and any" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
+				info.reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
 			elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." needs a two-hand weapon)"
+				info.reason = "("..spec.." "..localizedClass.." needs a two-hand weapon)"
 			end
 		elseif (info.invType == Enum.InventoryType.IndexShieldType) then
 			if (weapons ~= "weapon and shield") and (weapons ~= "any") then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." should not use a shield)"
+				info.reason = "("..spec.." "..localizedClass.." should not use a shield)"
 			end
 		elseif (info.invType == Enum.InventoryType.Index2HweaponType) then
 			if (weapons == "weapon and shield") then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." needs weapon and shield)"
+				info.reason = "("..spec.." "..localizedClass.." needs weapon and shield)"
 			elseif (weapons == "dual wield" and CanDualWield()) then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." should dual wield one-handers)"
+				info.reason = "("..spec.." "..localizedClass.." should dual wield one-handers)"
 			elseif ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
 			and weapons == "ranged") then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." should use a ranged weapon)"
+				info.reason = "("..spec.." "..localizedClass.." should use a ranged weapon)"
 			end
 		elseif (info.invType == Enum.InventoryType.IndexHoldableType) then
 			if (weapons == "2h" or
@@ -3013,37 +3016,37 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			weapons == "weapon and shield" or
 			weapons == "ranged") then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." needs the off-hand for a weapon or shield)"
+				info.reason = "("..spec.." "..localizedClass.." needs the off-hand for a weapon or shield)"
 			end
 		elseif (info.invType == Enum.InventoryType.IndexWeaponoffhandType) then
 			if (weapons == "2h" or weapons == "ranged") then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." should use a two-hand weapon)"
+				info.reason = "("..spec.." "..localizedClass.." should use a two-hand weapon)"
 			elseif (weapons == "dagger" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." needs a dagger in the off-hand)"
+				info.reason = "("..spec.." "..localizedClass.." needs a dagger in the off-hand)"
 			elseif (weapons == "weapon and shield"
 			and (info.classID ~= Enum.ItemClass.Armor)
 			and (info.subclassID ~= Enum.ItemArmorSubclass.Shield)) then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." needs a shield in the off-hand)"
+				info.reason = "("..spec.." "..localizedClass.." needs a shield in the off-hand)"
 			elseif (weapons == "dual wield"
 			and CanDualWield()
 			and (info.classID == Enum.ItemClass.Armor)
 			and (info.subclassID == Enum.ItemArmorSubclass.Shield)) then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." should dual wield and not use a shield)"
+				info.reason = "("..spec.." "..localizedClass.." should dual wield and not use a shield)"
 			end
 		elseif (info.invType == Enum.InventoryType.IndexWeaponType) then
 			if (weapons == "2h"
 			or weapons == "2hDW"
 			or ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (weapons == "ranged"))) then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." should use a two-handed weapon or dual wield two-handers)"
+				info.reason = "("..spec.." "..localizedClass.." should use a two-handed weapon or dual wield two-handers)"
 			end
 			if (weapons == "dagger" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
 				info.unusable = 1
-				reason = "("..spec.." "..localizedClass.." needs a dagger in each hand)"
+				info.reason = "("..spec.." "..localizedClass.." needs a dagger in each hand)"
 			end
 		end
 
@@ -3051,7 +3054,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		(info.invType == Enum.InventoryType.IndexRangedType) and
 		(weapons ~= "ranged" and info.subclassID ~= Enum.ItemWeaponSubclass.Wand) then
 			info.unusable = 1
-			reason = "("..spec.." "..localizedClass.." should not use a ranged 2h weapon)"
+			info.reason = "("..spec.." "..localizedClass.." should not use a ranged 2h weapon)"
 		end
 	end
 
@@ -3072,7 +3075,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 						AutoGearIsItemDataMissing = 1
 					end
 					info.unusable = 1
-					reason = "(this item's tooltip is not yet available)"
+					info.reason = "(this item's tooltip is not yet available)"
 				end
 			end
 			local multiplier = 1.0
@@ -3105,7 +3108,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if string.find(text, "already known") then
 				info.alreadyKnown = 1
 				info.unusable = 1
-				reason = "(this item has been learned already)"
+				info.reason = "(this item has been learned already)"
 			end
 			local isHealer = spec=="Holy" or spec=="Restoration" or spec=="Mistweaver" or spec=="Discipline"
 			if string.find(text, L["strength"]) then info.Strength = (info.Strength or 0) + value end
@@ -3170,7 +3173,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				if (not info.unusable and string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
 					info.Within5levels = 1
 				end
-				reason = "(found red text: \""..textLeftText.."\")"
+				info.reason = "(found red text: \""..textLeftText.."\")"
 				info.unusable = 1
 			end
 
@@ -3180,7 +3183,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				local r, g, b = textRight:GetTextColor()
 				local textRightText = textRight:GetText()
 				if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and textRightText) then --this is red text
-					reason = "(found red text: \""..textRightText.."\")"
+					info.reason = "(found red text: \""..textRightText.."\")"
 					info.unusable = 1
 				end
 			end
@@ -3199,10 +3202,8 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		info.usable = 1
 	elseif not (info.isGear or info.isMount) then
 		info.unusable = 1
-		reason = "(item can't be equipped. info.invType = '".. tostring(info.invType) .."')"
+		info.reason = "(item can't be equipped. info.invType = '".. tostring(info.invType) .."')"
 	end
-
-	info.reason = reason
 
 	--caching did not show a performance benefit, so commented this out
 	-- if not AutoGearIsItemDataMissing then
@@ -3524,9 +3525,9 @@ function AutoGearDetermineItemScore(info)
 	end
 
 	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
-		local PawnItemData = PawnGetItemData(info.link)
-		if PawnItemData then
-			return PawnGetSingleValueFromItem(PawnItemData, AutoGearGetPawnScaleName())
+		local pawnItemData = PawnGetItemData(info.link)
+		if pawnItemData then
+			return PawnGetSingleValueFromItem(pawnItemData, AutoGearGetPawnScaleName())
 		end
 	end
 
@@ -3645,44 +3646,65 @@ function AutoGearDump(o)
     end
 end
 
-function AutoGearGetTooltipScoreComparisonInfo(info)
+function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 	if not info.validGearSlots then return nil, 0 end
 	local firstValidGearSlot = info.validGearSlots[1]
 	local lowestScoringValidGearSlot = firstValidGearSlot
 	local lowestScoringValidGearSlotScore = AutoGearEquippedItems[firstValidGearSlot].score
+	local lowestScoringValidGearInfo = AutoGearEquippedItems[firstValidGearSlot].info
 	if info.is2hWeapon then
-		local oneHandedWeaponsScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND]
-		if (oneHandedWeaponsScore < lowestScoringValidGearSlotScore)
-		or (AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty
-		and AutoGearEquippedItems[INVSLOT_OFFHAND].info.empty) then
-			lowestScoringValidGearSlot = INVSLOT_TABARD
-			lowestScoringValidGearSlotScore = oneHandedWeaponsScore
-		elseif (AutoGearEquippedItems[INVSLOT_TABARD].score < lowestScoringValidGearSlotScore)
-		or AutoGearEquippedItems[INVSLOT_TABARD].info.empty then
-			lowestScoringValidGearSlot = INVSLOT_TABARD
-			lowestScoringValidGearSlotScore = AutoGearEquippedItems[INVSLOT_TABARD]
-		end
+		local mainHandInfo = AutoGearReadItemInfo(INVSLOT_MAINHAND)
+		local mainHandScore = AutoGearDetermineItemScore(mainHandInfo)
+		local offHandScore = AutoGearDetermineItemScore(AutoGearReadItemInfo(INVSLOT_OFFHAND))
+		local oneHandedWeaponsScore = mainHandScore + offHandScore
+		lowestScoringValidGearInfo = mainHandInfo
+		lowestScoringValidGearSlot = INVSLOT_MAINHAND
+		lowestScoringValidGearSlotScore = oneHandedWeaponsScore
+	elseif info.is1hWeaponOrOffHand
+	and AutoGearIsTwoHandEquipped() then
+		lowestScoringValidGearInfo = AutoGearReadItemInfo(INVSLOT_MAINHAND)
+		lowestScoringValidGearSlot = INVSLOT_MAINHAND
+		lowestScoringValidGearSlotScore = AutoGearDetermineItemScore(lowestScoringValidGearInfo)
 	else
 		for _, gearSlot in ipairs(info.validGearSlots) do
-			if info.unique and AutoGearEquippedItems[gearSlot].info.unique and
-			(info.id == AutoGearEquippedItems[gearSlot].info.id) and
-			(GetItemCount(info.id, true) > 1) then
-				return
+			if info.unique and AutoGearEquippedItems[gearSlot].info.unique
+			and (info.id == AutoGearEquippedItems[gearSlot].info.id)
+			and (GetItemCount(info.id, true) > 1) then
+				return nil, 0, gearSlot
 			end
-			if (AutoGearEquippedItems[gearSlot].score < lowestScoringValidGearSlotScore) or
-			AutoGearEquippedItems[gearSlot].info.empty then
+			if (AutoGearEquippedItems[gearSlot].score < lowestScoringValidGearSlotScore)
+			or AutoGearEquippedItems[gearSlot].info.empty then
+				lowestScoringValidGearInfo = AutoGearEquippedItems[gearSlot].info
 				lowestScoringValidGearSlot = gearSlot
 				lowestScoringValidGearSlotScore = AutoGearEquippedItems[gearSlot].score
 			end
 		end
+		if info.is1hWeaponOrOffHand and not equipped then
+			lowestScoringValidGearSlotScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND].score
+		end
 	end
-	return AutoGearEquippedItems[lowestScoringValidGearSlot].info, lowestScoringValidGearSlotScore
+	return lowestScoringValidGearInfo, lowestScoringValidGearSlotScore, lowestScoringValidGearSlot
+end
+
+function AutoGearGetScoreOfBest1hPairingForInfo(info)
+	if info.isWeaponOrOffHand and info.validGearSlots then
+		local score = AutoGearDetermineItemScore(info)
+		for _, gearSlot in pairs(info.validGearSlots) do
+			if gearSlot == INVSLOT_MAINHAND then
+				return AutoGearBestItems[INVSLOT_OFFHAND].score + score
+			elseif gearSlot == INVSLOT_OFFHAND then
+				return AutoGearBestItems[INVSLOT_MAINHAND].score + score
+			end
+		end
+	end
+	return 0
 end
 
 function AutoGearTooltipHook(tooltip)
 	if (not AutoGearDB.ScoreInTooltips) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
 	local name, link = tooltip:GetItem()
+	local equipped = tooltip:IsEquippedItem()
 	if not link then
 		AutoGearPrint("AutoGear: No item link for "..(name or "(no name)").." on "..tooltip:GetName(),3)
 		return
@@ -3695,30 +3717,33 @@ function AutoGearTooltipHook(tooltip)
 		pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
 		pawnScaleColor = PawnGetScaleColor(pawnScaleName)
 	end
-	local score = AutoGearDetermineItemScore(tooltipItemInfo, AutoGearCurrentWeighting)
 	local lowestScoringEquippedItemInfo
 	local lowestScoringEquippedItemScore
+	local lowestScoringEquippedItemSlot
 	local scoreColor = HIGHLIGHT_FONT_COLOR
-	if (tooltipItemInfo.shouldShowScoreInTooltip == 1) then
-		lowestScoringEquippedItemInfo, lowestScoringEquippedItemScore = AutoGearGetTooltipScoreComparisonInfo(tooltipItemInfo)
+	if tooltipItemInfo.shouldShowScoreInTooltip then
 		local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
+		local score = (tooltipItemInfo.is1hWeaponOrOffHand and (not equipped) and (not isAComparisonTooltip)) and (AutoGearGetScoreOfBest1hPairingForInfo(tooltipItemInfo)) or AutoGearDetermineItemScore(tooltipItemInfo, AutoGearCurrentWeighting)
+		lowestScoringEquippedItemInfo, lowestScoringEquippedItemScore, lowestScoringEquippedItemSlot = AutoGearGetTooltipScoreComparisonInfo(tooltipItemInfo, equipped)
 		local isAnyComparisonTooltipVisible = ItemRefTooltip:IsVisible() or ShoppingTooltip1:IsVisible() or ShoppingTooltip2:IsVisible()
-		local shouldShowComparisonLine = (not isAComparisonTooltip and (not isAnyComparisonTooltipVisible or AutoGearDB.AlwaysShowScoreComparisons)) and not tooltipItemInfo.equipped
-		if (score > lowestScoringEquippedItemScore) then
-			scoreColor = GREEN_FONT_COLOR
-		elseif (score < lowestScoringEquippedItemScore) then
-			scoreColor = RED_FONT_COLOR
+		local shouldShowComparisonLine = (not isAComparisonTooltip and (not isAnyComparisonTooltipVisible or AutoGearDB.AlwaysShowScoreComparisons)) and not equipped
+		if (not equipped) and (not isAComparisonTooltip) then
+			if (score > lowestScoringEquippedItemScore) then
+				scoreColor = GREEN_FONT_COLOR
+			elseif (score < lowestScoringEquippedItemScore) then
+				scoreColor = RED_FONT_COLOR
+			end
 		end
 		-- 3 decimal places max
 		score = math.floor(score * 1000) / 1000
 		if shouldShowComparisonLine then
 			lowestScoringEquippedItemScore = math.floor(lowestScoringEquippedItemScore * 1000) / 1000
-			tooltip:AddDoubleLine((((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped):",
+			tooltip:AddDoubleLine((((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score".." (equipped"..(((not AutoGearIsTwoHandEquipped()) and tooltipItemInfo.isWeaponOrOffHand) and " pair" or "").."):",
 			lowestScoringEquippedItemScore or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine((((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..((shouldShowComparisonLine and not isAComparisonTooltip) and " (this)" or "")..":",
+		tooltip:AddDoubleLine((((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear").." score"..((shouldShowComparisonLine and not isAComparisonTooltip) and " (this"..(tooltipItemInfo.is1hWeaponOrOffHand and " and best pairing" or "")..")" or "")..":",
 		(((tooltipItemInfo.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
@@ -3728,14 +3753,6 @@ function AutoGearTooltipHook(tooltip)
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b,
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b)
 		end
-
-		--[[
-		if AutoGearDB.AllowedVerbosity >= 3 then
-			AutoGearPrint("AutoGear: The score of the item in the current tooltip is "..tostring(score),3)
-			AutoGearPrint("AutoGear: Tooltip item info:",3)
-			AutoGearRecursivePrint(tooltipItemInfo)
-		end
-		]]
 	end
 	if (AutoGearDB.DebugInfoInTooltips == true) then
 		-- AutoGearHandleLootRoll(tooltipItemInfo.link,1,1,tooltip)
@@ -3771,13 +3788,26 @@ function AutoGearTooltipHook(tooltip)
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 			)
+			local pawnItemData = PawnGetItemData(tooltipItemInfo.link)
 			tooltip:AddDoubleLine(
 				"AutoGear: Pawn value:",
-				tostring((tooltipItemInfo.link and (PawnCanItemHaveStats(tooltipItemInfo.link) and PawnGetSingleValueFromItem(PawnGetItemData(tooltipItemInfo.link),AutoGearGetPawnScaleName()) or "item can't have stats") or "nil item data") or "nil"),
+				tostring(tooltipItemInfo and ((tooltipItemInfo.link and (PawnCanItemHaveStats(tooltipItemInfo.link) and (pawnItemData and (PawnGetSingleValueFromItem(pawnItemData,AutoGearGetPawnScaleName()) or "Pawn says item can't have stats") or "nil Pawn item data") or "nil item data") or "nil")) or "nil AG item info"),
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 			)
 		end
+		tooltip:AddDoubleLine(
+			"AutoGear: info.is1hWeaponOrOffHand:",
+			tostring(tooltipItemInfo.is1hWeaponOrOffHand or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		tooltip:AddDoubleLine(
+			"AutoGear: info.is2hWeapon:",
+			tostring(tooltipItemInfo.is2hWeapon or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
 		tooltip:AddDoubleLine(
 			"AutoGear: item class ID:",
 			tostring(tooltipItemInfo.classID or "nil"),
@@ -3802,12 +3832,17 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			tooltipItemInfo.rarityColor.r, tooltipItemInfo.rarityColor.g, tooltipItemInfo.rarityColor.b
 		)
-		local lowestScoringEquippedItemRarityColor = lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.rarityColor or HIGHLIGHT_FONT_COLOR
+		tooltip:AddDoubleLine(
+			"AutoGear: lowest-scoring equipped item slot:",
+			tostring(lowestScoringEquippedItemSlot or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
 		tooltip:AddDoubleLine(
 			"AutoGear: lowest-scoring equipped item:",
-			lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.name or "nil",
+			lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.link or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			lowestScoringEquippedItemRarityColor.r, lowestScoringEquippedItemRarityColor.g, lowestScoringEquippedItemRarityColor.b
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: lowest-scoring equipped item score:",
