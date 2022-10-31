@@ -2510,6 +2510,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 				AutoGearConsiderItem(info, nil, nil, nil, i)
 			end
 		end
+		AutoGearEquippedItems[INVSLOT_TABARD] = AutoGearDeepCopy(AutoGearBestItems[INVSLOT_TABARD])
 	end
 
 	--create all future equip actions required (only if not rolling currently)
@@ -2685,26 +2686,31 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
 	if (info.isMount and (not info.alreadyKnown)) then return true end
 	if (info.usable or (rollOn and info.Within5levels)) then
 		score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
-		if info.isGear then
-			if not info.validGearSlots then return end
-			--ignore it if it's a tabard or ammo
-			if (info.validGearSlots[1] == INVSLOT_TABARD) then return end
-			if (info.validGearSlots[1] == INVSLOT_AMMO) then return end
+		if info.isGear and info.validGearSlots then
 			local firstValidGearSlot = info.validGearSlots[1]
 			local lowestScoringValidGearSlot = firstValidGearSlot
 			local lowestScoringValidGearSlotScore = AutoGearBestItems[firstValidGearSlot].score
 			if info.is2hWeapon then
-				lowestScoringValidGearSlot = INVSLOT_TABARD
-				lowestScoringValidGearSlotScore = AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score
+				local oneHandedWeaponsScore = AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND]
+				if (oneHandedWeaponsScore < lowestScoringValidGearSlotScore)
+				or (AutoGearBestItems[INVSLOT_MAINHAND].info.empty
+				and AutoGearBestItems[INVSLOT_OFFHAND].info.empty) then
+					lowestScoringValidGearSlot = INVSLOT_TABARD
+					lowestScoringValidGearSlotScore = oneHandedWeaponsScore
+				elseif (AutoGearBestItems[INVSLOT_TABARD].score < lowestScoringValidGearSlotScore)
+				or AutoGearBestItems[INVSLOT_TABARD].info.empty then
+					lowestScoringValidGearSlot = INVSLOT_TABARD
+					lowestScoringValidGearSlotScore = AutoGearBestItems[INVSLOT_TABARD]
+				end
 			else
-				for _, gearSlot in ipairs(info.validGearSlots) do
+				for _, gearSlot in pairs(info.validGearSlots) do
 					if info.unique and AutoGearBestItems[gearSlot].info.unique and
 					(info.id == AutoGearBestItems[gearSlot].info.id) and
 					(GetItemCount(info.id, true) > 1) then
 						return
 					end
-					if (AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore) or
-					AutoGearBestItems[gearSlot].info.empty then
+					if (AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore)
+					or AutoGearBestItems[gearSlot].info.empty then
 						lowestScoringValidGearSlot = gearSlot
 						lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot].score
 					end
@@ -2714,8 +2720,8 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
 			if ((score > lowestScoringValidGearSlotScore)
 			or AutoGearBestItems[lowestScoringValidGearSlot].info.empty
 			or AutoGearBestItems[lowestScoringValidGearSlot].info.unusable) then
-				AutoGearBestItemsAlreadyAdded[info.linkHash] = 1
 				if not justLook then
+					AutoGearBestItemsAlreadyAdded[info.linkHash] = 1
 					AutoGearBestItems[lowestScoringValidGearSlot].info = info
 					AutoGearBestItems[lowestScoringValidGearSlot].score = score
 					AutoGearBestItems[lowestScoringValidGearSlot].equipped = nil
@@ -2736,10 +2742,10 @@ function AutoGearInitializeEquippableBagSlotsTable()
 	end
 end
 
-function AutoGearGetValidGearSlotsForInvType(invType, weapons)
+function AutoGearGetValidGearSlotsForInvType(invType)
 	local gearSlotTable = {
 		[Enum.InventoryType.IndexNonEquipType]       = nil,
-		[Enum.InventoryType.IndexAmmoType]           = { INVSLOT_AMMO },
+		[Enum.InventoryType.IndexAmmoType]           = nil, -- ignore ammo because it's hard to match with weapon type
 		[Enum.InventoryType.IndexHeadType]           = { INVSLOT_HEAD },
 		[Enum.InventoryType.IndexNeckType]           = { INVSLOT_NECK },
 		[Enum.InventoryType.IndexShoulderType]       = { INVSLOT_SHOULDER },
@@ -2754,17 +2760,62 @@ function AutoGearGetValidGearSlotsForInvType(invType, weapons)
 		[Enum.InventoryType.IndexFingerType]         = { INVSLOT_FINGER1, INVSLOT_FINGER2 },
 		[Enum.InventoryType.IndexTrinketType]        = { INVSLOT_TRINKET1, INVSLOT_TRINKET2 },
 		[Enum.InventoryType.IndexCloakType]          = { INVSLOT_BACK },
-		[Enum.InventoryType.IndexWeaponType]         = CanDualWield() and { INVSLOT_MAINHAND, INVSLOT_OFFHAND } or { INVSLOT_MAINHAND },
-		[Enum.InventoryType.IndexShieldType]         = { INVSLOT_OFFHAND },
-		[Enum.InventoryType.Index2HweaponType]       = weapons == "2hDW" and { INVSLOT_MAINHAND, INVSLOT_OFFHAND } or { INVSLOT_MAINHAND },
-		[Enum.InventoryType.IndexWeaponmainhandType] = { INVSLOT_MAINHAND },
-		[Enum.InventoryType.IndexWeaponoffhandType]  = { INVSLOT_OFFHAND },
-		[Enum.InventoryType.IndexHoldableType]       = { INVSLOT_OFFHAND },
-		[Enum.InventoryType.IndexRangedType]         = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or { INVSLOT_MAINHAND },
-		[Enum.InventoryType.IndexThrownType]         = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or { INVSLOT_MAINHAND },
-		[Enum.InventoryType.IndexRangedrightType]    = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or { INVSLOT_MAINHAND },
-		[Enum.InventoryType.IndexRelicType]          = TOC_VERSION_CURRENT < TOC_VERSION_MOP and { INVSLOT_RANGED } or nil,
-		[Enum.InventoryType.IndexTabardType]         = { INVSLOT_TABARD },
+		[Enum.InventoryType.IndexWeaponType]         = ((weapons == "any")
+		                                               or (weapons == "dagger and any")
+		                                               or (weapons == "dagger")
+		                                               or (weapons == "dual wield")
+		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and (weapons == "ranged")))
+		                                               and (CanDualWield()
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
+		                                               or { INVSLOT_MAINHAND })
+		                                               or ((weapons == "weapon and shield")
+		                                               and { INVSLOT_MAINHAND }
+		                                               or nil),
+		[Enum.InventoryType.IndexShieldType]         = ((weapons == "any")
+		                                               or (weapons == "weapon and shield"))
+													   and { INVSLOT_OFFHAND }
+													   or nil,
+		[Enum.InventoryType.Index2HweaponType]       = (weapons == "2hDW")
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
+		                                               or (((weapons == "any")
+													   or (weapons == "2h"))
+		                                               and { INVSLOT_TABARD }
+		                                               or nil),
+		[Enum.InventoryType.IndexWeaponmainhandType] = ((weapons == "any")
+		                                               or (weapons == "weapon and shield")
+		                                               or (weapons == "dagger and any")
+		                                               or (weapons == "dagger")
+		                                               or (weapons == "dual wield")
+		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and (weapons == "ranged")))
+		                                               and { INVSLOT_MAINHAND }
+		                                               or nil,
+		[Enum.InventoryType.IndexWeaponoffhandType]  = (CanDualWield()
+		                                               and ((weapons == "any")
+		                                               or (weapons == "dagger and any")
+		                                               or (weapons == "dagger")
+		                                               or (weapons == "dual wield"))
+		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and (weapons == "ranged")))
+		                                               and { INVSLOT_OFFHAND }
+		                                               or nil,
+		[Enum.InventoryType.IndexHoldableType]       = (weapons == "any")
+		                                               and { INVSLOT_OFFHAND }
+		                                               or nil,
+		[Enum.InventoryType.IndexRangedType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and { INVSLOT_RANGED }
+		                                               or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexThrownType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and { INVSLOT_RANGED }
+		                                               or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexRangedrightType]    = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and { INVSLOT_RANGED }
+		                                               or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexRelicType]          = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and { INVSLOT_RANGED }
+		                                               or nil,
+		[Enum.InventoryType.IndexTabardType]         = nil, -- INVSLOT_TABARD is used for evaluating 2h weapons
 		[Enum.InventoryType.IndexBagType]            = AutoGearEquippableBagSlots,
 		[Enum.InventoryType.IndexQuiverType]         = AutoGearEquippableBagSlots
 	}
@@ -2910,15 +2961,20 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	local localizedClass, class, spec = AutoGearGetClassAndSpec()
 
 	if info.isGear then
-		info.validGearSlots = AutoGearGetValidGearSlotsForInvType(info.invType, weapons)
-		for _, v in pairs(info.validGearSlots) do
-			if v == INVSLOT_MAINHAND or v == INVSLOT_OFFHAND then
-				info.isWeaponOrOffHand = 1
-				if AutoGearIsInvTypeTwoHanded(info.invType) then
-					info.is2hWeapon = 1
+		info.validGearSlots = AutoGearGetValidGearSlotsForInvType(info.invType)
+		if info.validGearSlots then
+			for _, v in pairs(info.validGearSlots) do
+				if v == INVSLOT_MAINHAND or v == INVSLOT_OFFHAND then
+					info.isWeaponOrOffHand = 1
+					if AutoGearIsInvTypeTwoHanded(info.invType) then
+						info.is2hWeapon = 1
+					end
+					break
 				end
-				break
 			end
+		else
+			info.unusable = 1
+			reason = "(invalid item for "..spec.." "..localizedClass..")"
 		end
 	end
 
@@ -3590,26 +3646,22 @@ function AutoGearDump(o)
 end
 
 function AutoGearGetTooltipScoreComparisonInfo(info)
-	-- if not info.validGearSlots then return end
-	-- local firstValidGearSlot = info.validGearSlots[1]
-	-- local lowestScore = AutoGearEquippedItems[firstValidGearSlot].score
-	-- local lowestScoringValidGearSlot = firstValidGearSlot
-	-- for _, gearSlot in ipairs(info.validGearSlots) do
-	-- 	if AutoGearEquippedItems[gearSlot].score < lowestScore then
-	-- 		lowestScore = AutoGearEquippedItems[gearSlot].score
-	-- 		lowestScoringValidGearSlot = gearSlot
-	-- 	end
-	-- end
-	-- return AutoGearEquippedItems[lowestScoringValidGearSlot].info
 	if not info.validGearSlots then return nil, 0 end
-	--ignore it if it's a tabard
-	if (info.validGearSlots[1] == INVSLOT_TABARD) then return nil, 0 end
 	local firstValidGearSlot = info.validGearSlots[1]
 	local lowestScoringValidGearSlot = firstValidGearSlot
 	local lowestScoringValidGearSlotScore = AutoGearEquippedItems[firstValidGearSlot].score
 	if info.is2hWeapon then
-		lowestScoringValidGearSlot = INVSLOT_MAINHAND
-		lowestScoringValidGearSlotScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND].score
+		local oneHandedWeaponsScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND]
+		if (oneHandedWeaponsScore < lowestScoringValidGearSlotScore)
+		or (AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty
+		and AutoGearEquippedItems[INVSLOT_OFFHAND].info.empty) then
+			lowestScoringValidGearSlot = INVSLOT_TABARD
+			lowestScoringValidGearSlotScore = oneHandedWeaponsScore
+		elseif (AutoGearEquippedItems[INVSLOT_TABARD].score < lowestScoringValidGearSlotScore)
+		or AutoGearEquippedItems[INVSLOT_TABARD].info.empty then
+			lowestScoringValidGearSlot = INVSLOT_TABARD
+			lowestScoringValidGearSlotScore = AutoGearEquippedItems[INVSLOT_TABARD]
+		end
 	else
 		for _, gearSlot in ipairs(info.validGearSlots) do
 			if info.unique and AutoGearEquippedItems[gearSlot].info.unique and
