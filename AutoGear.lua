@@ -3261,121 +3261,122 @@ function AutoGearGetPawnScaleName()
 	if AutoGearDB.Override then
 
 		-- Try to find a visible scale with name matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if PawnIsScaleVisible(ScaleName)
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if PawnIsScaleVisible(scaleName)
 			and AutoGearDB.OverrideSpec
-			and AutoGearDB.OverrideSpec == ScaleName
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+			and AutoGearDB.OverrideSpec == scaleName
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find a visible scale with localized name matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if PawnIsScaleVisible(ScaleName)
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if PawnIsScaleVisible(scaleName)
 			and AutoGearDB.OverrideSpec
-			and AutoGearDB.OverrideSpec == Scale.LocalizedName
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+			and AutoGearDB.OverrideSpec == scale.LocalizedName
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
-		-- Try to find a visible scale with class ID matching the override class ID and override spec name found in the override spec name (example: "Protection")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if PawnIsScaleVisible(ScaleName)
+		-- Try to find a visible scale with class ID matching the override class ID and override spec name found in the localized scale name (example: "Protection")
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if PawnIsScaleVisible(scaleName)
 			and AutoGearDB.OverrideSpec
-			and overrideClassID == Scale.ClassID
-			and string.find(Scale.LocalizedName or ScaleName, overrideSpec)
-			and Scale.Values and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+			and overrideClassID == scale.ClassID
+			and scale.LocalizedName
+			and string.find(scale.LocalizedName, overrideSpec)
+			and scale.Values and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find a visible scale matching just the override spec name (example: "Protection")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if PawnIsScaleVisible(ScaleName)
-			and overrideSpec == ScaleName
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if PawnIsScaleVisible(scaleName)
+			and overrideSpec == scaleName
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find a visible scale with name matching just the override localized class name (example: "Paladin")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if PawnIsScaleVisible(ScaleName)
-			and overrideLocalizedClass == ScaleName
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if PawnIsScaleVisible(scaleName)
+			and overrideLocalizedClass == scaleName
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find any scale matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		for scaleName, scale in pairs(PawnCommon.Scales) do
 			if AutoGearDB.OverrideSpec
-			and AutoGearDB.OverrideSpec == ScaleName
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+			and AutoGearDB.OverrideSpec == scaleName
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find any scale with localized name matching the full AutoGearDB.OverrideSpec string (example: "Paladin: Protection")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
+		for scaleName, scale in pairs(PawnCommon.Scales) do
 			if AutoGearDB.OverrideSpec
-			and AutoGearDB.OverrideSpec == Scale.LocalizedName
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+			and AutoGearDB.OverrideSpec == scale.LocalizedName
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find any scale with class ID matching the override class ID and name containing the override spec name (example: "Protection")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if Scale.ClassID == overrideClassID
-			and string.find(ScaleName, overrideSpec)
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if scale.ClassID == overrideClassID
+			and string.find(scaleName, overrideSpec)
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find any scale with name containing just the override spec name (example: "Protection")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if string.find(ScaleName, overrideSpec)
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if string.find(scaleName, overrideSpec)
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find any scale with class ID matching override class ID
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if Scale.ClassID == overrideClassID
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if overrideClassID == scale.ClassID
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find any scale with name containing just the override localized class name (example: "Paladin")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if string.find(ScaleName, overrideLocalizedClass)
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if string.find(scaleName, overrideLocalizedClass)
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
 		-- Try to find any scale with name containing just the override class name (example: "PALADIN")
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if string.find(ScaleName, overrideClass)
-			and Scale.Values
-			and next(Scale.Values) then
-				return ScaleName, Scale.LocalizedName
+		for scaleName, scale in pairs(PawnCommon.Scales) do
+			if string.find(scaleName, overrideClass)
+			and scale.Values
+			and next(scale.Values) then
+				return scaleName, scale.LocalizedName
 			end
 		end
 
@@ -3384,119 +3385,133 @@ function AutoGearGetPawnScaleName()
 	local realClassAndSpec = realLocalizedClass..": "..realSpec
 
 	-- Try to find a visible scale matching the real class and spec string (example: "Warrior: Arms")
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName)
-		and realClassAndSpec == ScaleName
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(scaleName)
+		and realClassAndSpec == scaleName
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
 	-- Try to find a visible scale matching the real localized class and spec string (example: "Warrior: Arms")
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName)
-		and realClassAndSpec == Scale.LocalizedName
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(scaleName)
+		and realClassAndSpec == scale.LocalizedName
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
 	-- Try to find a visible scale with matching real class ID and with localized name containing the real spec name (example: "Arms")
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName)
-		and Scale.ClassID == realClassID
-		and string.find(Scale.LocalizedName, realSpec)
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(scaleName)
+		and scale.ClassID == realClassID
+		and scale.LocalizedName
+		and string.find(scale.LocalizedName, realSpec)
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
 	-- Try to find a visible scale matching just the real spec name (example: "Arms")
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName)
-		and realSpec == ScaleName
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(scaleName)
+		and realSpec == scaleName
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
 	-- Try to find a visible scale matching just the real class name (example: "Warrior")
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName)
-		and realLocalizedClass == ScaleName
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(scaleName)
+		and realLocalizedClass == scaleName
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
 	-- Try to find any scale matching the real class and spec string (example: "Warrior: Arms")
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if realClassAndSpec == ScaleName
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if realClassAndSpec == scaleName
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
 	-- Try to find any scale matching the real localized class and spec string (example: "Warrior: Arms")
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if realClassAndSpec == Scale.LocalizedName
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if realClassAndSpec == scale.LocalizedName
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
 	-- Try to find any scale matching just the real spec name (example: "Arms")
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if realSpec == ScaleName
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if realSpec == scaleName
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
 	-- Try to find any scale matching just the real localized class name (example: "Warrior")
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if realLocalizedClass == ScaleName
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if realLocalizedClass == scaleName
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
-	-- Try to find the matching class with the matching spec
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if Scale.ClassID == realClassID
-		and string.find(Scale.LocalizedName, realSpec)
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	-- Try to find the matching class with the matching real spec in the localized scale name
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if scale.ClassID == realClassID
+		and scale.LocalizedName
+		and string.find(scale.LocalizedName, realSpec)
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
-	-- Try to find the matching class
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if Scale.ClassID == realClassID
-		and Scale.Values
-		and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	-- Try to find the matching class with the matching real spec in the scale name
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if scale.ClassID == realClassID
+		and string.find(scaleName, realSpec)
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
+		end
+	end
+
+	-- Try to find the matching real class
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if scale.ClassID == realClassID
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
 	-- Use the first visible
-	for ScaleName, Scale in pairs(PawnCommon.Scales) do
-		if PawnIsScaleVisible(ScaleName) and Scale.Values and next(Scale.Values) then
-			return ScaleName, Scale.LocalizedName
+	for scaleName, scale in pairs(PawnCommon.Scales) do
+		if PawnIsScaleVisible(scaleName)
+		and scale.Values
+		and next(scale.Values) then
+			return scaleName, scale.LocalizedName
 		end
 	end
 
-	-- Just use the first one
+	-- Just use the first one that has values
 	for ScaleName, Scale in pairs(PawnCommon.Scales) do
 		if Scale.Values and next(Scale.Values) then
 			return ScaleName, Scale.LocalizedName
