@@ -2647,9 +2647,9 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 		if (info.isMount and (not info.alreadyKnown)) then return 1 end
 		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
 			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
-				if (AutoGearBestItems[i].rollOn and
-				(i ~= INVSLOT_MAINHAND or i ~= INVSLOT_OFFHAND or AutoGearIs1hWorthwhile(i)) and
-				(i ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff(i))) then
+				if (AutoGearBestItems[invSlot].rollOn and
+				(invSlot ~= INVSLOT_MAINHAND or invSlot ~= INVSLOT_OFFHAND or AutoGearIs1hWorthwhile(invSlot)) and
+				(invSlot ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff(invSlot))) then
 					return 1
 				end
 			end
@@ -2662,11 +2662,11 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 		local bestRewardScoreDelta
 		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
 			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
-				if (AutoGearBestItems[i].chooseReward and (i ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff())) then
-					local delta = AutoGearBestItems[i].score - AutoGearBestItems[i].equippedScore
+				if (AutoGearBestItems[invSlot].chooseReward and (invSlot ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff())) then
+					local delta = AutoGearBestItems[invSlot].score - AutoGearBestItems[invSlot].equippedScore
 					if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
 						bestRewardScoreDelta = delta
-						bestRewardIndex = AutoGearBestItems[i].chooseReward
+						bestRewardIndex = AutoGearBestItems[invSlot].chooseReward
 					end
 				end
 			end
