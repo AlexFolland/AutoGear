@@ -2006,7 +2006,12 @@ SlashCmdList["AutoGear"] = function(msg)
 		local localizedRealClass, realClass, realSpec, realClassID = AutoGearDetectClassAndSpec()
 		local localizedOverrideClass, overrideClass, overrideSpec, overrideClassID = AutoGearGetClassAndSpec()
 		local usingPawn = AutoGearDB.UsePawn and PawnIsReady and PawnIsReady()
-		AutoGearPrint("AutoGear: Looks like you are a"..(realSpec:find("^[AEIOUaeiou]") and "n " or " ")..RAID_CLASS_COLORS[realClass]:WrapTextInColorCode(realSpec.." "..localizedRealClass).."."..((usingPawn or (AutoGearDB.Override and ((realClassID ~= overrideClassID) or (realSpec ~= overrideSpec)))) and ("  However, AutoGear is using "..(usingPawn and ("Pawn scale \""..PawnGetScaleColor(AutoGearDB.PawnScale)..AutoGearDB.PawnScale..FONT_COLOR_CODE_CLOSE.."\"") or (RAID_CLASS_COLORS[overrideClass]:WrapTextInColorCode(overrideSpec.." "..localizedOverrideClass).." weights")).." for gear evaluation due to the \""..(usingPawn and "Use Pawn to evaluate upgrades" or "Override specialization").."\" option.") or ""), 0)
+		local pawnScaleName = ""
+		local pawnScaleLocalizedName = ""
+		if usingPawn then
+			pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
+		end
+		AutoGearPrint("AutoGear: Looks like you are a"..(realSpec:find("^[AEIOUaeiou]") and "n " or " ")..RAID_CLASS_COLORS[realClass]:WrapTextInColorCode(realSpec.." "..localizedRealClass).."."..((usingPawn or (AutoGearDB.Override and ((realClassID ~= overrideClassID) or (realSpec ~= overrideSpec)))) and ("  However, AutoGear is using "..(usingPawn and ("Pawn scale \""..PawnGetScaleColor(pawnScaleName)..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"") or (RAID_CLASS_COLORS[overrideClass]:WrapTextInColorCode(overrideSpec.." "..localizedOverrideClass).." weights")).." for gear evaluation due to the \""..(usingPawn and "Use Pawn to evaluate upgrades" or "Override specialization").."\" option.") or ""), 0)
 	elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
 		AutoGearSetAllowedVerbosity(param2)
 	elseif ((param1 == "setspec") or
@@ -2033,17 +2038,21 @@ SlashCmdList["AutoGear"] = function(msg)
 		-- AutoGearItemInfoCache = {}
 		if PawnIsReady then
 			if PawnIsReady() then
-				local scaleName = param2..(string.len(param3)>0 and " "..param3 or "")..(string.len(param4)>0 and " "..param4 or "")..(string.len(param5)>0 and " "..param5 or "")
-				if string.len(scaleName) == 0 then
+				local userPawnScaleName = param2..(string.len(param3)>0 and " "..param3 or "")..(string.len(param4)>0 and " "..param4 or "")..(string.len(param5)>0 and " "..param5 or "")
+				if string.len(userPawnScaleName) == 0 then
 					AutoGearPrint("AutoGear: Usage: \"/ag pawnscale [Pawn scale name]\" (example: \"/ag pawnscale Hunter: Beast Mastery\")",0)
-				elseif PawnDoesScaleExist(scaleName) then
-					AutoGearDB.PawnScale = scaleName
+					return
+				end
+				local truePawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName(userPawnScaleName)
+				if PawnDoesScaleExist(truePawnScaleName) then
+					AutoGearDB.PawnScale = userPawnScaleName
 					if AutoGearPawnScaleDropdown then
 						UIDropDownMenu_SetText(AutoGearPawnScaleDropdown, AutoGearDB.PawnScale)
 					end
-					AutoGearPrint("AutoGear: "..(AutoGearDB.UsePawn and "" or "While using Pawn is enabled, ").."AutoGear will now use the \""..PawnGetScaleColor(AutoGearDB.PawnScale)..((PawnCommon.Scales[scaleName] and PawnCommon.Scales[scaleName].LocalizedName) or scaleName)..FONT_COLOR_CODE_CLOSE.."\" Pawn scale to evaluate gear.",0)
+
+					AutoGearPrint("AutoGear: "..(AutoGearDB.UsePawn and "" or "While using Pawn is enabled, ").."AutoGear will now use the \""..PawnGetScaleColor(truePawnScaleName)..(pawnScaleLocalizedName or truePawnScaleName)..FONT_COLOR_CODE_CLOSE.."\" Pawn scale to evaluate gear.",0)
 				else
-					AutoGearPrint("AutoGear: According to Pawn, a Pawn scale named \""..scaleName.."\" does not exist.",0)
+					AutoGearPrint("AutoGear: According to Pawn, a Pawn scale named \""..userPawnScaleName.."\" does not exist.",0)
 				end
 			else
 				AutoGearPrint("AutoGear: Pawn is not ready yet.",0)
@@ -2212,14 +2221,20 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		elseif (AutoGearDB.AutoCompleteItemQuests) then
 			--choose a quest reward
 			local questRewardID = {}
+			local itemLinkMissing
 			for i = 1, rewards do
 				local itemLink = GetQuestItemLink("choice", i)
-				if (not itemLink) then AutoGearPrint("AutoGear: No item link received from the server.", 0) end
-				local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-				questRewardID[i] = id
+				if (not itemLink) then
+					itemLinkMissing = 1
+					AutoGearPrint("AutoGear: No item link received from the server. To automatically choose a reward, you can try reopening quest rewards menu.", 0)
+				else
+					local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+					questRewardID[i] = id
+				end
 			end
-			local choice = AutoGearConsiderAllItems(nil, questRewardID)
-			GetQuestReward(choice)
+			if not itemLinkMissing then
+				GetQuestReward(AutoGearConsiderAllItems(nil, questRewardID))
+			end
 		end
 	end
 
@@ -2845,8 +2860,11 @@ function AutoGearIsTwoHandEquipped()
 end
 
 function AutoGearIsMainHandAFishingPole()
-	local itemClassID, itemSubClassID = select(6, GetItemInfoInstant(GetInventoryItemID("player", INVSLOT_MAINHAND)))
-	return (itemClassID == Enum.ItemClass.Weapon) and (itemSubClassID == Enum.ItemWeaponSubclass.Fishingpole)
+	local mainHandID = GetInventoryItemID("player", INVSLOT_MAINHAND)
+	if mainHandID then
+		local itemClassID, itemSubClassID = select(6, GetItemInfoInstant(GetInventoryItemID("player", INVSLOT_MAINHAND)))
+		return ((itemClassID == Enum.ItemClass.Weapon) and (itemSubClassID == Enum.ItemWeaponSubclass.Fishingpole))
+	end
 end
 
 function AutoGearPrintItem(info)
@@ -3227,9 +3245,9 @@ function AutoGearGetPawnScales()
 	AutoGearPawnScalesFromPawn = PawnGetAllScalesEx()
 	for _, v in ipairs(AutoGearPawnScalesFromPawn) do
 		if v["IsVisible"] then
-			table.insert(AutoGearPawnScales[1]["subLabels"], v["Name"])
+			table.insert(AutoGearPawnScales[1]["subLabels"], v["LocalizedName"] or v["Name"])
 		else
-			table.insert(AutoGearPawnScales[2]["subLabels"], v["Name"])
+			table.insert(AutoGearPawnScales[2]["subLabels"], v["LocalizedName"] or v["Name"])
 		end
 	end
 	return AutoGearPawnScales
@@ -3239,16 +3257,18 @@ function AutoGearGetLockedGearSlots()
 	return AutoGearDB.LockedGearSlots or {}
 end
 
-function AutoGearGetPawnScaleName()
+function AutoGearGetPawnScaleName(scaleNameToFind)
 	local realLocalizedClass, realClass, realSpec, realClassID = AutoGearDetectClassAndSpec()
 	local overrideLocalizedClass, overrideClass, overrideSpec, overrideClassID = AutoGearGetClassAndSpec()
 
 	-- Try to find the selected Pawn scale
 	if AutoGearDB.OverridePawnScale and AutoGearDB.PawnScale then
 		if not AutoGearPawnScales then AutoGearGetPawnScales() end
-		local scaleNameToFind = AutoGearDB.PawnScale
+		scaleNameToFind = scaleNameToFind or AutoGearDB.PawnScale
 		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if scaleNameToFind == ScaleName then
+			if (scaleNameToFind == ScaleName)
+			or (Scale.LocalizedName
+			and (scaleNameToFind == Scale.LocalizedName)) then
 				if (not Scale.Values)
 				or (not next(Scale.Values)) then
 					AutoGearPrint("AutoGear: Warning: Pawn override scale "..ScaleName.." has no values.  AutoGear will still try to use it, but it will not determine gear scores until you fix it.  You can fix your scale in Pawn's menus by typing \"/pawn\".",0)
