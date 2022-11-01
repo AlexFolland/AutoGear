@@ -3275,15 +3275,13 @@ function AutoGearGetPawnScaleName(scaleNameToFind)
 	if AutoGearDB.OverridePawnScale and AutoGearDB.PawnScale then
 		if not AutoGearPawnScales then AutoGearGetPawnScales() end
 		scaleNameToFind = scaleNameToFind or AutoGearDB.PawnScale
-		for ScaleName, Scale in pairs(PawnCommon.Scales) do
-			if (scaleNameToFind == ScaleName)
-			or (Scale.LocalizedName
-			and (scaleNameToFind == Scale.LocalizedName)) then
-				if (not Scale.Values)
-				or (not next(Scale.Values)) then
-					AutoGearPrint("AutoGear: Warning: Pawn override scale "..ScaleName.." has no values.  AutoGear will still try to use it, but it will not determine gear scores until you fix it.  You can fix your scale in Pawn's menus by typing \"/pawn\".",0)
-				end
-				return ScaleName, Scale.LocalizedName
+		for trueScaleName, scale in pairs(PawnCommon.Scales) do
+			if ((scaleNameToFind == trueScaleName)
+			or (scale.LocalizedName
+			and (scaleNameToFind == scale.LocalizedName)))
+			and scale.Values
+			and next(scale.Values) then
+				return trueScaleName, scale.LocalizedName
 			end
 		end
 	end
