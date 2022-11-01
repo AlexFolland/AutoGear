@@ -3732,11 +3732,23 @@ end
 function AutoGearGetBest1hPairing(info)
 	if info.isWeaponOrOffHand and info.validGearSlots then
 		local score = AutoGearDetermineItemScore(info)
+		local totalScore = 0
+		local bestScore = 0
+		local bestScoreSlot
 		for _, gearSlot in pairs(info.validGearSlots) do
-			if gearSlot == INVSLOT_MAINHAND then
-				return AutoGearBestItems[INVSLOT_OFFHAND], AutoGearBestItems[INVSLOT_OFFHAND].score + score
-			elseif gearSlot == INVSLOT_OFFHAND then
-				return AutoGearBestItems[INVSLOT_MAINHAND], AutoGearBestItems[INVSLOT_MAINHAND].score + score
+			if AutoGearBestItems[gearSlot].info.validGearSlots then
+				for _, validPairingSlot in pairs(AutoGearBestItems[gearSlot].info.validGearSlots) do
+					if gearSlot ~= validPairingSlot then
+						totalScore = AutoGearBestItems[validPairingSlot].score + score
+						if totalScore > bestScore then
+							bestScore = totalScore
+							bestScoreSlot = gearSlot
+						end
+					end
+				end
+			end
+			if bestScoreSlot then
+				return AutoGearBestItems[bestScoreSlot], bestScore
 			end
 		end
 	end
@@ -3792,14 +3804,14 @@ function AutoGearTooltipHook(tooltip)
 		-- 3 decimal places max
 		score = math.floor(score * 1000) / 1000
 		local scoreLinePrefix = (((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear")
-		if shouldShowComparisonLine then
+		if shouldShowComparisonLine or shouldShowBest1hPairing then
 			lowestScoringEquippedItemScore = math.floor(lowestScoringEquippedItemScore * 1000) / 1000
 			tooltip:AddDoubleLine(scoreLinePrefix.." score".." (equipped"..(((not AutoGearIsTwoHandEquipped()) and tooltipItemInfo.isWeaponOrOffHand) and " pair" or "").."):",
 			lowestScoringEquippedItemScore or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine(scoreLinePrefix.." score"..((shouldShowComparisonLine and not isAComparisonTooltip) and " (this"..(shouldShowBest1hPairing and " and best pairing" or "")..")" or "")..":",
+		tooltip:AddDoubleLine(scoreLinePrefix.." score"..((shouldShowComparisonLine and not isAComparisonTooltip or shouldShowBest1hPairing) and " (this"..(shouldShowBest1hPairing and " and best pairing" or "")..")" or "")..":",
 		(((tooltipItemInfo.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
