@@ -70,6 +70,7 @@ local L = T.Localization
 AutoGearWouldRoll = "nil"
 AutoGearIsItemDataMissing = nil
 AutoGearFirstEquippableBagSlot = 0
+AutoGearLastEquippableBagSlot = 0
 AutoGearEquippableBagSlots = {}
 
 function AutoGearSerializeTable(val, name, skipnewlines, depth)
@@ -1730,6 +1731,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 
 		AutoGearInitializeDB(AutoGearDBDefaults)
 		AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID and ContainerIDToInventoryID(1) or (C_Container and (C_Container.ContainerIDToInventoryID and C_Container.ContainerIDToInventoryID(1) or 20) or 20)
+		AutoGearLastEquippableBagSlot = ContainerIDToInventoryID and ContainerIDToInventoryID(NUM_BAG_SLOTS) or (C_Container and (C_Container.ContainerIDToInventoryID and C_Container.ContainerIDToInventoryID(1) or 23) or 23)
 		AutoGearInitializeEquippableBagSlotsTable()
 		AutoGearUpdateEquippedItems()
 
@@ -2452,15 +2454,17 @@ function AutoGearUpdateEquippedItems()
 	-- AutoGearItemInfoCache = {}
 	AutoGearEquippedItems = {}
 	local info, score
-	for invSlot = 1, 23 do
-		info = AutoGearReadItemInfo(invSlot)
-		score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
-		AutoGearEquippedItems[invSlot] = {}
-		AutoGearEquippedItems[invSlot].info = info
-		AutoGearEquippedItems[invSlot].score = score
-		AutoGearEquippedItems[invSlot].equippedScore = score
-		AutoGearEquippedItems[invSlot].equipped = 1
-		AutoGearEquippedItems[invSlot].empty = info.empty
+	for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
+		if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
+			info = AutoGearReadItemInfo(invSlot)
+			score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
+			AutoGearEquippedItems[invSlot] = {}
+			AutoGearEquippedItems[invSlot].info = info
+			AutoGearEquippedItems[invSlot].score = score
+			AutoGearEquippedItems[invSlot].equippedScore = score
+			AutoGearEquippedItems[invSlot].equipped = 1
+			AutoGearEquippedItems[invSlot].empty = info.empty
+		end
 	end
 
 	--pretend the tabard slot is a separate slot for 2-handers
@@ -2529,26 +2533,28 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 
 	--create all future equip actions required (only if not rolling currently)
 	if (not lootRollItemID and not questRewardID and not noActions) then
-		for invSlot = 1, 23 do
-			if invSlot == INVSLOT_MAINHAND or invSlot == INVSLOT_OFFHAND or invSlot == INVSLOT_TABARD then
-				--skip weapons for now
-			else
-				local equippedInfo = AutoGearEquippedItems[invSlot].info
-				local equippedScore = AutoGearEquippedItems[invSlot].score
-				if (not AutoGearBestItems[invSlot].equipped) then
-					AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or AutoGearBestItems[invSlot].info.name).." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or equippedInfo.name).." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
-					AutoGearPrintItem(AutoGearBestItems[invSlot].info)
-					AutoGearPrintItem(equippedInfo)
-					anythingBetter = 1
-					local newAction = {}
-					newAction.action = "equip"
-					newAction.t = GetTime()
-					newAction.container = AutoGearBestItems[invSlot].bag
-					newAction.slot = AutoGearBestItems[invSlot].slot
-					newAction.replaceSlot = invSlot
-					newAction.info = AutoGearBestItems[invSlot].info
-					newAction.score = AutoGearBestItems[invSlot].score
-					table.insert(futureAction, newAction)
+		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
+			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
+				if invSlot == INVSLOT_MAINHAND or invSlot == INVSLOT_OFFHAND or invSlot == INVSLOT_TABARD then
+					--skip weapons for now
+				else
+					local equippedInfo = AutoGearEquippedItems[invSlot].info
+					local equippedScore = AutoGearEquippedItems[invSlot].score
+					if (not AutoGearBestItems[invSlot].equipped) then
+						AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or AutoGearBestItems[invSlot].info.name).." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or equippedInfo.name).." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						AutoGearPrintItem(AutoGearBestItems[invSlot].info)
+						AutoGearPrintItem(equippedInfo)
+						anythingBetter = 1
+						local newAction = {}
+						newAction.action = "equip"
+						newAction.t = GetTime()
+						newAction.container = AutoGearBestItems[invSlot].bag
+						newAction.slot = AutoGearBestItems[invSlot].slot
+						newAction.replaceSlot = invSlot
+						newAction.info = AutoGearBestItems[invSlot].info
+						newAction.score = AutoGearBestItems[invSlot].score
+						table.insert(futureAction, newAction)
+					end
 				end
 			end
 		end
@@ -2639,11 +2645,13 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 	elseif (lootRollItemID) then
 		--decide whether to roll on the item or not
 		if (info.isMount and (not info.alreadyKnown)) then return 1 end
-		for i = 1, 23 do
-			if (AutoGearBestItems[i].rollOn and
-			(i ~= INVSLOT_MAINHAND or i ~= INVSLOT_OFFHAND or AutoGearIs1hWorthwhile(i)) and
-			(i ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff(i))) then
-				return 1
+		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
+			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
+				if (AutoGearBestItems[i].rollOn and
+				(i ~= INVSLOT_MAINHAND or i ~= INVSLOT_OFFHAND or AutoGearIs1hWorthwhile(i)) and
+				(i ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff(i))) then
+					return 1
+				end
 			end
 		end
 		return nil
@@ -2652,12 +2660,14 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 		--pick the reward with the biggest score improvement
 		local bestRewardIndex
 		local bestRewardScoreDelta
-		for i = 1, 23 do
-			if (AutoGearBestItems[i].chooseReward and (i ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff())) then
-				local delta = AutoGearBestItems[i].score - AutoGearBestItems[i].equippedScore
-				if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
-					bestRewardScoreDelta = delta
-					bestRewardIndex = AutoGearBestItems[i].chooseReward
+		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
+			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
+				if (AutoGearBestItems[i].chooseReward and (i ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff())) then
+					local delta = AutoGearBestItems[i].score - AutoGearBestItems[i].equippedScore
+					if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
+						bestRewardScoreDelta = delta
+						bestRewardIndex = AutoGearBestItems[i].chooseReward
+					end
 				end
 			end
 		end
@@ -2665,7 +2675,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 			--no gear upgrades, so choose the one with the highest sell value
 			local bestRewardVendorPrice
 			for i = 1, GetNumQuestChoices() do
-				local name, link, quality, iLevel, reqLevel, class, subclass, maxStack, equipSlot, texture, vendorPrice = GetItemInfo(questRewardID[i])
+				local vendorPrice = select(11,GetItemInfo(questRewardID[i]))
 				if (not bestRewardVendorPrice or vendorPrice > bestRewardVendorPrice) then
 					bestRewardIndex = i
 					bestRewardVendorPrice = vendorPrice
