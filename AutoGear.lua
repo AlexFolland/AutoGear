@@ -3732,24 +3732,27 @@ end
 function AutoGearGetBest1hPairing(info)
 	if info.isWeaponOrOffHand and info.validGearSlots then
 		local score = AutoGearDetermineItemScore(info)
+		local oppositeSlot
 		local totalScore = 0
 		local bestScore = 0
 		local bestScoreSlot
 		for _, gearSlot in pairs(info.validGearSlots) do
-			if AutoGearBestItems[gearSlot].info.validGearSlots then
-				for _, validPairingSlot in pairs(AutoGearBestItems[gearSlot].info.validGearSlots) do
-					if gearSlot ~= validPairingSlot then
-						totalScore = AutoGearBestItems[validPairingSlot].score + score
-						if totalScore > bestScore then
-							bestScore = totalScore
-							bestScoreSlot = gearSlot
-						end
+			oppositeSlot = (gearSlot == INVSLOT_MAINHAND and INVSLOT_OFFHAND or INVSLOT_MAINHAND)
+			if AutoGearBestItems[oppositeSlot].info.validGearSlots then
+				for _, validPairingSlot in pairs(AutoGearBestItems[oppositeSlot].info.validGearSlots) do
+					totalScore = AutoGearBestItems[validPairingSlot].score + score
+					if totalScore > bestScore
+					and (((AutoGearBestItems[validPairingSlot].info.id ~= info.id)
+					or (AutoGearBestItems[validPairingSlot].score ~= score))
+					or (GetItemCount(AutoGearBestItems[validPairingSlot].info.id, true) > 1)) then
+						bestScore = totalScore
+						bestScoreSlot = validPairingSlot
 					end
 				end
 			end
-			if bestScoreSlot then
-				return AutoGearBestItems[bestScoreSlot], bestScore
-			end
+		end
+		if bestScoreSlot then
+			return AutoGearBestItems[bestScoreSlot], bestScore
 		end
 	end
 	return { info = { name = "nothing", empty = 1 }, score = 0 }, 0
