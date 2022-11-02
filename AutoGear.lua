@@ -1527,7 +1527,7 @@ function AutoGearDetectClassAndSpec()
 end
 
 function AutoGearSetStatWeights()
-	local localizedClass, class, spec = AutoGearGetClassAndSpec()
+	local class, spec = select(2,AutoGearGetClassAndSpec())
 	AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec] or nil
 	if TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK then
 		AutoGearCurrentWeighting.Crit = math.max(AutoGearCurrentWeighting.Crit or 0, AutoGearCurrentWeighting.SpellCrit or 0)
@@ -2124,7 +2124,7 @@ AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
 AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
 AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
-AutoGearFrame:RegisterEvent("ITEM_PUSH")
+AutoGearFrame:RegisterEvent("CHAT_MSG_LOOT")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when the player tries to equip a soulbound item that can still be traded to eligible players
 AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
@@ -2147,7 +2147,7 @@ AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")        --Fires when an atte
 AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the player attempts a gossip choice which requires entering a code
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
-AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, ...)
+AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, ...)
 
 	if (AutoGearDB.AutoAcceptQuests) then
 		if (event == "QUEST_ACCEPT_CONFIRM") then --another group member starts a quest (like an escort)
@@ -2267,7 +2267,39 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		ConfirmLootRoll(arg1, arg2)
 	elseif event == "CONFIRM_DISENCHANT_ROLL" then
 		ConfirmLootRoll(arg1, arg2)
-	elseif event == "ITEM_PUSH" then
+	elseif event == "CHAT_MSG_LOOT" then
+		local message, name, guid = arg1, arg5, arg12
+		local pattern1 = LOOT_ITEM_SELF_MULTIPLE:gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)"):gsub("^", "^")
+		local pattern2 = LOOT_ITEM_PUSHED_SELF_MULTIPLE:gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)"):gsub("^", "^")
+		local pattern3 = LOOT_ITEM_CREATED_SELF_MULTIPLE:gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)"):gsub("^", "^")
+		local pattern4 = LOOT_ITEM_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
+		local pattern5 = LOOT_ITEM_PUSHED_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
+		local pattern6 = LOOT_ITEM_CREATED_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
+	
+		if guid and guid ~= UnitGUID("player") or name ~= UnitName("player") then
+			return
+		end
+	
+		local link, quantity = message:match(pattern1)
+		if not link then
+			link, quantity = message:match(pattern2)
+			if not link then
+				link, quantity = message:match(pattern3)
+				if not link then
+					quantity, link = 1, message:match(pattern4)
+					if not link then
+						quantity, link = 1, message:match(pattern5)
+						if not link then
+							quantity, link = 1, message:match(pattern6)
+						end
+					end
+				end
+			end
+		end
+
+		-- if it's not gear, return early to avoid scanning for upgrades
+		if link and (C_Item.GetItemInventoryTypeByID(link) == Enum.InventoryType.IndexNonEquipType) then return end
+
 		--make sure a fishing pole isn't replaced while fishing
 		if (not AutoGearIsMainHandAFishingPole()) then
 			--check if there's already a scan action in queue
@@ -2463,7 +2495,6 @@ function AutoGearUpdateEquippedItems()
 			AutoGearEquippedItems[invSlot].score = score
 			AutoGearEquippedItems[invSlot].equippedScore = score
 			AutoGearEquippedItems[invSlot].equipped = 1
-			AutoGearEquippedItems[invSlot].empty = info.empty
 		end
 	end
 
@@ -2471,16 +2502,18 @@ function AutoGearUpdateEquippedItems()
 	if (AutoGearEquippedItems[INVSLOT_MAINHAND].info.is2hWeapon and (not ((weapons == "2hDW") and CanDualWield()))) then
 		AutoGearEquippedItems[INVSLOT_TABARD] = AutoGearDeepCopy(AutoGearEquippedItems[INVSLOT_MAINHAND])
 		AutoGearEquippedItems[INVSLOT_MAINHAND].info = { name = "nothing", empty = 1 }
-		AutoGearEquippedItems[INVSLOT_MAINHAND].empty = 1
 		AutoGearEquippedItems[INVSLOT_MAINHAND].score = 0
 		AutoGearEquippedItems[INVSLOT_MAINHAND].equipped = nil
 	else
 		AutoGearEquippedItems[INVSLOT_TABARD] = {}
 		AutoGearEquippedItems[INVSLOT_TABARD].info = { name = "nothing", empty = 1 }
-		AutoGearEquippedItems[INVSLOT_TABARD].empty = 1
 		AutoGearEquippedItems[INVSLOT_TABARD].score = 0
 		AutoGearEquippedItems[INVSLOT_TABARD].equipped = nil
 	end
+
+	--reset table of best items to reconsider all items
+	--set starting best scores from all equipped items
+	AutoGearBestItems = AutoGearDeepCopy(AutoGearEquippedItems)
 end
 
 function AutoGearDeepCopy(object)
@@ -2503,32 +2536,28 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 	local info
 
 	AutoGearUpdateEquippedItems()
-	--reset table of best items to reconsider all items
-	--set starting best scores from all equipped items
-	AutoGearBestItems = AutoGearDeepCopy(AutoGearEquippedItems)
 	
+	-- table to track whether an item's been added
 	AutoGearBestItemsAlreadyAdded = {}
-	for passesDone = 0,1 do
-		--consider all items in bags
-		for bag = 0, NUM_BAG_SLOTS do
-			local slotMax = GetContainerNumSlots(bag)
-			for slot = 0, slotMax do
-				info = AutoGearReadItemInfo(nil, nil, bag, slot)
-				AutoGearConsiderItem(info, bag, slot, nil)
-			end
+
+	--consider all items in bags
+	for bag = 0, NUM_BAG_SLOTS do
+		local slotMax = GetContainerNumSlots(bag)
+		for slot = 0, slotMax do
+			info = AutoGearReadItemInfo(nil, nil, bag, slot)
+			AutoGearConsiderItem(info, bag, slot, nil)
 		end
-		--consider item being rolled on (if any)
-		if (lootRollItemID) then
-			AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1)
+	end
+	--consider item being rolled on (if any)
+	if (lootRollItemID) then
+		AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1)
+	end
+	--consider quest rewards (if any)
+	if (questRewardID) then
+		for i = 1, GetNumQuestChoices() do
+			info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
+			AutoGearConsiderItem(info, nil, nil, nil, i)
 		end
-		--consider quest rewards (if any)
-		if (questRewardID) then
-			for i = 1, GetNumQuestChoices() do
-				info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
-				AutoGearConsiderItem(info, nil, nil, nil, i)
-			end
-		end
-		AutoGearEquippedItems[INVSLOT_TABARD] = AutoGearDeepCopy(AutoGearBestItems[INVSLOT_TABARD])
 	end
 
 	--create all future equip actions required (only if not rolling currently)
@@ -2541,10 +2570,10 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 					local equippedInfo = AutoGearEquippedItems[invSlot].info
 					local equippedScore = AutoGearEquippedItems[invSlot].score
 					if (not AutoGearBestItems[invSlot].equipped) then
+						anythingBetter = 1
 						AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or AutoGearBestItems[invSlot].info.name).." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or equippedInfo.name).." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
 						AutoGearPrintItem(AutoGearBestItems[invSlot].info)
 						AutoGearPrintItem(equippedInfo)
-						anythingBetter = 1
 						local newAction = {}
 						newAction.action = "equip"
 						newAction.t = GetTime()
@@ -2559,7 +2588,10 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 			end
 		end
 		--handle weapons
-		if (AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score > AutoGearBestItems[INVSLOT_TABARD].score) then
+		if (AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score > AutoGearBestItems[INVSLOT_TABARD].score)
+		or (((not AutoGearBestItems[INVSLOT_MAINHAND].info.empty)
+		or (not AutoGearBestItems[INVSLOT_OFFHAND].info.empty))
+		and AutoGearBestItems[INVSLOT_TABARD].info.empty) then
 			local extraDelay = 0
 			local mainSwap, offSwap
 			--main hand
@@ -2620,17 +2652,22 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 					AutoGearPrintItem(equippedInfo)
 				end
 			end
-		elseif (AutoGearBestItems[INVSLOT_TABARD].score > (AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score)) then
+		elseif (AutoGearBestItems[INVSLOT_TABARD].score > (AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score))
+		or ((not AutoGearBestItems[INVSLOT_TABARD].info.empty)
+		and ((AutoGearBestItems[INVSLOT_MAINHAND].info.empty)
+		and (AutoGearBestItems[INVSLOT_OFFHAND].info.empty))) then
 			if (not AutoGearBestItems[INVSLOT_TABARD].equipped) and (not AutoGearBestItems[INVSLOT_TABARD].info.empty) then
-				local equippedMain = AutoGearEquippedItems[INVSLOT_MAINHAND].info
-				local mainScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score
+				anythingBetter = 1
+				local showBothSlots = AutoGearIsTwoHandEquipped()
+				local mainSlot = showBothSlots and INVSLOT_TABARD or INVSLOT_MAINHAND
+				local equippedMain = AutoGearEquippedItems[mainSlot].info
+				local mainScore = AutoGearEquippedItems[mainSlot].score
 				local equippedOff = AutoGearEquippedItems[INVSLOT_OFFHAND].info
 				local offScore = AutoGearEquippedItems[INVSLOT_OFFHAND].score
-				AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_TABARD].info.link or AutoGearBestItems[INVSLOT_TABARD].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_TABARD].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.link or equippedOff.name).." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+				AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_TABARD].info.link or AutoGearBestItems[INVSLOT_TABARD].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_TABARD].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..")"..(showBothSlots and ((" combined with "..(equippedOff.link or equippedOff.name).." ("..string.format("%.2f", offScore))..")") or "")..".  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
 				AutoGearPrintItem(AutoGearBestItems[INVSLOT_TABARD].info)
 				AutoGearPrintItem(equippedMain)
-				AutoGearPrintItem(equippedOff)
-				anythingBetter = 1
+				if showBothSlots then AutoGearPrintItem(equippedOff) end
 				local newAction = {}
 				newAction.action = "equip"
 				newAction.t = GetTime() + 0.5 --do it after a short delay
@@ -2703,59 +2740,43 @@ function AutoGearIs1hWorthwhile(i)
 end
 
 --companion function to AutoGearConsiderAllItems
-function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward, justLook)
+function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 	if info.empty
-	or (info.linkHash and AutoGearBestItemsAlreadyAdded[info.linkHash]) then
+	or (info.link and AutoGearBestItemsAlreadyAdded[info.link]) then
 		return
 	end
-	local score
 	if (info.isMount and (not info.alreadyKnown)) then return true end
 	if (info.usable or (rollOn and info.Within5levels)) then
-		score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
+		local score = AutoGearDetermineItemScore(info)
 		if info.isGear and info.validGearSlots then
 			local firstValidGearSlot = info.validGearSlots[1]
 			local lowestScoringValidGearSlot = firstValidGearSlot
 			local lowestScoringValidGearSlotScore = AutoGearBestItems[firstValidGearSlot].score
-			if info.is2hWeapon then
-				local oneHandedWeaponsScore = AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score
-				if (oneHandedWeaponsScore < lowestScoringValidGearSlotScore)
-				or (AutoGearBestItems[INVSLOT_MAINHAND].info.empty
-				and AutoGearBestItems[INVSLOT_OFFHAND].info.empty) then
-					lowestScoringValidGearSlot = INVSLOT_TABARD
-					lowestScoringValidGearSlotScore = oneHandedWeaponsScore
-				elseif (AutoGearBestItems[INVSLOT_TABARD].score < lowestScoringValidGearSlotScore)
-				or AutoGearBestItems[INVSLOT_TABARD].info.empty then
-					lowestScoringValidGearSlot = INVSLOT_TABARD
-					lowestScoringValidGearSlotScore = AutoGearBestItems[INVSLOT_TABARD].score
+			for _, gearSlot in pairs(info.validGearSlots) do
+				if info.unique
+				and AutoGearBestItems[gearSlot].info.unique
+				and	(info.id == AutoGearBestItems[gearSlot].info.id)
+				and	(GetItemCount(info.id, true) > 1) then
+					return
 				end
-			else
-				for _, gearSlot in pairs(info.validGearSlots) do
-					if info.unique and AutoGearBestItems[gearSlot].info.unique and
-					(info.id == AutoGearBestItems[gearSlot].info.id) and
-					(GetItemCount(info.id, true) > 1) then
-						return
-					end
-					if (AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore)
-					or AutoGearBestItems[gearSlot].info.empty then
-						lowestScoringValidGearSlot = gearSlot
-						lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot].score
-					end
+				if (AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore)
+				or AutoGearBestItems[gearSlot].info.empty then
+					lowestScoringValidGearSlot = gearSlot
+					lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot].score
 				end
 			end
 			
 			if ((score > lowestScoringValidGearSlotScore)
 			or AutoGearBestItems[lowestScoringValidGearSlot].info.empty
 			or AutoGearBestItems[lowestScoringValidGearSlot].info.unusable) then
-				if not justLook then
-					AutoGearBestItemsAlreadyAdded[info.linkHash] = 1
-					AutoGearBestItems[lowestScoringValidGearSlot].info = info
-					AutoGearBestItems[lowestScoringValidGearSlot].score = score
-					AutoGearBestItems[lowestScoringValidGearSlot].equipped = nil
-					AutoGearBestItems[lowestScoringValidGearSlot].bag = bag
-					AutoGearBestItems[lowestScoringValidGearSlot].slot = slot
-					AutoGearBestItems[lowestScoringValidGearSlot].rollOn = rollOn
-					AutoGearBestItems[lowestScoringValidGearSlot].chooseReward = chooseReward
-				end
+				AutoGearBestItemsAlreadyAdded[info.link] = 1
+				AutoGearBestItems[lowestScoringValidGearSlot].info = info
+				AutoGearBestItems[lowestScoringValidGearSlot].score = score
+				AutoGearBestItems[lowestScoringValidGearSlot].equipped = nil
+				AutoGearBestItems[lowestScoringValidGearSlot].bag = bag
+				AutoGearBestItems[lowestScoringValidGearSlot].slot = slot
+				AutoGearBestItems[lowestScoringValidGearSlot].rollOn = rollOn
+				AutoGearBestItems[lowestScoringValidGearSlot].chooseReward = chooseReward
 				return true
 			end
 		end
@@ -2766,6 +2787,10 @@ function AutoGearInitializeEquippableBagSlotsTable()
 	for i = BACKPACK_CONTAINER+1, NUM_BAG_SLOTS do
 		table.insert(AutoGearEquippableBagSlots, AutoGearFirstEquippableBagSlot+i-1)
 	end
+end
+
+function AutoGearShouldAllowOneHanders()
+	return (AutoGearGetValidGearSlotsForInvType(Enum.InventoryType.IndexWeaponType) and 1 or nil)
 end
 
 function AutoGearGetValidGearSlotsForInvType(invType)
@@ -2849,6 +2874,22 @@ function AutoGearGetValidGearSlotsForInvType(invType)
 	return gearSlotTable[invType]
 end
 
+function AutoGearIsInvTypeWeapon(invType)
+	if not invType then return nil end
+	return AutoGearIsInvTypeTwoHanded(invType) or
+	AutoGearIsInvTypeRangedOrRelic(invType) or
+	AutoGearIsInvTypeOneHanded(invType)
+end
+
+function AutoGearIsInvTypeOneHanded(invType)
+	if not invType then return nil end
+	return (invType == Enum.InventoryType.IndexWeaponType) or
+	(invType == Enum.InventoryType.IndexWeaponmainhandType) or
+	(invType == Enum.InventoryType.IndexWeaponoffhandType) or
+	(invType == Enum.InventoryType.IndexShieldType) or
+	(invType == Enum.InventoryType.IndexHoldableType)
+end
+
 function AutoGearIsInvTypeTwoHanded(invType)
 	if not invType then return nil end
 	return (invType == Enum.InventoryType.Index2HweaponType) or (
@@ -2857,6 +2898,16 @@ function AutoGearIsInvTypeTwoHanded(invType)
 				invType == Enum.InventoryType.IndexRangedrightType
 			)
 		)
+	)
+end
+
+function AutoGearIsInvTypeRangedOrRelic(invType)
+	if not invType then return nil end
+	return (TOC_VERSION_CURRENT < TOC_VERSION_MOP) and (
+		(invType == Enum.InventoryType.IndexRangedType) or
+		(invType == Enum.InventoryType.IndexRangedrightType) or
+		(invType == Enum.InventoryType.IndexThrownType) or
+		(invType == Enum.InventoryType.IndexRelicType)
 	)
 end
 
@@ -2966,7 +3017,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 
 	-- EF: this might actually be breaking it as I think it's caching empty tooltips before they're fully loaded
 	-- caching did not show a performance benefit, so commented this and the below out
-	info.linkHash = AutoGearStringHash(info.link)
+	-- info.linkHash = AutoGearStringHash(info.link)
 	-- local cachediteminfo = AutoGearItemInfoCache[info.linkHash]
 	-- if cachediteminfo then return cachediteminfo end
 
@@ -2990,20 +3041,18 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	local localizedClass, class, spec = AutoGearGetClassAndSpec()
 
 	if info.isGear then
+		if AutoGearIsInvTypeWeapon(info.invType) then
+			info.isWeaponOrOffHand = 1
+		end
+		if AutoGearIsInvTypeTwoHanded(info.invType) then
+			info.is2hWeapon = 1
+		elseif AutoGearIsInvTypeOneHanded(info.invType) then
+			info.is1hWeaponOrOffHand = 1
+		elseif AutoGearIsInvTypeRangedOrRelic(info.invType) then
+			info.isRangedWeapon = 1
+		end
 		info.validGearSlots = AutoGearGetValidGearSlotsForInvType(info.invType)
-		if info.validGearSlots then
-			for _, v in pairs(info.validGearSlots) do
-				if v == INVSLOT_MAINHAND or v == INVSLOT_OFFHAND or v == INVSLOT_TABARD then
-					info.isWeaponOrOffHand = 1
-					if AutoGearIsInvTypeTwoHanded(info.invType) then
-						info.is2hWeapon = 1
-					else
-						info.is1hWeaponOrOffHand = 1
-					end
-					break
-				end
-			end
-		else
+		if not info.validGearSlots then
 			info.unusable = 1
 			info.reason = "(invalid item for "..spec.." "..localizedClass..")"
 		end
@@ -3567,10 +3616,15 @@ function AutoGearDetermineItemScore(info)
 		end
 	end
 
-	if (AutoGearDB.UsePawn == true) and (PawnIsReady ~= nil) and PawnIsReady() then
+	if (AutoGearDB.UsePawn == true) and PawnIsReady and PawnIsReady() then
 		local pawnItemData = PawnGetItemData(info.link)
 		if pawnItemData then
-			return PawnGetSingleValueFromItem(pawnItemData, AutoGearGetPawnScaleName())
+			local score = PawnGetSingleValueFromItem(pawnItemData, AutoGearGetPawnScaleName())
+			if score == 0 then
+				return E
+			else
+				return score
+			end
 		end
 	end
 
@@ -3605,7 +3659,11 @@ function AutoGearDetermineItemScore(info)
 		(AutoGearCurrentWeighting.Damage or 0) * (info.Damage or 0) +
 		((UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) and
 		(AutoGearCurrentWeighting.ExperienceGained or 0) * (info.ExperienceGained or 0) or 0)
-	return score
+	if score == 0 then
+		return E
+	else
+		return score
+	end
 end
 
 function AutoGearIsMountItemAlreadyCollected(itemID)
@@ -3690,11 +3748,9 @@ function AutoGearDump(o)
 end
 
 function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
-	if not info.validGearSlots then return nil, 0 end
-	local firstValidGearSlot = info.validGearSlots[1]
-	local lowestScoringValidGearSlot = firstValidGearSlot
-	local lowestScoringValidGearSlotScore = AutoGearEquippedItems[firstValidGearSlot].score
-	local lowestScoringValidGearInfo = AutoGearEquippedItems[firstValidGearSlot].info
+	local lowestScoringValidGearSlot
+	local lowestScoringValidGearSlotScore = AutoGearDetermineItemScore(info)
+	local lowestScoringValidGearInfo = info
 	if info.is2hWeapon then
 		local mainHandInfo = AutoGearReadItemInfo(INVSLOT_MAINHAND)
 		local mainHandScore = AutoGearDetermineItemScore(mainHandInfo)
@@ -3708,7 +3764,11 @@ function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 		lowestScoringValidGearInfo = AutoGearReadItemInfo(INVSLOT_MAINHAND)
 		lowestScoringValidGearSlot = INVSLOT_MAINHAND
 		lowestScoringValidGearSlotScore = AutoGearDetermineItemScore(lowestScoringValidGearInfo)
-	else
+	elseif info.validGearSlots then
+		local firstValidGearSlot = info.validGearSlots[1]
+		lowestScoringValidGearSlot = firstValidGearSlot
+		lowestScoringValidGearSlotScore = AutoGearEquippedItems[firstValidGearSlot].score
+		lowestScoringValidGearInfo = AutoGearEquippedItems[firstValidGearSlot].info
 		for _, gearSlot in ipairs(info.validGearSlots) do
 			if info.unique and AutoGearEquippedItems[gearSlot].info.unique
 			and (info.id == AutoGearEquippedItems[gearSlot].info.id)
@@ -3729,25 +3789,45 @@ function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 	return lowestScoringValidGearInfo, lowestScoringValidGearSlotScore, lowestScoringValidGearSlot
 end
 
+function AutoGearGetOppositeHandSlot(invSlot)
+	if (invSlot ~= INVSLOT_MAINHAND) and (invSlot ~= INVSLOT_OFFHAND) then return end
+	return (invSlot == INVSLOT_MAINHAND and INVSLOT_OFFHAND or INVSLOT_MAINHAND)
+end
+
+function AutoGearIsGearPairEquippableTogether(a, b)
+	if (not a.validGearSlots)
+	or (not b.validGearSlots)
+	or ((a.id == b.id) and (a.unique)) then
+		return
+	end
+	for _, firstSlot in pairs(a.validGearSlots) do
+		for _, secondSlot in pairs(b.validGearSlots) do
+			if (firstSlot ~= secondSlot)
+			and (not (((firstSlot == INVSLOT_MAINHAND)
+			or (firstSlot == INVSLOT_OFFHAND))
+			and (secondSlot == INVSLOT_TABARD)))
+			and (not ((firstSlot == INVSLOT_TABARD)
+			and ((secondSlot == INVSLOT_MAINHAND)
+			or (secondSlot == INVSLOT_OFFHAND))))
+			then
+				return 1
+			end
+		end
+	end
+end
+
 function AutoGearGetBest1hPairing(info)
-	if info.isWeaponOrOffHand and info.validGearSlots then
+	if info.is1hWeaponOrOffHand and info.validGearSlots then
 		local score = AutoGearDetermineItemScore(info)
-		local oppositeSlot
 		local totalScore = 0
 		local bestScore = 0
 		local bestScoreSlot
-		for _, gearSlot in pairs(info.validGearSlots) do
-			oppositeSlot = (gearSlot == INVSLOT_MAINHAND and INVSLOT_OFFHAND or INVSLOT_MAINHAND)
-			if AutoGearBestItems[oppositeSlot].info.validGearSlots then
-				for _, validPairingSlot in pairs(AutoGearBestItems[oppositeSlot].info.validGearSlots) do
-					totalScore = AutoGearBestItems[validPairingSlot].score + score
-					if totalScore > bestScore
-					and (((AutoGearBestItems[validPairingSlot].info.id ~= info.id)
-					or (AutoGearBestItems[validPairingSlot].score ~= score))
-					or (GetItemCount(AutoGearBestItems[validPairingSlot].info.id, true) > 1)) then
-						bestScore = totalScore
-						bestScoreSlot = validPairingSlot
-					end
+		for hand = INVSLOT_MAINHAND, INVSLOT_OFFHAND do
+			if AutoGearIsGearPairEquippableTogether(info, AutoGearBestItems[hand].info) then
+				totalScore = score + AutoGearBestItems[hand].score
+				if totalScore > bestScore then
+					bestScore = totalScore
+					bestScoreSlot = hand
 				end
 			end
 		end
