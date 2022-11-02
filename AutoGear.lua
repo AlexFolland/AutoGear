@@ -2255,7 +2255,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		--make sure this doesn't happen as part of logon
 		if dataAvailable then
 			local localizedClass, class, spec = AutoGearGetClassAndSpec()
-			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..spec.." "..localizedClass..".", 2)
+			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..".", 2)
 			AutoGearConsiderAllItems()
 		end
 	elseif event == "PLAYER_EQUIPMENT_CHANGED" then
@@ -2440,8 +2440,8 @@ function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
 			table.insert(futureAction, newAction)
 		end
 	else
-		local localizedClass, _, spec = AutoGearGetClassAndSpec()
-		AutoGearPrint("AutoGear: No weighting set for "..spec.." "..localizedClass..".", 0)
+		local localizedClass, class, spec = AutoGearGetClassAndSpec()
+		AutoGearPrint("AutoGear: No weighting set for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..".", 0)
 	end
 end
 
@@ -2877,8 +2877,8 @@ end
 function AutoGearIsInvTypeWeapon(invType)
 	if not invType then return nil end
 	return AutoGearIsInvTypeTwoHanded(invType) or
-	AutoGearIsInvTypeRangedOrRelic(invType) or
-	AutoGearIsInvTypeOneHanded(invType)
+	AutoGearIsInvTypeOneHanded(invType) or
+	AutoGearIsInvTypeRangedOrRelic(invType)
 end
 
 function AutoGearIsInvTypeOneHanded(invType)
@@ -3024,13 +3024,13 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.invType = C_Item.GetItemInventoryTypeByID(info.id) or 0
 	info.isGear = info.invType > 0
 
-	if ((info.classID == Enum.ItemClass.Miscellaneous) and
-	(info.subclassID == Enum.ItemMiscellaneousSubclass.Mount)) then
+	if (info.classID == Enum.ItemClass.Miscellaneous) and
+	(info.subclassID == Enum.ItemMiscellaneousSubclass.Mount) then
 		info.isMount = 1
 		if AutoGearIsMountItemAlreadyCollected(info.id) then
 			info.alreadyKnown = 1
 		end
-	elseif (not info.isGear) then
+	elseif not info.isGear then
 		return info -- return early if the item isn't a mount or gear
 	end
 
@@ -3054,88 +3054,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		info.validGearSlots = AutoGearGetValidGearSlotsForInvType(info.invType)
 		if not info.validGearSlots then
 			info.unusable = 1
-			info.reason = "(invalid item for "..spec.." "..localizedClass..")"
+			info.reason = "(invalid item for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..")"
 		end
 	end
-
-	if info.isWeaponOrOffHand then
-		if (info.invType == Enum.InventoryType.IndexWeaponmainhandType) then
-			if (weapons == "dagger" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
-			elseif (weapons == "dagger and any" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." needs a dagger main hand)"
-			elseif (weapons == "2h" or weapons == "ranged" or weapons == "2hDW") then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." needs a two-hand weapon)"
-			end
-		elseif (info.invType == Enum.InventoryType.IndexShieldType) then
-			if (weapons ~= "weapon and shield") and (weapons ~= "any") then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." should not use a shield)"
-			end
-		elseif (info.invType == Enum.InventoryType.Index2HweaponType) then
-			if (weapons == "weapon and shield") then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." needs weapon and shield)"
-			elseif (weapons == "dual wield" and CanDualWield()) then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." should dual wield one-handers)"
-			elseif ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
-			and weapons == "ranged") then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." should use a ranged weapon)"
-			end
-		elseif (info.invType == Enum.InventoryType.IndexHoldableType) then
-			if (weapons == "2h" or
-			(weapons == "dual wield" and CanDualWield()) or
-			weapons == "weapon and shield" or
-			weapons == "ranged") then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." needs the off-hand for a weapon or shield)"
-			end
-		elseif (info.invType == Enum.InventoryType.IndexWeaponoffhandType) then
-			if (weapons == "2h" or weapons == "ranged") then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." should use a two-hand weapon)"
-			elseif (weapons == "dagger" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." needs a dagger in the off-hand)"
-			elseif (weapons == "weapon and shield"
-			and (info.classID ~= Enum.ItemClass.Armor)
-			and (info.subclassID ~= Enum.ItemArmorSubclass.Shield)) then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." needs a shield in the off-hand)"
-			elseif (weapons == "dual wield"
-			and CanDualWield()
-			and (info.classID == Enum.ItemClass.Armor)
-			and (info.subclassID == Enum.ItemArmorSubclass.Shield)) then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." should dual wield and not use a shield)"
-			end
-		elseif (info.invType == Enum.InventoryType.IndexWeaponType) then
-			if (weapons == "2h"
-			or weapons == "2hDW"
-			or ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (weapons == "ranged"))) then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." should use a two-handed weapon or dual wield two-handers)"
-			end
-			if (weapons == "dagger" and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
-				info.unusable = 1
-				info.reason = "("..spec.." "..localizedClass.." needs a dagger in each hand)"
-			end
-		end
-
-		if (TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and
-		(info.invType == Enum.InventoryType.IndexRangedType) and
-		(weapons ~= "ranged" and info.subclassID ~= Enum.ItemWeaponSubclass.Wand) then
-			info.unusable = 1
-			info.reason = "("..spec.." "..localizedClass.." should not use a ranged 2h weapon)"
-		end
-	end
-
-	info.equipped = not not inventoryID
 
 	for i = 1, AutoGearTooltip:NumLines() do
 		local textLeft = getglobal("AutoGearTooltipTextLeft"..i)
@@ -3271,6 +3192,93 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	if info.YellowSockets == 0 then info.YellowSockets = nil end
 	if info.BlueSockets == 0 then info.BlueSockets = nil end
 	if info.MetaSockets == 0 then info.MetaSockets = nil end
+
+	if info.isWeaponOrOffHand then
+		if info.invType == Enum.InventoryType.IndexWeaponmainhandType then
+			if ((weapons == "dagger")
+			or (weapons == "dagger and any"))
+			and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a dagger main hand)"
+			elseif weapons == "2h"
+			or weapons == "2hDW" or
+			((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
+			and weapons == "ranged") then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a two-handed weapon)"
+			end
+		elseif info.invType == Enum.InventoryType.IndexShieldType then
+			if (weapons ~= "weapon and shield") and (weapons ~= "any") then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should not use a shield)"
+			end
+		elseif info.invType == Enum.InventoryType.Index2HweaponType then
+			if weapons == "weapon and shield" then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a weapon and shield)"
+			elseif weapons == "dual wield" and CanDualWield() then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should dual wield one-handers)"
+			elseif ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
+			and weapons == "ranged") then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should use a ranged weapon)"
+			end
+		elseif info.invType == Enum.InventoryType.IndexHoldableType then
+			if weapons == "2h"
+			or (weapons == "dual wield" and CanDualWield())
+			or weapons == "weapon and shield"
+			or ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
+			and weapons == "ranged") then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs the off-hand for a weapon or shield)"
+			end
+		elseif info.invType == Enum.InventoryType.IndexWeaponoffhandType then
+			if weapons == "2h"
+			or ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
+			and weapons == "ranged") then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a two-handed weapon)"
+			elseif weapons == "dagger"
+			and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a dagger in the off-hand)"
+			elseif weapons == "weapon and shield"
+			and (info.classID ~= Enum.ItemClass.Armor)
+			and (info.subclassID ~= Enum.ItemArmorSubclass.Shield) then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a shield in the off-hand)"
+			elseif weapons == "dual wield"
+			and CanDualWield()
+			and (info.classID == Enum.ItemClass.Armor)
+			and (info.subclassID == Enum.ItemArmorSubclass.Shield) then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should dual wield and not use a shield)"
+			end
+		elseif info.invType == Enum.InventoryType.IndexWeaponType then
+			if weapons == "2h"
+			or ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
+			and (weapons == "ranged")) then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should use a two-handed weapon)"
+			elseif (weapons == "2hDW") then
+				info.unusable = 1
+				info.reason =  "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should dual wield two-handers)"
+			elseif (weapons == "dagger"
+			and info.subclassID ~= Enum.ItemWeaponSubclass.Dagger) then
+				info.unusable = 1
+				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a dagger in each hand)"
+			end
+		elseif (TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
+		and (info.invType == Enum.InventoryType.IndexRangedType)
+		and	(weapons ~= "ranged"
+		and info.subclassID ~= Enum.ItemWeaponSubclass.Wand) then
+			info.unusable = 1
+			info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should not use a ranged 2h weapon)"
+		end
+	end
+
+	info.equipped = not not inventoryID
 
 	if info.isGear or info.isMount then
 		info.shouldShowScoreInTooltip = 1
