@@ -292,6 +292,26 @@ function AutoGearGetDefaultOverrideSpec()
 	end
 end
 
+function AutoGearGetDefaultLockedGearSlots()
+	local lockedGearSlots = {}
+	for gearSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
+		if gearSlot <= INVSLOT_LAST_EQUIPPED or gearSlot >= AutoGearFirstEquippableBagSlot then
+			table.insert(lockedGearSlots, {
+				["label"] = tostring(gearSlot),
+				["enabled"] = false
+			})
+		end
+	end
+	return lockedGearSlots
+end
+
+function AutoGearGetLockedGearSlots()
+	if not AutoGearDB.LockedGearSlots then
+		AutoGearDB.LockedGearSlots = AutoGearGetDefaultLockedGearSlots()
+	end
+	return AutoGearDB.LockedGearSlots
+end
+
 --default values for variables saved between sessions
 AutoGearDBDefaults = {
 	Enabled = true,
@@ -317,7 +337,7 @@ AutoGearDBDefaults = {
 	DebugInfoInTooltips = false,
 	AllowedVerbosity = 1,
 	LockGearSlots = true,
-	LockedGearSlots = {}
+	LockedGearSlots = AutoGearGetDefaultLockedGearSlots()
 }
 
 --an invisible tooltip that AutoGear can scan for various information
@@ -1612,17 +1632,33 @@ local function optionsSetup(optionsMenu)
 
 				frame[i].dropDown = CreateFrame("FRAME", "AutoGear"..v["child"]["option"].."Dropdown", optionsMenu, "UIDropDownMenuTemplate")
 				--newDropdown(v["child"]["option"], v["child"]["label"], v["child"]["description"], _G["AutoGearSelectFrom"..v["child"]["option"].."Dropdown"], v["child"]["options"], optionsMenu)
-				local width = 200
+				local width = 250
 				frame[i].dropDown:SetPoint("TOPLEFT", frame[i], "TOPRIGHT", width, 0) --attach to parent
 				UIDropDownMenu_SetWidth(frame[i].dropDown, width)
 				--frame[i].dropDown:SetHitRectInsets(0, -280, 0, 0) --change click region to not be super wide
-				UIDropDownMenu_SetText(frame[i].dropDown, AutoGearDB[v["child"]["option"]])
+				if type(AutoGearDB[v["child"]["option"]]) == 'string' then
+					UIDropDownMenu_SetText(frame[i].dropDown, AutoGearDB[v["child"]["option"]])
+				elseif type(AutoGearDB[v["child"]["option"]]) == 'table' then
+					local label
+					for _, l in pairs(v["child"]["options"]) do
+						if l["enabled"] then
+							if label then
+								label = label..", "..l["label"]
+							else
+								label = l["label"]
+							end
+						end
+					end
+					UIDropDownMenu_SetText(_G["AutoGear"..v["child"]["option"].."Dropdown"], label)
+				end
 
 				--function to run when using this dropdown
 				_G["AutoGear"..v["child"]["option"].."Dropdown"].SetValue = function(self, value)
-					AutoGearDB[v["child"]["option"]] = value
-					UIDropDownMenu_SetText(_G["AutoGear"..v["child"]["option"].."Dropdown"], AutoGearDB[v["child"]["option"]])
-					CloseDropDownMenus()
+					if type(AutoGearDB[v["child"]["option"]]) == 'string' then
+						AutoGearDB[v["child"]["option"]] = value
+						UIDropDownMenu_SetText(_G["AutoGear"..v["child"]["option"].."Dropdown"], AutoGearDB[v["child"]["option"]])
+						CloseDropDownMenus()
+					end
 				end
 
 				if v["child"]["dropdownPostHook"] then
@@ -1633,12 +1669,37 @@ local function optionsSetup(optionsMenu)
 					local info = UIDropDownMenu_CreateInfo()
 					if (level or 1) == 1 then
 						--display the labels
-						for _, j in ipairs(v["child"]["options"]) do
-							info.text = j["label"]
-							info.checked = (AutoGearDB[v["child"]["option"]] and (string.match(AutoGearDB[v["child"]["option"]], "^"..j["label"]..":") and true or false) or false)
-							info.menuList = j
-							info.hasArrow = (j["subLabels"] and true or false)
-							UIDropDownMenu_AddButton(info)
+						if type(AutoGearDB[v["child"]["option"]]) == 'string' then
+							for _, j in ipairs(v["child"]["options"]) do
+								info.text = j["label"]
+								info.checked = (AutoGearDB[v["child"]["option"]] and (string.match(AutoGearDB[v["child"]["option"]], "^"..j["label"]..":") and true or false) or false)
+								info.menuList = j
+								info.hasArrow = (j["subLabels"] and true or false)
+								UIDropDownMenu_AddButton(info)
+							end
+						elseif type(AutoGearDB[v["child"]["option"]]) == 'table' then
+							for _, j in pairs(v["child"]["options"]) do
+								info.text = j["label"]
+								info.keepShownOnClick = true
+								info.isNotRadio = true
+								info.checked = j["enabled"]
+								info.func = function(self) j["enabled"] = self.checked
+									local label
+									for _, l in pairs(v["child"]["options"]) do
+										if l["enabled"] then
+											if label then
+												label = label..", "..l["label"]
+											else
+												label = l["label"]
+											end
+										end
+									end
+									UIDropDownMenu_SetText(_G["AutoGear"..v["child"]["option"].."Dropdown"], label)
+								end
+								info.menuList = j
+								info.hasArrow = (j["subLabels"] and true or false)
+								UIDropDownMenu_AddButton(info)
+							end
 						end
 					else
 						--display the subLabels
@@ -1729,10 +1790,10 @@ optionsMenu:RegisterEvent("ADDON_LOADED")
 optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 	if event == "PLAYER_ENTERING_WORLD" then
 
-		AutoGearInitializeDB(AutoGearDBDefaults)
 		AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID and ContainerIDToInventoryID(1) or (C_Container and (C_Container.ContainerIDToInventoryID and C_Container.ContainerIDToInventoryID(1) or 20) or 20)
 		AutoGearLastEquippableBagSlot = ContainerIDToInventoryID and ContainerIDToInventoryID(NUM_BAG_SLOTS) or (C_Container and (C_Container.ContainerIDToInventoryID and C_Container.ContainerIDToInventoryID(1) or 23) or 23)
 		AutoGearInitializeEquippableBagSlotsTable()
+		AutoGearInitializeDB(AutoGearDBDefaults)
 		AutoGearUpdateEquippedItems()
 
 		--initialize options menu variables
@@ -1931,10 +1992,10 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,true) end,
 				["child"] = {
 					["option"] = "PawnScale",
-					["options"] = (function() if PawnIsReady ~= nil and PawnIsReady() then return AutoGearGetPawnScales() end end)(),
+					["options"] = (function() if PawnIsReady and PawnIsReady() then return AutoGearGetPawnScales() end end)(),
 					["label"] = "Pawn scale to use",
 					["description"] = "Override the Pawn scale that would normally be automatically detected in \"[class]: [spec]\" format with the Pawn scale chosen in this dropdown.",
-					["shouldUse"] = ((PawnIsReady ~= nil) and PawnIsReady()),
+					["shouldUse"] = (PawnIsReady and PawnIsReady()),
 					["dropdownPostHook"] = function(self, value)
 						if AutoGearDB.PawnScale and string.len(AutoGearDB.PawnScale)>0 then
 							local numMatches
@@ -1951,17 +2012,16 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliCommands"] = { "lock", "lockslots", "lockgearslots" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "("..RED_FONT_COLOR_CODE.."planned"..FONT_COLOR_CODE_CLOSE..") Lock specified gear slots",
-				["description"] = "Lock the specified gear slots, so AutoGear will not remove or equip items in those slots.  If this is enabled and any slots are locked, AutoGear will still evaluate scores for items in all slots, but will not remove or equip items in the locked slots.\n\n"..RED_FONT_COLOR_CODE.."Although you can toggle this option and your setting will be honored when this feature is implemented, this feature is not yet implemented."..FONT_COLOR_CODE_CLOSE,
+				["label"] = "Lock specified gear slots",
+				["description"] = "Lock the specified gear slots, so AutoGear will not remove or equip items in those slots.  If this is enabled and any slots are locked, AutoGear will still evaluate scores for items in all slots, but will not remove or equip items in the locked slots.",
 				["toggleDescriptionTrue"] = "Locking specified gear slots is now enabled.",
 				["toggleDescriptionFalse"] = "Locking specified gear slots is now disabled.",
 				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,true) end,
 				["child"] = {
 					["option"] = "LockedGearSlots",
-					["options"] = (function() return AutoGearGetLockedGearSlots() end)(),
+					["options"] = AutoGearGetLockedGearSlots(),
 					["label"] = "Gear slots to lock",
-					["description"] = "Choose which gear slots to lock in this dropdown.",
-					["shouldUse"] = AutoGearDB.LockGearSlots
+					["description"] = "Choose which gear slots to lock in this dropdown."
 				}
 			},
 			{
@@ -1978,6 +2038,9 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 
 		if AutoGearDB.OverrideSpec == nil then
 			AutoGearDB.OverrideSpec = AutoGearGetDefaultOverrideSpec()
+		end
+		if (not AutoGearDB.LockedGearSlots) or (#AutoGearDB.LockedGearSlots == 0) then
+			AutoGearDB.LockedGearSlots = AutoGearGetDefaultLockedGearSlots()
 		end
 		optionsSetup(optionsMenu)
 
@@ -2493,7 +2556,6 @@ function AutoGearUpdateEquippedItems()
 			AutoGearEquippedItems[invSlot] = {}
 			AutoGearEquippedItems[invSlot].info = info
 			AutoGearEquippedItems[invSlot].score = score
-			AutoGearEquippedItems[invSlot].equippedScore = score
 			AutoGearEquippedItems[invSlot].equipped = 1
 		end
 	end
@@ -2567,27 +2629,32 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 				if invSlot == INVSLOT_MAINHAND or invSlot == INVSLOT_OFFHAND or invSlot == INVSLOT_TABARD then
 					--skip weapons for now
 				else
+					local isSlotLocked = AutoGearDB.LockedGearSlots[invSlot].enabled
 					local equippedInfo = AutoGearEquippedItems[invSlot].info
 					local equippedScore = AutoGearEquippedItems[invSlot].score
 					if (not AutoGearBestItems[invSlot].equipped) then
 						anythingBetter = 1
-						AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or AutoGearBestItems[invSlot].info.name).." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or equippedInfo.name).." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or AutoGearBestItems[invSlot].info.name).." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or equippedInfo.name).." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and (isSlotLocked and "Would equip, but slot "..tostring(invSlot or "nil").." is locked." or "Equipping.") or "Would equip if automatic gear equipping was enabled."), 1)
 						AutoGearPrintItem(AutoGearBestItems[invSlot].info)
 						AutoGearPrintItem(equippedInfo)
-						local newAction = {}
-						newAction.action = "equip"
-						newAction.t = GetTime()
-						newAction.container = AutoGearBestItems[invSlot].bag
-						newAction.slot = AutoGearBestItems[invSlot].slot
-						newAction.replaceSlot = invSlot
-						newAction.info = AutoGearBestItems[invSlot].info
-						newAction.score = AutoGearBestItems[invSlot].score
-						table.insert(futureAction, newAction)
+						if not isSlotLocked then
+							local newAction = {}
+							newAction.action = "equip"
+							newAction.t = GetTime()
+							newAction.container = AutoGearBestItems[invSlot].bag
+							newAction.slot = AutoGearBestItems[invSlot].slot
+							newAction.replaceSlot = invSlot
+							newAction.info = AutoGearBestItems[invSlot].info
+							newAction.score = AutoGearBestItems[invSlot].score
+							table.insert(futureAction, newAction)
+						end
 					end
 				end
 			end
 		end
 		--handle weapons
+		local isMainHandSlotLocked = AutoGearDB.LockedGearSlots[INVSLOT_MAINHAND].enabled
+		local isOffHandSlotLocked = AutoGearDB.LockedGearSlots[INVSLOT_OFFHAND].enabled
 		if (AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score > AutoGearBestItems[INVSLOT_TABARD].score)
 		or (((not AutoGearBestItems[INVSLOT_MAINHAND].info.empty)
 		or (not AutoGearBestItems[INVSLOT_OFFHAND].info.empty))
@@ -2597,29 +2664,33 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 			--main hand
 			if (not AutoGearBestItems[INVSLOT_MAINHAND].equipped) and (not AutoGearBestItems[INVSLOT_MAINHAND].info.empty) then
 				mainSwap = 1
-				local newAction = {}
-				newAction.action = "equip"
-				newAction.t = GetTime()
-				newAction.container = AutoGearBestItems[INVSLOT_MAINHAND].bag
-				newAction.slot = AutoGearBestItems[INVSLOT_MAINHAND].slot
-				newAction.replaceSlot = INVSLOT_MAINHAND
-				newAction.info = AutoGearBestItems[INVSLOT_MAINHAND].info
-				newAction.score = AutoGearBestItems[INVSLOT_MAINHAND].score
-				table.insert(futureAction, newAction)
-				extraDelay = 0.5
+				if not isMainHandSlotLocked then
+					local newAction = {}
+					newAction.action = "equip"
+					newAction.t = GetTime()
+					newAction.container = AutoGearBestItems[INVSLOT_MAINHAND].bag
+					newAction.slot = AutoGearBestItems[INVSLOT_MAINHAND].slot
+					newAction.replaceSlot = INVSLOT_MAINHAND
+					newAction.info = AutoGearBestItems[INVSLOT_MAINHAND].info
+					newAction.score = AutoGearBestItems[INVSLOT_MAINHAND].score
+					table.insert(futureAction, newAction)
+					extraDelay = 0.5
+				end
 			end
 			--off-hand
 			if (not AutoGearBestItems[INVSLOT_OFFHAND].equipped) and (not AutoGearBestItems[INVSLOT_OFFHAND].info.empty) then
 				offSwap = 1
-				local newAction = {}
-				newAction.action = "equip"
-				newAction.t = GetTime() + extraDelay --do it after a longer delay
-				newAction.container = AutoGearBestItems[INVSLOT_OFFHAND].bag
-				newAction.slot = AutoGearBestItems[INVSLOT_OFFHAND].slot
-				newAction.replaceSlot = INVSLOT_OFFHAND
-				newAction.info = AutoGearBestItems[INVSLOT_OFFHAND].info
-				newAction.score = AutoGearBestItems[INVSLOT_OFFHAND].score
-				table.insert(futureAction, newAction)
+				if not isOffHandSlotLocked then
+					local newAction = {}
+					newAction.action = "equip"
+					newAction.t = GetTime() + extraDelay --do it after a longer delay
+					newAction.container = AutoGearBestItems[INVSLOT_OFFHAND].bag
+					newAction.slot = AutoGearBestItems[INVSLOT_OFFHAND].slot
+					newAction.replaceSlot = INVSLOT_OFFHAND
+					newAction.info = AutoGearBestItems[INVSLOT_OFFHAND].info
+					newAction.score = AutoGearBestItems[INVSLOT_OFFHAND].score
+					table.insert(futureAction, newAction)
+				end
 			end
 			if (mainSwap or offSwap) then
 				anythingBetter = 1
@@ -2627,7 +2698,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 					if (AutoGearIsTwoHandEquipped()) then
 						local equippedMain = AutoGearEquippedItems[INVSLOT_TABARD].info
 						local mainScore = AutoGearEquippedItems[INVSLOT_TABARD].score
-						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or AutoGearBestItems[INVSLOT_MAINHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or AutoGearBestItems[INVSLOT_OFFHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or AutoGearBestItems[INVSLOT_MAINHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or AutoGearBestItems[INVSLOT_OFFHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..").  "..((AutoGearDB.Enabled == true) and ((isMainHandSlotLocked or isOffHandSlotLocked) and "Would equip, but slot "..tostring((isMainHandSlotLocked and INVSLOT_MAINHAND or INVSLOT_OFFHAND) or "nil").." is locked." or "Equipping.") or "Would equip if automatic gear equipping was enabled."), 1)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_MAINHAND].info)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_OFFHAND].info)
 						AutoGearPrintItem(equippedMain)
@@ -2636,7 +2707,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 						local mainScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score
 						local equippedOff = AutoGearEquippedItems[INVSLOT_OFFHAND].info
 						local offScore = AutoGearEquippedItems[INVSLOT_OFFHAND].score
-						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or AutoGearBestItems[INVSLOT_MAINHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or AutoGearBestItems[INVSLOT_OFFHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.link or equippedOff.name).." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+						AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_MAINHAND].info.link or AutoGearBestItems[INVSLOT_MAINHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_MAINHAND].score)..") combined with "..(AutoGearBestItems[INVSLOT_OFFHAND].info.link or AutoGearBestItems[INVSLOT_OFFHAND].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_OFFHAND].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..") combined with "..(equippedOff.link or equippedOff.name).." ("..string.format("%.2f", offScore)..").  "..((AutoGearDB.Enabled == true) and ((isMainHandSlotLocked or isOffHandSlotLocked) and "Would equip, but slot "..tostring((isMainHandSlotLocked and INVSLOT_MAINHAND or INVSLOT_OFFHAND) or "nil").." is locked." or "Equipping.") or "Would equip if automatic gear equipping was enabled."), 1)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_MAINHAND].info)
 						AutoGearPrintItem(AutoGearBestItems[INVSLOT_OFFHAND].info)
 						AutoGearPrintItem(equippedMain)
@@ -2647,7 +2718,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 					if (offSwap) then invSlot = INVSLOT_OFFHAND end
 					local equippedInfo = AutoGearEquippedItems[invSlot].info
 					local equippedScore = AutoGearEquippedItems[invSlot].score
-					AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or AutoGearBestItems[invSlot].info.name).." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or equippedInfo.name).." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+					AutoGearPrint("AutoGear: "..(AutoGearBestItems[invSlot].info.link or AutoGearBestItems[invSlot].info.name).." ("..string.format("%.2f", AutoGearBestItems[invSlot].score)..") was determined to be better than "..(equippedInfo.link or equippedInfo.name).." ("..string.format("%.2f", equippedScore)..").  "..((AutoGearDB.Enabled == true) and (((invSlot == INVSLOT_MAINHAND and isMainHandSlotLocked) or (invSlot == INVSLOT_OFFHAND and isOffHandSlotLocked)) and "Would equip, but slot "..tostring((isMainHandSlotLocked and INVSLOT_MAINHAND or INVSLOT_OFFHAND) or "nil").." is locked." or "Equipping.") or "Would equip if automatic gear equipping was enabled."), 1)
 					AutoGearPrintItem(AutoGearBestItems[invSlot].info)
 					AutoGearPrintItem(equippedInfo)
 				end
@@ -2664,19 +2735,21 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 				local mainScore = AutoGearEquippedItems[mainSlot].score
 				local equippedOff = AutoGearEquippedItems[INVSLOT_OFFHAND].info
 				local offScore = AutoGearEquippedItems[INVSLOT_OFFHAND].score
-				AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_TABARD].info.link or AutoGearBestItems[INVSLOT_TABARD].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_TABARD].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..")"..(showBothSlots and ((" combined with "..(equippedOff.link or equippedOff.name).." ("..string.format("%.2f", offScore))..")") or "")..".  "..((AutoGearDB.Enabled == true) and "Equipping." or "Would equip if automatic gear equipping was enabled."), 1)
+				AutoGearPrint("AutoGear: "..(AutoGearBestItems[INVSLOT_TABARD].info.link or AutoGearBestItems[INVSLOT_TABARD].info.name).." ("..string.format("%.2f", AutoGearBestItems[INVSLOT_TABARD].score)..") was determined to be better than "..(equippedMain.link or equippedMain.name).." ("..string.format("%.2f", mainScore)..")"..(showBothSlots and ((" combined with "..(equippedOff.link or equippedOff.name).." ("..string.format("%.2f", offScore))..")") or "")..".  "..((AutoGearDB.Enabled == true) and ((isMainHandSlotLocked or isOffHandSlotLocked) and "Would equip, but slot "..tostring((isMainHandSlotLocked and INVSLOT_MAINHAND or INVSLOT_OFFHAND) or "nil").." is locked." or "Equipping.") or "Would equip if automatic gear equipping was enabled."), 1)
 				AutoGearPrintItem(AutoGearBestItems[INVSLOT_TABARD].info)
 				AutoGearPrintItem(equippedMain)
 				if showBothSlots then AutoGearPrintItem(equippedOff) end
-				local newAction = {}
-				newAction.action = "equip"
-				newAction.t = GetTime() + 0.5 --do it after a short delay
-				newAction.container = AutoGearBestItems[INVSLOT_TABARD].bag
-				newAction.slot = AutoGearBestItems[INVSLOT_TABARD].slot
-				newAction.replaceSlot = INVSLOT_MAINHAND
-				newAction.info = AutoGearBestItems[INVSLOT_TABARD].info
-				newAction.score = AutoGearBestItems[INVSLOT_TABARD].score
-				table.insert(futureAction, newAction)
+				if (not isMainHandSlotLocked) and (not isOffHandSlotLocked) then
+					local newAction = {}
+					newAction.action = "equip"
+					newAction.t = GetTime() + 0.5 --do it after a short delay
+					newAction.container = AutoGearBestItems[INVSLOT_TABARD].bag
+					newAction.slot = AutoGearBestItems[INVSLOT_TABARD].slot
+					newAction.replaceSlot = INVSLOT_MAINHAND
+					newAction.info = AutoGearBestItems[INVSLOT_TABARD].info
+					newAction.score = AutoGearBestItems[INVSLOT_TABARD].score
+					table.insert(futureAction, newAction)
+				end
 			end
 		end
 	elseif (lootRollItemID) then
@@ -3318,10 +3391,6 @@ function AutoGearGetPawnScales()
 		end
 	end
 	return AutoGearPawnScales
-end
-
-function AutoGearGetLockedGearSlots()
-	return AutoGearDB.LockedGearSlots or {}
 end
 
 function AutoGearGetPawnScaleName(scaleNameToFind)
