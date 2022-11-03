@@ -3896,8 +3896,8 @@ function AutoGearIsGearPairEquippableTogether(a, b)
 end
 
 function AutoGearGetBest1hPairing(info)
+	local score = AutoGearDetermineItemScore(info)
 	if info.is1hWeaponOrOffHand and info.validGearSlots then
-		local score = AutoGearDetermineItemScore(info)
 		local totalScore = 0
 		local bestScore = 0
 		local bestScoreSlot
@@ -3914,7 +3914,7 @@ function AutoGearGetBest1hPairing(info)
 			return AutoGearBestItems[bestScoreSlot], bestScore
 		end
 	end
-	return { info = { name = "nothing", empty = 1 }, score = 0 }, 0
+	return { info = { name = "nothing", empty = 1 }, score = 0 }, score
 end
 
 function AutoGearTooltipHook(tooltip)
@@ -3947,9 +3947,6 @@ function AutoGearTooltipHook(tooltip)
 		and (not isAComparisonTooltip))
 		if shouldShowBest1hPairing then
 			best1hPairing, score = AutoGearGetBest1hPairing(tooltipItemInfo)
-			shouldShowBest1hPairing = (shouldShowBest1hPairing
-			and best1hPairing.info
-			and best1hPairing.info.link)
 		else
 			score = AutoGearDetermineItemScore(tooltipItemInfo)
 		end
