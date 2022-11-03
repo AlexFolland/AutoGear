@@ -2773,7 +2773,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
 			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
 				if (AutoGearBestItems[invSlot].chooseReward and (invSlot ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff())) then
-					local delta = AutoGearBestItems[invSlot].score - AutoGearBestItems[invSlot].equippedScore
+					local delta = AutoGearBestItems[invSlot].score - AutoGearEquippedItems[invSlot].score
 					if (not bestRewardScoreDelta or delta > bestRewardScoreDelta) then
 						bestRewardScoreDelta = delta
 						bestRewardIndex = AutoGearBestItems[invSlot].chooseReward
@@ -3841,22 +3841,24 @@ function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 		lowestScoringValidGearInfo = AutoGearReadItemInfo(INVSLOT_MAINHAND)
 		lowestScoringValidGearSlot = INVSLOT_MAINHAND
 		lowestScoringValidGearSlotScore = AutoGearDetermineItemScore(lowestScoringValidGearInfo)
-	elseif info.validGearSlots then
-		local firstValidGearSlot = info.validGearSlots[1]
-		lowestScoringValidGearSlot = firstValidGearSlot
-		lowestScoringValidGearSlotScore = AutoGearEquippedItems[firstValidGearSlot].score
-		lowestScoringValidGearInfo = AutoGearEquippedItems[firstValidGearSlot].info
-		for _, gearSlot in ipairs(info.validGearSlots) do
-			if info.unique and AutoGearEquippedItems[gearSlot].info.unique
-			and (info.id == AutoGearEquippedItems[gearSlot].info.id)
-			and (GetItemCount(info.id, true) > 1) then
-				return nil, 0, gearSlot
-			end
-			if (AutoGearEquippedItems[gearSlot].score < lowestScoringValidGearSlotScore)
-			or AutoGearEquippedItems[gearSlot].info.empty then
-				lowestScoringValidGearInfo = AutoGearEquippedItems[gearSlot].info
-				lowestScoringValidGearSlot = gearSlot
-				lowestScoringValidGearSlotScore = AutoGearEquippedItems[gearSlot].score
+	else
+		if info.validGearSlots then
+			local firstValidGearSlot = info.validGearSlots[1]
+			lowestScoringValidGearSlot = firstValidGearSlot
+			lowestScoringValidGearSlotScore = AutoGearEquippedItems[firstValidGearSlot].score
+			lowestScoringValidGearInfo = AutoGearEquippedItems[firstValidGearSlot].info
+			for _, gearSlot in ipairs(info.validGearSlots) do
+				if info.unique and AutoGearEquippedItems[gearSlot].info.unique
+				and (info.id == AutoGearEquippedItems[gearSlot].info.id)
+				and (GetItemCount(info.id, true) > 1) then
+					return nil, 0, gearSlot
+				end
+				if (AutoGearEquippedItems[gearSlot].score < lowestScoringValidGearSlotScore)
+				or AutoGearEquippedItems[gearSlot].info.empty then
+					lowestScoringValidGearInfo = AutoGearEquippedItems[gearSlot].info
+					lowestScoringValidGearSlot = gearSlot
+					lowestScoringValidGearSlotScore = AutoGearEquippedItems[gearSlot].score
+				end
 			end
 		end
 		if info.is1hWeaponOrOffHand and not equipped then
@@ -3970,7 +3972,7 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine(scoreLinePrefix.." score"..((shouldShowComparisonLine and not isAComparisonTooltip or shouldShowBest1hPairing) and " (this"..(shouldShowBest1hPairing and " and best pairing" or "")..")" or "")..":",
+		tooltip:AddDoubleLine(scoreLinePrefix.." score"..((shouldShowComparisonLine and not isAComparisonTooltip or shouldShowBest1hPairing) and " (this"..((shouldShowBest1hPairing and (not best1hPairing.info.empty)) and " and best pairing" or "")..")" or "")..":",
 		(((tooltipItemInfo.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..score) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
@@ -3980,14 +3982,14 @@ function AutoGearTooltipHook(tooltip)
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b,
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b)
 		end
-		if shouldShowBest1hPairing then
+		if shouldShowBest1hPairing and (not best1hPairing.info.empty) then
 			local thisScore = math.floor(AutoGearDetermineItemScore(tooltipItemInfo) * 1000) / 1000
 			local best1hPairingScore = math.floor(best1hPairing.score * 1000) / 1000
 			tooltip:AddDoubleLine(scoreLinePrefix.." score (this; "..tooltipItemInfo.link.."):",
 			tostring(thisScore or 0),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-			tooltip:AddDoubleLine(scoreLinePrefix.." score (best pairing; "..best1hPairing.info.link.."):",
+			tooltip:AddDoubleLine(scoreLinePrefix.." score (best pairing; "..(best1hPairing.info.link or best1hPairing.info.name).."):",
 			tostring(best1hPairingScore or 0),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
