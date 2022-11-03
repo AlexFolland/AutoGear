@@ -3874,7 +3874,9 @@ end
 function AutoGearIsGearPairEquippableTogether(a, b)
 	if (not a.validGearSlots)
 	or (not b.validGearSlots)
-	or ((a.id == b.id) and (a.unique)) then
+	or ((a.id == b.id)
+	and ((GetItemCount(a.id, true) < 2)
+	or (a.unique))) then
 		return
 	end
 	for _, firstSlot in pairs(a.validGearSlots) do
