@@ -1,7 +1,7 @@
-## Interface: 90207
-## Interface-Retail: 90207
-## Interface-Classic: 11403
-## Interface-BCC: 20504
+## Interface: 100002
+## Interface-Mainline: 100002
+## Interface-Vanilla: 11403
+## Interface-TBC: 20504
 ## Interface-Wrath: 30400
 ## Title: AutoGear
 ## Notes: Automatically chooses loot and equips gear

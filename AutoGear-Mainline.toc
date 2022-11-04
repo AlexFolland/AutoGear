@@ -1,4 +1,4 @@
-## Interface: 90207
+## Interface: 100002
 ## Title: AutoGear
 ## Notes: Automatically chooses loot and equips gear
 ## Author: Synthetikaryote, BujuArena

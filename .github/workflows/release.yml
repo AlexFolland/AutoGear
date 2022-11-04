@@ -42,19 +42,17 @@ jobs:
       - name: Package and Release
         uses: BigWigsMods/packager@master
 
-      # another example where we supply additional arguments, this example is specifically to release
-      # for the Classic version of the game
       # the -g arg releases with all classic tags
       # uploading to CurseForge requires the X-Curse-Project-ID field in the toc file, or else no upload
-      - name: Package and Release for Classic
+      - name: Package and Release for Vanilla Classic
         uses: BigWigsMods/packager@master
         with:
-          args: -g classic
+          args: -g vanilla
 
       - name: Package and Release for Burning Crusade Classic
         uses: BigWigsMods/packager@master
         with:
-          args: -g bcc
+          args: -g tbc
 
       - name: Package and Release for Wrath of the Lich King Classic
         uses: BigWigsMods/packager@master
