@@ -47,12 +47,12 @@ jobs:
       - name: Package and Release for Vanilla Classic
         uses: BigWigsMods/packager@master
         with:
-          args: -g vanilla
+          args: -g classic
 
       - name: Package and Release for Burning Crusade Classic
         uses: BigWigsMods/packager@master
         with:
-          args: -g tbc
+          args: -g bcc
 
       - name: Package and Release for Wrath of the Lich King Classic
         uses: BigWigsMods/packager@master
