@@ -1926,7 +1926,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
 				["label"] = "Always show score comparisons in tooltips",
-				["description"] = "Always show score comparisons in the item tooltip, even when also also showing the comparison tooltip.  If this is enabled, only the score for the current item will be shown in the tooltip.",
+				["description"] = "Always show score comparisons in the item tooltip, even when also showing the comparison tooltip.  If this is enabled, only the score for the current item will be shown in the tooltip.",
 				["toggleDescriptionTrue"] = "Always show score comparisons in gear tooltips is now enabled.",
 				["toggleDescriptionFalse"] = "Always show score comparisons in gear tooltips is now disabled."
 			},
