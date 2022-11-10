@@ -221,7 +221,6 @@ function AutoGearInitializeDB(defaults, reset)
 	if AutoGearDB == nil or reset ~= nil then AutoGearDB = {} end
 	for k,v in pairs(defaults) do
 		if _G["AutoGearDB"][k] == nil then
-			--print("AutoGear: found nil value at "..k.."; should be "..tostring(v))
 			_G["AutoGearDB"][k] = v
 		end
 	end
@@ -296,10 +295,10 @@ function AutoGearGetDefaultLockedGearSlots()
 	local lockedGearSlots = {}
 	for gearSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
 		if gearSlot <= INVSLOT_LAST_EQUIPPED or gearSlot >= AutoGearFirstEquippableBagSlot then
-			table.insert(lockedGearSlots, {
+			lockedGearSlots[gearSlot] = {
 				["label"] = tostring(gearSlot),
 				["enabled"] = false
-			})
+			}
 		end
 	end
 	return lockedGearSlots
@@ -310,6 +309,20 @@ function AutoGearGetLockedGearSlots()
 		AutoGearDB.LockedGearSlots = AutoGearGetDefaultLockedGearSlots()
 	end
 	return AutoGearDB.LockedGearSlots
+end
+
+function AutoGearFixLockedGearSlots() -- finds missing slots and adds them, in case Blizzard changed them around
+	if not AutoGearDB.LockedGearSlots then AutoGearDB.LockedGearSlots = AutoGearGetDefaultLockedGearSlots() return end
+	for gearSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
+		if gearSlot <= INVSLOT_LAST_EQUIPPED or gearSlot >= AutoGearFirstEquippableBagSlot then
+			if not AutoGearDB.LockedGearSlots[gearSlot] then
+				AutoGearDB.LockedGearSlots[gearSlot] = {
+					["label"] = tostring(gearSlot),
+					["enabled"] = false
+				}
+			end
+		end
+	end
 end
 
 --default values for variables saved between sessions
@@ -1794,6 +1807,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 		AutoGearLastEquippableBagSlot = ContainerIDToInventoryID and ContainerIDToInventoryID(NUM_BAG_SLOTS) or (C_Container and (C_Container.ContainerIDToInventoryID and C_Container.ContainerIDToInventoryID(1) or 23) or 23)
 		AutoGearInitializeEquippableBagSlotsTable()
 		AutoGearInitializeDB(AutoGearDBDefaults)
+		AutoGearFixLockedGearSlots()
 		AutoGearUpdateEquippedItems()
 
 		--initialize options menu variables
