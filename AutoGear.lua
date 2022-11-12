@@ -2141,7 +2141,7 @@ SlashCmdList["AutoGear"] = function(msg)
 		end
 	elseif (param1 == "") then
 		if not InterfaceAddOnsList_Update then
-			InterfaceOpInterfaceOptionsFrame_OpenToCategory(optionsMenu)
+			InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 		end
 		InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 	else
