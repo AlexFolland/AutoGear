@@ -3748,7 +3748,7 @@ function AutoGearDetermineItemScore(info)
 		(AutoGearCurrentWeighting.Versatility or 0) * (info.Versatility or 0) +
 		(AutoGearCurrentWeighting.DPS or 0) * (info.DPS or 0) +
 		(AutoGearCurrentWeighting.Damage or 0) * (info.Damage or 0) +
-		((UnitLevel("player") < maxPlayerLevel and not IsXPUserDisabled()) and
+		((UnitLevel("player") < maxPlayerLevel and not (IsXPUserDisabled and IsXPUserDisabled())) and
 		(AutoGearCurrentWeighting.ExperienceGained or 0) * (info.ExperienceGained or 0) or 0)
 	if score == 0 then
 		return E
