@@ -2670,6 +2670,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 		local isMainHandSlotLocked = AutoGearDB.LockedGearSlots[INVSLOT_MAINHAND].enabled
 		local isOffHandSlotLocked = AutoGearDB.LockedGearSlots[INVSLOT_OFFHAND].enabled
 		if (AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score > AutoGearBestItems[INVSLOT_TABARD].score)
+		or (AutoGearBestItems[INVSLOT_MAINHAND.info.unusable])
 		or (((not AutoGearBestItems[INVSLOT_MAINHAND].info.empty)
 		or (not AutoGearBestItems[INVSLOT_OFFHAND].info.empty))
 		and AutoGearBestItems[INVSLOT_TABARD].info.empty) then
