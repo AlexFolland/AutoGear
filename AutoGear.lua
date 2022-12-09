@@ -2224,6 +2224,7 @@ AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")        --Fires when an atte
 AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the player attempts a gossip choice which requires entering a code
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
+AutoGearFrame:RegisterEvent("BAG_UPDATE_DELAYED")			--Fires when any bag contents are updated, including moving items. Fires on delay which avoided nil issues with BAG_UPDATED event
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, ...)
 
 	if (AutoGearDB.AutoAcceptQuests) then
@@ -2413,14 +2414,15 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			local soldSomething = nil
 			local totalSellValue = 0
 			for i = 0, NUM_BAG_SLOTS do
-				local slotMax = GetContainerNumSlots(i)
+				local slotMax = ((C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots)(i)
 				for j = 0, slotMax do
-					local _, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
+					local _, count, locked, quality, _, _, link = ((C_Container and C_Container.GetContainerItemInfo) or GetContainerItemInfo)(i, j)
 					if (link) then
 						local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
 						if (string.find(link,"|cff9d9d9d") and not locked and not AutoGearIsQuestItem(i,j)) then
 							totalSellValue = totalSellValue + select(11, GetItemInfo(link)) * count
-							PickupContainerItem(i, j)
+							-- For some reason I could not identify, this does not work with the cascade logic used elsewhere for cross compatibility
+							C_Container.PickupContainerItem(i, j)
 							PickupMerchantItem()
 							soldSomething = 1
 						end
@@ -2459,6 +2461,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			dataAvailable = 1
 			AutoGearFrame:UnregisterEvent(event)
 		end
+	elseif event == "BAG_UPDATE_DELAYED" then
+		AutoGearConsiderAllItems()
 	elseif event ~= "ADDON_LOADED" then
 		AutoGearPrint("AutoGear: event fired: "..event, 3)
 	end
@@ -2618,7 +2622,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 
 	--consider all items in bags
 	for bag = 0, NUM_BAG_SLOTS do
-		local slotMax = GetContainerNumSlots(bag)
+		local slotMax = ((C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots)(bag)
 		for slot = 0, slotMax do
 			info = AutoGearReadItemInfo(nil, nil, bag, slot)
 			AutoGearConsiderItem(info, bag, slot, nil)
@@ -3778,7 +3782,7 @@ end
 function AutoGearGetAllBagsNumFreeSlots()
 	local slotCount = 0
 	for i = 0, NUM_BAG_SLOTS do
-		local freeSlots, bagType = GetContainerNumFreeSlots(i)
+		local freeSlots, bagType = ((C_Container and C_Container.GetContainerNumFreeSlots) or GetContainerNumFreeSlots)(i)
 		if (bagType == 0) then
 			slotCount = slotCount + freeSlots
 		end
@@ -3787,9 +3791,9 @@ function AutoGearGetAllBagsNumFreeSlots()
 end
 
 function AutoGearPutItemInEmptyBagSlot()
-	if GetContainerNumFreeSlots(BACKPACK_CONTAINER) > 0 then PutItemInBackpack() end
+	if ((C_Container and C_Container.GetContainerNumFreeSlots) or GetContainerNumFreeSlots)(BACKPACK_CONTAINER) > 0 then PutItemInBackpack() end
 	for i = 1, NUM_BAG_SLOTS do
-		local freeSlots, bagType = GetContainerNumFreeSlots(i)
+		local freeSlots, bagType = ((C_Container and C_Container.GetContainerNumFreeSlots) or GetContainerNumFreeSlots)(i)
 		if (bagType == 0 and freeSlots > 0) then
 			PutItemInBag(CONTAINER_BAG_OFFSET+i)
 		end
@@ -3935,10 +3939,13 @@ function AutoGearGetBest1hPairing(info)
 end
 
 function AutoGearTooltipHook(tooltip)
+	-- Added nil check to avoid errors which were happening on GetItem() call
+	if tooltip ~= GameTooltip or tooltip == nil then return end
 	if (not AutoGearDB.ScoreInTooltips) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
 	local name, link = tooltip:GetItem()
-	local equipped = tooltip:IsEquippedItem()
+	-- Changed to this call which I found in Blizzard code while researching and seems to work well
+	local equipped = IsEquippedItem(name)
 	if not link then
 		AutoGearPrint("AutoGear: No item link for "..(name or "(no name)").." on "..tooltip:GetName(),3)
 		return
@@ -4108,10 +4115,7 @@ function AutoGearTooltipHook(tooltip)
 		)
 	end
 end
-GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, AutoGearTooltipHook)
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
@@ -4184,7 +4188,7 @@ function AutoGearMain()
 									table.remove(futureAction, i)
 								end
 							else
-								PickupContainerItem(curAction.container, curAction.slot)
+								((C_Container and C_Container.PickupContainerItem) or PickupContainerItem)(curAction.container, curAction.slot)
 								EquipCursorItem(curAction.replaceSlot)
 								curAction.ensuringEquipped = 1
 							end
