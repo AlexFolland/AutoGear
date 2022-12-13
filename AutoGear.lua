@@ -2224,6 +2224,7 @@ AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")        --Fires when an atte
 AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the player attempts a gossip choice which requires entering a code
 AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
 AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
+AutoGearFrame:RegisterEvent("BAG_UPDATE_DELAYED")			--Fires when any bag contents are updated, including moving items. Fires on delay which avoided nil issues with BAG_UPDATED event
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, ...)
 
 	if (AutoGearDB.AutoAcceptQuests) then
@@ -2352,11 +2353,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		local pattern4 = LOOT_ITEM_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
 		local pattern5 = LOOT_ITEM_PUSHED_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
 		local pattern6 = LOOT_ITEM_CREATED_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
-
-		local uname, userver = UnitFullName("player")
-		local fullName = uname .. "-" .. userver
-
-		if guid and guid ~= UnitGUID("player") or name ~= fullName then
+	
+		if guid and guid ~= UnitGUID("player") or name ~= UnitName("player") then
 			return
 		end
 	
@@ -2423,14 +2421,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 						local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
 						if (string.find(link,"|cff9d9d9d") and not locked and not AutoGearIsQuestItem(i,j)) then
 							totalSellValue = totalSellValue + select(11, GetItemInfo(link)) * count
-							if C_Container and C_Container.PickupItem then
-								C_Container.PickupContainerItem(i,j)
-							elseif PickupContainerItem then
-								PickupContainerItem(i,j)
-							else 
-								AutoGearPrint("AutoGear: Can't pick up an item because function PickupContainerItem does not exist in this version of the WoW addon API ("..tostring(TOC_VERSION_CURRENT)..").  Returning.",0)
-								return
-							end
+							-- For some reason I could not identify, this does not work with the cascade logic used elsewhere for cross compatibility
+							C_Container.PickupContainerItem(i, j)
 							PickupMerchantItem()
 							soldSomething = 1
 						end
@@ -2469,6 +2461,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			dataAvailable = 1
 			AutoGearFrame:UnregisterEvent(event)
 		end
+	elseif event == "BAG_UPDATE_DELAYED" then
+		AutoGearConsiderAllItems()
 	elseif event ~= "ADDON_LOADED" then
 		AutoGearPrint("AutoGear: event fired: "..event, 3)
 	end
@@ -2857,11 +2851,11 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 				and	(GetItemCount(info.id, true) > 1) then
 					return
 				end
-					if (AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore)
-					or AutoGearBestItems[gearSlot].info.empty then
-						lowestScoringValidGearSlot = gearSlot
-						lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot].score
-					end
+				if (AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore)
+				or AutoGearBestItems[gearSlot].info.empty then
+					lowestScoringValidGearSlot = gearSlot
+					lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot].score
+				end
 			end
 			
 			if ((score > lowestScoringValidGearSlotScore)
@@ -3945,11 +3939,13 @@ function AutoGearGetBest1hPairing(info)
 end
 
 function AutoGearTooltipHook(tooltip)
-	if tooltip ~= GameTooltip or tooltip ~= ShoppingTooltip1 or tooltip ~= ShoppingTooltip2 or tooltip ~= ItemRefTooltip or tooltip == nil then return end
+	-- Added nil check to avoid errors which were happening on GetItem() call
+	if tooltip ~= GameTooltip or tooltip == nil then return end
 	if (not AutoGearDB.ScoreInTooltips) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
 	local name, link = tooltip:GetItem()
-	local equipped = tooltip:IsEquippedItem()
+	-- Changed to this call which I found in Blizzard code while researching and seems to work well
+	local equipped = IsEquippedItem(name)
 	if not link then
 		AutoGearPrint("AutoGear: No item link for "..(name or "(no name)").." on "..tooltip:GetName(),3)
 		return
