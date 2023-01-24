@@ -2,7 +2,7 @@
 ## Interface-Mainline: 100000
 ## Interface-Vanilla: 11403
 ## Interface-TBC: 20504
-## Interface-Wrath: 30400
+## Interface-Wrath: 30401
 ## Title: AutoGear
 ## Notes: Automatically chooses loot and equips gear
 ## Author: Synthetikaryote, BujuArena
