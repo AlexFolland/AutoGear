@@ -67,6 +67,10 @@ local dataAvailable = nil
 local shouldPrintHelp = false
 local maxPlayerLevel = GetMaxLevelForExpansionLevel(GetExpansionLevel())
 local L = T.Localization
+local ContainerIDToInventoryID = ContainerIDToInventoryID or (C_Container and (C_Container.ContainerIDToInventoryID))
+local GetContainerNumSlots = GetContainerNumSlots or (C_Container and (C_Container.GetContainerNumSlots))
+local PickupContainerItem = PickupContainerItem or (C_Container and (C_Container.PickupContainerItem))
+local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and (C_Container.GetContainerNumFreeSlots))
 AutoGearWouldRoll = "nil"
 AutoGearIsItemDataMissing = nil
 AutoGearFirstEquippableBagSlot = 0
@@ -1803,8 +1807,8 @@ optionsMenu:RegisterEvent("ADDON_LOADED")
 optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 	if event == "PLAYER_ENTERING_WORLD" then
 
-		AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID and ContainerIDToInventoryID(1) or (C_Container and (C_Container.ContainerIDToInventoryID and C_Container.ContainerIDToInventoryID(1) or 20) or 20)
-		AutoGearLastEquippableBagSlot = ContainerIDToInventoryID and ContainerIDToInventoryID(NUM_BAG_SLOTS) or (C_Container and (C_Container.ContainerIDToInventoryID and C_Container.ContainerIDToInventoryID(1) or 23) or 23)
+		AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID(1) or 20
+		AutoGearLastEquippableBagSlot = ContainerIDToInventoryID(NUM_BAG_SLOTS) or 23
 		AutoGearInitializeEquippableBagSlotsTable()
 		AutoGearInitializeDB(AutoGearDBDefaults)
 		AutoGearFixLockedGearSlots()
@@ -2197,6 +2201,20 @@ if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
 	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")
 end
 
+function AutoGearGetContainerItemInfo(bagIndex, bagSlot)
+	if GetContainerItemInfo then
+		local _, count, locked, quality, _, _, link = GetContainerItemInfo(bagIndex, bagSlot)
+		if (link) then
+			return count, locked, link
+		end
+	elseif C_Container and C_Container.GetContainerItemInfo then
+		local itemInfo = C_Container.GetContainerItemInfo(bagIndex, bagSlot)
+		if itemInfo then
+			return itemInfo.stackCount, itemInfo.isLocked, itemInfo.hyperlink
+		end
+	end
+end
+
 AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
 AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
@@ -2233,11 +2251,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			QuestDetailAcceptButton_OnClick()
 		elseif (event == "GOSSIP_SHOW") then
 			--active quests
-			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL) then
+			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA)) then
 				for i = 1, C_GossipInfo.GetNumActiveQuests() do
 					local quest = C_GossipInfo.GetActiveQuests()[i]
 					if (quest["isComplete"]==true) then
-						C_GossipInfo.SelectActiveQuest(i)
+						C_GossipInfo.SelectActiveQuest(quest.questID)
 					end
 				end
 			else
@@ -2250,11 +2268,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL) then
+			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA)) then
 				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
 					local quest = C_GossipInfo.GetAvailableQuests()[i]
 					if (quest["isTrivial"]==false) then
-						C_GossipInfo.SelectAvailableQuest(i)
+						C_GossipInfo.SelectAvailableQuest(quest.questID)
 					end
 				end
 			else
@@ -2275,11 +2293,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if TOC_VERSION_CURRENT >= TOC_VERSION_SL then
-				for i = 1, GetNumAvailableQuests() do
-					local isTrivial, frequency, isRepeatable, isLegendary, questID = GetAvailableQuestInfo(i)
-					if (not isTrivial) then
-						SelectAvailableQuest(i)
+			if TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA) then
+				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
+					local quest = C_GossipInfo.GetAvailableQuests()[i]
+					if (not quest.isTrivial) then
+						C_GossipInfo.SelectAvailableQuest(quest.questID)
 					end
 				end
 			else
@@ -2415,7 +2433,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			for i = 0, NUM_BAG_SLOTS do
 				local slotMax = GetContainerNumSlots(i)
 				for j = 0, slotMax do
-					local _, count, locked, quality, _, _, link = GetContainerItemInfo(i, j)
+					local count, locked, link = AutoGearGetContainerItemInfo(i, j)
 					if (link) then
 						local name = select(3, string.find(link, "^.*%[(.*)%].*$"))
 						if (string.find(link,"|cff9d9d9d") and not locked and not AutoGearIsQuestItem(i,j)) then
