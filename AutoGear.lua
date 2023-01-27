@@ -2371,7 +2371,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		local pattern5 = LOOT_ITEM_PUSHED_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
 		local pattern6 = LOOT_ITEM_CREATED_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
 	
-		if guid and guid ~= UnitGUID("player") or name ~= UnitName("player") then
+		local uname, userver = UnitFullName("player")
+		local fullName = uname .. "-" .. userver
+
+		if (guid and guid ~= UnitGUID("player"))
+		or ((name ~= uname) and (name ~= fullName)) then
 			return
 		end
 	
@@ -4126,10 +4130,14 @@ function AutoGearTooltipHook(tooltip)
 		)
 	end
 end
-GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall then
+	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, AutoGearTooltipHook)
+else
+	GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+	ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+	ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+	ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+end
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then

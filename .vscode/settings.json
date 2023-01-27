@@ -32,6 +32,7 @@
         "CloseDropDownMenus",
         "UIDropDownMenu_CreateInfo",
         "HIGHLIGHT_FONT_COLOR_CODE",
-        "UIDropDownMenu_AddButton"
+        "UIDropDownMenu_AddButton",
+        "TooltipDataProcessor"
     ]
 }
