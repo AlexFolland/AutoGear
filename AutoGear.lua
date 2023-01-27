@@ -4130,14 +4130,10 @@ function AutoGearTooltipHook(tooltip)
 		)
 	end
 end
-if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall then
-	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, AutoGearTooltipHook)
-else
-	GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-	ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-	ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-	ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-end
+GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
