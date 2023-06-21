@@ -892,7 +892,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_CATA then
 				DPS = 1, Damage = 1
 			},
 			["Fury"] = {
-				weapons = "dual wield",
+				weapons = ((TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK) and "2hDW" or "dual wield"),
 				Strength = 2.98, Agility = 0.5, Stamina = 0.05, Intellect = E, Spirit = E,
 				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
 				SpellPower = E, SpellPenetration = E, Haste = 1.37, Mp5 = E,
@@ -2597,7 +2597,7 @@ function AutoGearUpdateEquippedItems()
 	end
 
 	--pretend the tabard slot is a separate slot for 2-handers
-	if (AutoGearEquippedItems[INVSLOT_MAINHAND].info.is2hWeapon and (not ((weapons == "2hDW") and CanDualWield()))) then
+	if (AutoGearEquippedItems[INVSLOT_MAINHAND].info.is2hWeapon and (not ((weapons == "2hDW") and CanDualWield() and IsSpellKnown(46917)))) then
 		AutoGearEquippedItems[INVSLOT_TABARD] = AutoGearDeepCopy(AutoGearEquippedItems[INVSLOT_MAINHAND])
 		AutoGearEquippedItems[INVSLOT_MAINHAND].info = { name = "nothing", empty = 1 }
 		AutoGearEquippedItems[INVSLOT_MAINHAND].score = 0
@@ -2924,7 +2924,7 @@ function AutoGearGetValidGearSlotsForInvType(invType)
 		[Enum.InventoryType.IndexWeaponType]         = ((weapons == "any")
 		                                               or (weapons == "dagger and any")
 		                                               or (weapons == "dagger")
-		                                               or (weapons == "dual wield")
+		                                               or ((weapons == "dual wield") and (not IsSpellKnown(46917)))
 		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and (weapons == "ranged")))
 		                                               and (CanDualWield()
@@ -2937,7 +2937,7 @@ function AutoGearGetValidGearSlotsForInvType(invType)
 		                                               or (weapons == "weapon and shield"))
 													   and { INVSLOT_OFFHAND }
 													   or nil,
-		[Enum.InventoryType.Index2HweaponType]       = (weapons == "2hDW")
+		[Enum.InventoryType.Index2HweaponType]       = ((weapons == "2hDW") and CanDualWield() and IsSpellKnown(46917))
 		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
 		                                               or (((weapons == "any")
 													   or (weapons == "2h"))
@@ -2947,7 +2947,7 @@ function AutoGearGetValidGearSlotsForInvType(invType)
 		                                               or (weapons == "weapon and shield")
 		                                               or (weapons == "dagger and any")
 		                                               or (weapons == "dagger")
-		                                               or (weapons == "dual wield")
+		                                               or ((weapons == "dual wield") and (not IsSpellKnown(46917)))
 		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and (weapons == "ranged")))
 		                                               and { INVSLOT_MAINHAND }
@@ -2956,7 +2956,7 @@ function AutoGearGetValidGearSlotsForInvType(invType)
 		                                               and ((weapons == "any")
 		                                               or (weapons == "dagger and any")
 		                                               or (weapons == "dagger")
-		                                               or (weapons == "dual wield"))
+		                                               or ((weapons == "dual wield") and (not IsSpellKnown(46917))))
 		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and (weapons == "ranged")))
 		                                               and { INVSLOT_OFFHAND }
@@ -3311,7 +3311,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				info.unusable = 1
 				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a dagger main hand)"
 			elseif weapons == "2h"
-			or weapons == "2hDW" or
+			or (weapons == "2hDW" and CanDualWield() and IsSpellKnown(46917)) or
 			((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
 			and weapons == "ranged") then
 				info.unusable = 1
@@ -3326,7 +3326,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if weapons == "weapon and shield" then
 				info.unusable = 1
 				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a weapon and shield)"
-			elseif weapons == "dual wield" and CanDualWield() then
+			elseif weapons == "dual wield" and CanDualWield() and (not IsSpellKnown(46917)) then
 				info.unusable = 1
 				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should dual wield one-handers)"
 			elseif ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
@@ -3360,6 +3360,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." needs a shield in the off-hand)"
 			elseif weapons == "dual wield"
 			and CanDualWield()
+			and (not IsSpellKnown(46917))
 			and (info.classID == Enum.ItemClass.Armor)
 			and (info.subclassID == Enum.ItemArmorSubclass.Shield) then
 				info.unusable = 1
@@ -3371,7 +3372,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			and (weapons == "ranged")) then
 				info.unusable = 1
 				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should use a two-handed weapon)"
-			elseif (weapons == "2hDW") then
+			elseif (weapons == "2hDW" and CanDualWield() and IsSpellKnown(46917)) then
 				info.unusable = 1
 				info.reason =  "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should dual wield two-handers)"
 			elseif (weapons == "dagger"
