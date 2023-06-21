@@ -2370,7 +2370,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		local pattern4 = LOOT_ITEM_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
 		local pattern5 = LOOT_ITEM_PUSHED_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
 		local pattern6 = LOOT_ITEM_CREATED_SELF:gsub("%%s", "(.+)"):gsub("^", "^")
-	
+
 		local uname, userver = UnitFullName("player")
 		local fullName = uname .. "-" .. userver
 
@@ -2378,7 +2378,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		or ((name ~= uname) and (name ~= fullName)) then
 			return
 		end
-	
+
 		local link, quantity = message:match(pattern1)
 		if not link then
 			link, quantity = message:match(pattern2)
@@ -2634,7 +2634,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 	local info
 
 	AutoGearUpdateEquippedItems()
-	
+
 	-- table to track whether an item's been added
 	AutoGearBestItemsAlreadyAdded = {}
 
@@ -2875,7 +2875,7 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 					lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot].score
 				end
 			end
-			
+
 			if ((score > lowestScoringValidGearSlotScore)
 			or AutoGearBestItems[lowestScoringValidGearSlot].info.empty
 			or AutoGearBestItems[lowestScoringValidGearSlot].info.unusable) then
@@ -2980,7 +2980,7 @@ function AutoGearGetValidGearSlotsForInvType(invType)
 		[Enum.InventoryType.IndexBagType]            = AutoGearEquippableBagSlots,
 		[Enum.InventoryType.IndexQuiverType]         = AutoGearEquippableBagSlots
 	}
-	
+
 	return gearSlotTable[invType]
 end
 
