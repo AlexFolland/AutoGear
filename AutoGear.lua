@@ -1564,12 +1564,18 @@ function AutoGearDetectClassAndSpec()
 end
 
 function AutoGearSetStatWeights()
-	local class, spec = select(2,AutoGearGetClassAndSpec())
+	local localizedClass, class, spec = AutoGearGetClassAndSpec()
 	AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec] or nil
-	if TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK then
+	weapons = AutoGearCurrentWeighting and (AutoGearCurrentWeighting.weapons or "any") or "any"
+	if (not AutoGearCurrentWeighting) then
+		if (not (AutoGearDB.UsePawn and PawnIsReady and PawnIsReady())) then
+			AutoGearPrint("AutoGear: No weighting set for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..".", 0)
+		end
+		return
+	end
+	if (TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK) and (not (AutoGearDB.UsePawn and PawnIsReady and PawnIsReady())) then
 		AutoGearCurrentWeighting.Crit = math.max(AutoGearCurrentWeighting.Crit or 0, AutoGearCurrentWeighting.SpellCrit or 0)
 	end
-	weapons = AutoGearCurrentWeighting.weapons or "any"
 end
 
 local function newCheckbox(dbname, label, description, onClick, optionsMenu)
@@ -2899,11 +2905,7 @@ function AutoGearInitializeEquippableBagSlotsTable()
 	end
 end
 
-function AutoGearShouldAllowOneHanders()
-	return (AutoGearGetValidGearSlotsForInvType(Enum.InventoryType.IndexWeaponType) and 1 or nil)
-end
-
-function AutoGearGetValidGearSlotsForInvType(invType)
+function AutoGearGetValidGearSlots(info)
 	local gearSlotTable = {
 		[Enum.InventoryType.IndexNonEquipType]       = nil,
 		[Enum.InventoryType.IndexAmmoType]           = nil, -- ignore ammo because it's hard to match with weapon type
@@ -2935,12 +2937,16 @@ function AutoGearGetValidGearSlotsForInvType(invType)
 		                                               or nil),
 		[Enum.InventoryType.IndexShieldType]         = ((weapons == "any")
 		                                               or (weapons == "weapon and shield"))
-													   and { INVSLOT_OFFHAND }
-													   or nil,
-		[Enum.InventoryType.Index2HweaponType]       = ((weapons == "2hDW") and CanDualWield() and IsPlayerSpell(46917))
+		                                               and { INVSLOT_OFFHAND }
+		                                               or nil,
+		[Enum.InventoryType.Index2HweaponType]       = ((weapons == "2hDW")
+		                                               and CanDualWield() and IsPlayerSpell(46917)
+		                                               and (info.subclassID ~= Enum.ItemWeaponSubclass.Staff)
+		                                               and ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
+		                                               or (info.subclassID ~= Enum.ItemWeaponSubclass.Polearm)))
 		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
 		                                               or (((weapons == "any")
-													   or (weapons == "2h"))
+		                                               or (weapons == "2h"))
 		                                               and { INVSLOT_TABARD }
 		                                               or nil),
 		[Enum.InventoryType.IndexWeaponmainhandType] = ((weapons == "any")
@@ -2981,7 +2987,7 @@ function AutoGearGetValidGearSlotsForInvType(invType)
 		[Enum.InventoryType.IndexQuiverType]         = AutoGearEquippableBagSlots
 	}
 
-	return gearSlotTable[invType]
+	return gearSlotTable[info.invType]
 end
 
 function AutoGearIsInvTypeWeapon(invType)
@@ -3040,14 +3046,14 @@ end
 
 function AutoGearPrintItem(info)
 	AutoGearPrint("AutoGear:     "..(info.link or info.name)..":", 2)
-	if AutoGearDB.UsePawn and PawnIsReady ~= nil and PawnIsReady() then
+	if AutoGearDB.UsePawn and PawnIsReady and PawnIsReady() then
 		local pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
 		local pawnScaleColor = PawnGetScaleColor(pawnScaleName)
 		local score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
 		-- 3 decimal places max
 		score = math.floor(score * 1000) / 1000
 		AutoGearPrint("AutoGear:         "..(((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and ("Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"") or "AutoGear").." score: "..(score or "nil"),2)
-	elseif not AutoGearDB.UsePawn or PawnIsReady == nil then
+	elseif (not (AutoGearDB.UsePawn and PawnIsReady and PawnIsReady())) then
 		for k,v in pairs(info) do
 			if (k ~= "Name" and AutoGearCurrentWeighting[k]) then
 				AutoGearPrint("AutoGear:         "..k..": "..string.format("%.2f", v).." * "..AutoGearCurrentWeighting[k].." = "..string.format("%.2f", v * AutoGearCurrentWeighting[k]), 2)
@@ -3161,7 +3167,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		elseif AutoGearIsInvTypeRangedOrRelic(info.invType) then
 			info.isRangedWeapon = 1
 		end
-		info.validGearSlots = AutoGearGetValidGearSlotsForInvType(info.invType)
+		info.validGearSlots = AutoGearGetValidGearSlots(info)
 		if not info.validGearSlots then
 			info.unusable = 1
 			info.reason = "(invalid item for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..")"
@@ -3329,6 +3335,14 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			elseif weapons == "dual wield" and CanDualWield() and (not IsPlayerSpell(46917)) then
 				info.unusable = 1
 				info.reason = "("..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass).." should dual wield one-handers)"
+			elseif weapons == "2hDW" and CanDualWield() and IsPlayerSpell(46917) then
+				if info.subclassID == Enum.ItemWeaponSubclass.Staff then
+					info.unusable = 1
+					info.reason = "(Titan's Grip doesn't work with a staff)"
+				elseif info.subclassID == Enum.ItemWeaponSubclass.Polearm and TOC_VERSION_CURRENT < TOC_VERSION_MOP then
+					info.unusable = 1
+					info.reason = "(Titan's Grip doesn't work with a polearm)"
+				end
 			elseif ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
 			and weapons == "ranged") then
 				info.unusable = 1
@@ -3731,7 +3745,7 @@ function AutoGearDetermineItemScore(info)
 		end
 	end
 
-	if (AutoGearDB.UsePawn == true) and PawnIsReady and PawnIsReady() then
+	if AutoGearDB.UsePawn and PawnIsReady and PawnIsReady() then
 		local pawnItemData = PawnGetItemData(info.link)
 		if pawnItemData then
 			local score = PawnGetSingleValueFromItem(pawnItemData, AutoGearGetPawnScaleName())
@@ -3822,7 +3836,8 @@ end
 function AutoGearScan()
 	AutoGearSetStatWeights()
 	if (not AutoGearCurrentWeighting) then
-		AutoGearPrint("AutoGear: No weighting set for this class.", 0)
+		local localizedClass, class, spec = AutoGearGetClassAndSpec()
+		AutoGearPrint("AutoGear: No weighting set for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..".", 0)
 		return
 	end
 	AutoGearPrint("AutoGear: Scanning bags for upgrades.", 2)
