@@ -2594,7 +2594,7 @@ function AutoGearUpdateEquippedItems()
 	for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
 		if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
 			info = AutoGearReadItemInfo(invSlot)
-			score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
+			score = AutoGearDetermineItemScore(info)
 			AutoGearEquippedItems[invSlot] = {}
 			AutoGearEquippedItems[invSlot].info = info
 			AutoGearEquippedItems[invSlot].score = score
@@ -3049,7 +3049,7 @@ function AutoGearPrintItem(info)
 	if AutoGearDB.UsePawn and PawnIsReady and PawnIsReady() then
 		local pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
 		local pawnScaleColor = PawnGetScaleColor(pawnScaleName)
-		local score = AutoGearDetermineItemScore(info, AutoGearCurrentWeighting)
+		local score = AutoGearDetermineItemScore(info)
 		-- 3 decimal places max
 		score = math.floor(score * 1000) / 1000
 		AutoGearPrint("AutoGear:         "..(((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and ("Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"") or "AutoGear").." score: "..(score or "nil"),2)
@@ -3755,6 +3755,12 @@ function AutoGearDetermineItemScore(info)
 				return score
 			end
 		end
+	end
+
+	-- This error trap sucks, but execution can reach here with no AutoGearCurrentWeighting and I don't know how
+	if (not AutoGearCurrentWeighting) then
+		AutoGearSetStatWeights()
+		if (not AutoGearCurrentWeighting) then return 0 end
 	end
 
 	local score = (AutoGearCurrentWeighting.Strength or 0) * (info.Strength or 0) +
