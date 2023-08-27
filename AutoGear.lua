@@ -2257,13 +2257,14 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			QuestDetailAcceptButton_OnClick()
 		elseif (event == "GOSSIP_SHOW") then
 			--active quests
-			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA)) then
+			--if (TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA)) then
 				for i = 1, C_GossipInfo.GetNumActiveQuests() do
 					local quest = C_GossipInfo.GetActiveQuests()[i]
 					if (quest["isComplete"]==true) then
 						C_GossipInfo.SelectActiveQuest(quest.questID)
 					end
 				end
+			--[[
 			else
 				local info = {GetGossipActiveQuests()}
 				for i = 1, GetNumGossipActiveQuests() do
@@ -2273,14 +2274,16 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					end
 				end
 			end
+			]]--
 			--available quests
-			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA)) then
+			--if (TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA)) then
 				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
 					local quest = C_GossipInfo.GetAvailableQuests()[i]
 					if (quest["isTrivial"]==false) then
 						C_GossipInfo.SelectAvailableQuest(quest.questID)
 					end
 				end
+			--[[
 			else
 				local info = {GetGossipAvailableQuests()}
 				for i = 1, GetNumGossipAvailableQuests() do
@@ -2290,6 +2293,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					end
 				end
 			end
+			]]--
 		elseif (event == "QUEST_GREETING") then
 			--active quests
 			for i = 1, GetNumActiveQuests() do
@@ -2299,18 +2303,20 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA) then
+			--if TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA) then
 				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
 					local quest = C_GossipInfo.GetAvailableQuests()[i]
 					if (not quest.isTrivial) then
 						C_GossipInfo.SelectAvailableQuest(quest.questID)
 					end
 				end
+			--[[
 			else
 				for i = 1, GetNumAvailableQuests() do
 					SelectAvailableQuest(i)
 				end
 			end
+			]]--
 		elseif (event == "QUEST_PROGRESS") then
 			if (IsQuestCompletable()) then
 				CompleteQuest()
