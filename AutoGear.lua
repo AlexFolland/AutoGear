@@ -2257,37 +2257,17 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			QuestDetailAcceptButton_OnClick()
 		elseif (event == "GOSSIP_SHOW") then
 			--active quests
-			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA)) then
-				for i = 1, C_GossipInfo.GetNumActiveQuests() do
-					local quest = C_GossipInfo.GetActiveQuests()[i]
-					if (quest["isComplete"]==true) then
-						C_GossipInfo.SelectActiveQuest(quest.questID)
-					end
-				end
-			else
-				local info = {GetGossipActiveQuests()}
-				for i = 1, GetNumGossipActiveQuests() do
-					local name, level, isTrivial, isComplete, isLegendary = info[(i-1)*6+1], info[(i-1)*6+2], info[(i-1)*6+3], info[(i-1)*6+4], info[(i-1)*6+5]
-					if (isComplete) then
-						SelectGossipActiveQuest(i)
-					end
+			for i = 1, C_GossipInfo.GetNumActiveQuests() do
+				local quest = C_GossipInfo.GetActiveQuests()[i]
+				if (quest["isComplete"]==true) then
+					C_GossipInfo.SelectActiveQuest(quest.questID)
 				end
 			end
 			--available quests
-			if (TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA)) then
-				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
-					local quest = C_GossipInfo.GetAvailableQuests()[i]
-					if (quest["isTrivial"]==false) then
-						C_GossipInfo.SelectAvailableQuest(quest.questID)
-					end
-				end
-			else
-				local info = {GetGossipAvailableQuests()}
-				for i = 1, GetNumGossipAvailableQuests() do
-					local name, level, isTrivial, frequency, isRepeatable = info[(i-1)*7+1], info[(i-1)*7+2], info[(i-1)*7+3], info[(i-1)*7+4], info[(i-1)*7+5]
-					if (not isTrivial) then
-						SelectGossipAvailableQuest(i)
-					end
+			for i = 1, C_GossipInfo.GetNumAvailableQuests() do
+				local quest = C_GossipInfo.GetAvailableQuests()[i]
+				if (quest["isTrivial"]==false) then
+					C_GossipInfo.SelectAvailableQuest(quest.questID)
 				end
 			end
 		elseif (event == "QUEST_GREETING") then
@@ -2299,16 +2279,10 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				end
 			end
 			--available quests
-			if TOC_VERSION_CURRENT >= TOC_VERSION_SL or (TOC_VERSION_CURRENT >= 30401 and TOC_VERSION_CURRENT < TOC_VERSION_CATA) then
-				for i = 1, C_GossipInfo.GetNumAvailableQuests() do
-					local quest = C_GossipInfo.GetAvailableQuests()[i]
-					if (not quest.isTrivial) then
-						C_GossipInfo.SelectAvailableQuest(quest.questID)
-					end
-				end
-			else
-				for i = 1, GetNumAvailableQuests() do
-					SelectAvailableQuest(i)
+			for i = 1, C_GossipInfo.GetNumAvailableQuests() do
+				local quest = C_GossipInfo.GetAvailableQuests()[i]
+				if (not quest.isTrivial) then
+					C_GossipInfo.SelectAvailableQuest(quest.questID)
 				end
 			end
 		elseif (event == "QUEST_PROGRESS") then
