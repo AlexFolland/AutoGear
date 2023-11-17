@@ -2645,7 +2645,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 				if invSlot == INVSLOT_MAINHAND or invSlot == INVSLOT_OFFHAND or invSlot == INVSLOT_TABARD then
 					--skip weapons for now
 				else
-					local isSlotLocked = AutoGearDB.LockedGearSlots[invSlot].enabled
+					local isSlotLocked = AutoGearDB.LockGearSlots and AutoGearDB.LockedGearSlots[invSlot].enabled
 					local equippedInfo = AutoGearEquippedItems[invSlot].info
 					local equippedScore = AutoGearEquippedItems[invSlot].score
 					if (not AutoGearBestItems[invSlot].equipped) then
@@ -2669,8 +2669,8 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 			end
 		end
 		--handle weapons
-		local isMainHandSlotLocked = AutoGearDB.LockedGearSlots[INVSLOT_MAINHAND].enabled
-		local isOffHandSlotLocked = AutoGearDB.LockedGearSlots[INVSLOT_OFFHAND].enabled
+		local isMainHandSlotLocked = AutoGearDB.LockGearSlots and AutoGearDB.LockedGearSlots[INVSLOT_MAINHAND].enabled
+		local isOffHandSlotLocked = AutoGearDB.LockGearSlots and AutoGearDB.LockedGearSlots[INVSLOT_OFFHAND].enabled
 		if (AutoGearBestItems[INVSLOT_MAINHAND].score + AutoGearBestItems[INVSLOT_OFFHAND].score > AutoGearBestItems[INVSLOT_TABARD].score)
 		or (AutoGearEquippedItems[INVSLOT_TABARD].info.unusable)
 		or (((not AutoGearBestItems[INVSLOT_MAINHAND].info.empty)
