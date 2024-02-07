@@ -33,6 +33,26 @@
         "UIDropDownMenu_CreateInfo",
         "HIGHLIGHT_FONT_COLOR_CODE",
         "UIDropDownMenu_AddButton",
-        "TooltipDataProcessor"
+        "TooltipDataProcessor",
+        "class",
+        "FillLocalizedClassList",
+        "NUM_CHAT_WINDOWS",
+        "MAX_RAID_MEMBERS",
+        "MEMBERS_PER_RAID_GROUP",
+        "MASTER_LOOTER",
+        "GameFontNormalLeft",
+        "ChatTypeInfo",
+        "WHOS_TO_DISPLAY",
+        "LFG_LIST_TOOLTIP_MEMBERS_SIMPLE",
+        "FauxScrollFrame_GetOffset",
+        "LE_LFG_LIST_DISPLAY_TYPE_CLASS_ENUMERATE",
+        "MASTER_LOOTER_GIVE_TO",
+        "InspectFrame",
+        "InspectLevelText",
+        "PLAYER_LEVEL_NO_SPEC",
+        "FRIENDS_BUTTON_TYPE_WOW",
+        "GameTooltipTextLeft1",
+        "MasterLooterFrame",
+        "EFFECTIVE_LEVEL_FORMAT"
     ]
 }

@@ -729,7 +729,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_CATA then
 		},
 		["ROGUE"] = {
 			["None"] = {
-				weapons = "dual wield",
+				weapons = "dagger and any",
 				Strength = E, Agility = 1.1, Stamina = 0.05, Intellect = E, Spirit = E,
 				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
 				SpellPower = E, SpellPenetration = E, Haste = 1.05, Mp5 = E,
@@ -2832,7 +2832,10 @@ end
 --companion function to AutoGearConsiderAllItems
 function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 	if info.empty
-	or (info.link and AutoGearBestItemsAlreadyAdded[info.link]) then
+	or (info.link and AutoGearBestItemsAlreadyAdded[info.link])
+	or (info.isAmmoBag
+	and	AutoGearBestItems[INVSLOT_RANGED].info.isRangedWeapon)
+	and (not AutoGearIsAmmoBagValidForRangedWeapon(info, AutoGearBestItems[INVSLOT_RANGED].info)) then
 		return
 	end
 	if (info.isMount and (not info.alreadyKnown)) then return true end
@@ -2843,14 +2846,17 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 			local lowestScoringValidGearSlot = firstValidGearSlot
 			local lowestScoringValidGearSlotScore = AutoGearBestItems[firstValidGearSlot].score
 			for _, gearSlot in pairs(info.validGearSlots) do
-				if info.unique
-				and AutoGearBestItems[gearSlot].info.unique
-				and	(info.id == AutoGearBestItems[gearSlot].info.id)
-				and	(GetItemCount(info.id, true) > 1) then
-					return
+				local skipThisSlot = false
+				for _, otherGearSlot in pairs(info.validGearSlots) do
+					if gearSlot ~= otherGearSlot then
+						if not AutoGearIsGearPairEquippableTogether(info, AutoGearBestItems[otherGearSlot].info) then
+							skipThisSlot = true
+						end
+					end
 				end
-				if (AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore)
-				or AutoGearBestItems[gearSlot].info.empty then
+				if not skipThisSlot and
+				((AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore)
+				or AutoGearBestItems[gearSlot].info.empty) then
 					lowestScoringValidGearSlot = gearSlot
 					lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot].score
 				end
@@ -2958,7 +2964,9 @@ function AutoGearGetValidGearSlots(info)
 		                                               or nil,
 		[Enum.InventoryType.IndexTabardType]         = nil, -- INVSLOT_TABARD is used for evaluating 2h weapons
 		[Enum.InventoryType.IndexBagType]            = AutoGearEquippableBagSlots,
-		[Enum.InventoryType.IndexQuiverType]         = AutoGearEquippableBagSlots
+		[Enum.InventoryType.IndexQuiverType]         = (weapons == "ranged")
+		                                               and AutoGearEquippableBagSlots
+                                                       or nil
 	}
 
 	return gearSlotTable[info.invType]
@@ -2994,11 +3002,51 @@ end
 function AutoGearIsInvTypeRangedOrRelic(invType)
 	if not invType then return nil end
 	return (TOC_VERSION_CURRENT < TOC_VERSION_MOP) and (
+		AutoGearIsInvTypeRanged(invType) or
+		AutoGearIsInvTypeRelic(invType)
+	)
+end
+
+function AutoGearIsInvTypeRanged(invType)
+	if not invType then return nil end
+	return (TOC_VERSION_CURRENT < TOC_VERSION_MOP) and (
 		(invType == Enum.InventoryType.IndexRangedType) or
 		(invType == Enum.InventoryType.IndexRangedrightType) or
-		(invType == Enum.InventoryType.IndexThrownType) or
-		(invType == Enum.InventoryType.IndexRelicType)
+		(invType == Enum.InventoryType.IndexThrownType)
 	)
+end
+
+function AutoGearIsInvTypeRelic(invType)
+	if not invType then return nil end
+	return (TOC_VERSION_CURRENT < TOC_VERSION_MOP) and (
+		invType == Enum.InventoryType.IndexRelicType
+	)
+end
+
+function AutoGearIsAmmoBagArrowQuiver(info)
+	if (not info.classID) or (not info.subclassID) then return nil end
+	return (info.isAmmoBag) and (info.subclassID == 2)
+end
+
+function AutoGearIsAmmoBagBulletPouch(info)
+	if (not info.classID) or (not info.subclassID) then return nil end
+	return (info.isAmmoBag) and (info.subclassID == 3)
+end
+
+function AutoGearIsAmmoBagValidForRangedWeapon(ammoBag, rangedWeapon)
+	if (not ammoBag.isAmmoBag)
+	or (not rangedWeapon.isRangedWeapon)
+	or (not rangedWeapon.classID)
+	or (not rangedWeapon.subclassID) then
+		return nil
+	end
+	return (AutoGearIsAmmoBagArrowQuiver(ammoBag) and
+	((rangedWeapon.classID == Enum.ItemClass.Weapon) and
+	((rangedWeapon.subclassID == Enum.ItemWeaponSubclass.Bows) or
+	(rangedWeapon.subclassID == Enum.ItemWeaponSubclass.Crossbow)))) or
+	(AutoGearIsAmmoBagBulletPouch(ammoBag) and
+	((rangedWeapon.classID == Enum.ItemClass.Weapon) and
+	(rangedWeapon.subclassID == Enum.ItemWeaponSubclass.Guns)))
 end
 
 function AutoGearIsItemTwoHanded(itemID)
@@ -3087,6 +3135,19 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	end
 
 	info.id = info.item:GetItemID()
+	if not info.id then
+		AutoGearPrint("Error: "..tostring(info.name or "nil").." doesn't have an item ID",3)
+		AutoGearPrint(
+			"inventoryID: "..tostring(inventoryID or "nil")..
+			"; lootRollID: "..tostring(lootRollID or "nil")..
+			"; container: "..tostring(container or "nil")..
+			"; slot: "..tostring(slot or "nil")..
+			"; questRewardIndex: "..tostring(questRewardIndex or "nil")..
+			"; link: "..tostring(info.link or "nil"),
+			3
+		)
+		return info
+	end
 	info.classID, info.subclassID = select(6,GetItemInfoInstant(info.id))
 	info.name = C_Item.GetItemNameByID(info.id)
 	info.rarity = info.item:GetItemQuality()
@@ -3138,13 +3199,23 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			info.is2hWeapon = 1
 		elseif AutoGearIsInvTypeOneHanded(info.invType) then
 			info.is1hWeaponOrOffHand = 1
-		elseif AutoGearIsInvTypeRangedOrRelic(info.invType) then
+		elseif AutoGearIsInvTypeRanged(info.invType) then
 			info.isRangedWeapon = 1
+		elseif AutoGearIsInvTypeRelic(info.invType) then
+			info.isRelic = 1
+		end
+		if info.classID == Enum.ItemClass.Quiver then
+			info.isAmmoBag = 1
 		end
 		info.validGearSlots = AutoGearGetValidGearSlots(info)
+		info.numValidGearSlots = 0
 		if not info.validGearSlots then
 			info.unusable = 1
 			info.reason = "(invalid item for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..")"
+		else
+			for _, slot in pairs(info.validGearSlots) do
+				info.numValidGearSlots = info.numValidGearSlots + 1
+			end
 		end
 	end
 
@@ -3187,8 +3258,18 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			else
 				value = 0
 			end
-			if value > 0 and string.find(text, " bag") then
+			if value > 0
+			and (
+				string.find(text, " bag") or
+				string.find(text, " quiver") or
+				string.find(text, " ammo pouch")
+			) then
 				info.numBagSlots = (info.numBagSlots or 0) + value
+			end
+			if value > 0
+			and info.isAmmoBag
+			and string.find(text, "ranged attack speed") then
+				info.ammoBagRangedAttackSpeed = (info.ammoBagRangedAttackSpeed or 0) + value
 			end
 			if string.find(text, "unique") then
 				info.unique = 1
@@ -3717,6 +3798,8 @@ function AutoGearDetermineItemScore(info)
 		else
 			return info.numBagSlots * E -- specialized bags suck, so consider them only better than nothing
 		end
+	elseif info.isAmmoBag then
+		return info.numBagSlots + (info.ammoBagRangedAttackSpeed and info.ammoBagRangedAttackSpeed or 0)
 	end
 
 	if AutoGearDB.UsePawn and PawnIsReady and PawnIsReady() then
@@ -3881,13 +3964,17 @@ function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 			lowestScoringValidGearSlotScore = AutoGearEquippedItems[firstValidGearSlot].score
 			lowestScoringValidGearInfo = AutoGearEquippedItems[firstValidGearSlot].info
 			for _, gearSlot in ipairs(info.validGearSlots) do
-				if info.unique and AutoGearEquippedItems[gearSlot].info.unique
-				and (info.id == AutoGearEquippedItems[gearSlot].info.id)
-				and (GetItemCount(info.id, true) > 1) then
-					return nil, 0, gearSlot
+				local skipThisSlot = false
+				for _, otherGearSlot in pairs(info.validGearSlots) do
+					if gearSlot ~= otherGearSlot then
+						if not AutoGearIsGearPairEquippableTogether(info, AutoGearEquippedItems[otherGearSlot].info) then
+							skipThisSlot = true
+						end
+					end
 				end
-				if (AutoGearEquippedItems[gearSlot].score < lowestScoringValidGearSlotScore)
-				or AutoGearEquippedItems[gearSlot].info.empty then
+				if (not skipThisSlot)
+				and ((AutoGearEquippedItems[gearSlot].score <= lowestScoringValidGearSlotScore)
+				or AutoGearEquippedItems[gearSlot].info.empty) then
 					lowestScoringValidGearInfo = AutoGearEquippedItems[gearSlot].info
 					lowestScoringValidGearSlot = gearSlot
 					lowestScoringValidGearSlotScore = AutoGearEquippedItems[gearSlot].score
@@ -3911,7 +3998,15 @@ function AutoGearIsGearPairEquippableTogether(a, b)
 	or (not b.validGearSlots)
 	or ((a.id == b.id)
 	and ((GetItemCount(a.id, true) < 2)
-	or (a.unique))) then
+	or (a.unique)))
+	or (a.ammoBagRangedAttackSpeed and b.ammoBagRangedAttackSpeed)
+	or ((a.is1hWeaponOrOffHand and b.is1hWeaponOrOffHand)
+	and ((weapons == "dagger and any")
+	and (a.subclassID ~= Enum.ItemWeaponSubclass.Dagger)
+	and (b.subclassID ~= Enum.ItemWeaponSubclass.Dagger))
+	or ((weapons == "weapon and shield")
+	and (a.subclassID ~= Enum.ItemArmorSubclass.Shield)
+	and (b.subclassID ~= Enum.ItemArmorSubclass.Shield))) then
 		return
 	end
 	for _, firstSlot in pairs(a.validGearSlots) do
