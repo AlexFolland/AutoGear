@@ -3798,7 +3798,7 @@ function AutoGearDetermineItemScore(info)
 		else
 			return info.numBagSlots * E -- specialized bags suck, so consider them only better than nothing
 		end
-	elseif info.isAmmoBag then
+	elseif info.isAmmoBag and info.numBagSlots then
 		return info.numBagSlots + (info.ammoBagRangedAttackSpeed and info.ammoBagRangedAttackSpeed or 0)
 	end
 
