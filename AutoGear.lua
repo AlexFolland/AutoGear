@@ -2862,9 +2862,22 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 				end
 			end
 
-			if ((score > lowestScoringValidGearSlotScore)
-			or AutoGearBestItems[lowestScoringValidGearSlot].info.empty
-			or AutoGearBestItems[lowestScoringValidGearSlot].info.unusable) then
+			if (
+				((score > lowestScoringValidGearSlotScore) and (not info.isAmmoBag))
+				or AutoGearBestItems[lowestScoringValidGearSlot].info.empty
+				or AutoGearBestItems[lowestScoringValidGearSlot].info.unusable
+				or (info.isAmmoBag
+					and (score > lowestScoringValidGearSlotScore)
+					and AutoGearIsAmmoBagValidForRangedWeapon(
+						info,
+						(
+							(AutoGearBestItems and AutoGearBestItems[INVSLOT_RANGED])
+							and AutoGearBestItems[INVSLOT_RANGED].info
+							or AutoGearReadItemInfo(INVSLOT_RANGED)
+						)
+					)
+				)
+			) then
 				AutoGearBestItemsAlreadyAdded[info.link] = 1
 				AutoGearBestItems[lowestScoringValidGearSlot].info = info
 				AutoGearBestItems[lowestScoringValidGearSlot].score = score
@@ -3023,12 +3036,12 @@ function AutoGearIsInvTypeRelic(invType)
 	)
 end
 
-function AutoGearIsAmmoBagArrowQuiver(info)
+function AutoGearIsAmmoBagAQuiverForArrows(info)
 	if (not info.classID) or (not info.subclassID) then return nil end
 	return (info.isAmmoBag) and (info.subclassID == 2)
 end
 
-function AutoGearIsAmmoBagBulletPouch(info)
+function AutoGearIsAmmoBagABulletPouch(info)
 	if (not info.classID) or (not info.subclassID) then return nil end
 	return (info.isAmmoBag) and (info.subclassID == 3)
 end
@@ -3040,13 +3053,23 @@ function AutoGearIsAmmoBagValidForRangedWeapon(ammoBag, rangedWeapon)
 	or (not rangedWeapon.subclassID) then
 		return nil
 	end
-	return (AutoGearIsAmmoBagArrowQuiver(ammoBag) and
-	((rangedWeapon.classID == Enum.ItemClass.Weapon) and
-	((rangedWeapon.subclassID == Enum.ItemWeaponSubclass.Bows) or
-	(rangedWeapon.subclassID == Enum.ItemWeaponSubclass.Crossbow)))) or
-	(AutoGearIsAmmoBagBulletPouch(ammoBag) and
-	((rangedWeapon.classID == Enum.ItemClass.Weapon) and
-	(rangedWeapon.subclassID == Enum.ItemWeaponSubclass.Guns)))
+	return (AutoGearIsAmmoBagAQuiverForArrows(ammoBag) and
+	(AutoGearIsRangedWeaponABowOrCrossbow(rangedWeapon))) or
+	(AutoGearIsAmmoBagABulletPouch(ammoBag) and
+	AutoGearIsRangedWeaponAGun(rangedWeapon))
+end
+
+function AutoGearIsRangedWeaponABowOrCrossbow(info)
+	if (not info.classID) or (not info.subclassID) then return nil end
+	return (info.classID == Enum.ItemClass.Weapon) and
+	((info.subclassID == Enum.ItemWeaponSubclass.Bows) or
+	(info.subclassID == Enum.ItemWeaponSubclass.Crossbow))
+end
+
+function AutoGearIsRangedWeaponAGun(info)
+	if (not info.classID) or (not info.subclassID) then return nil end
+	return ((info.classID == Enum.ItemClass.Weapon) and
+	(info.subclassID == Enum.ItemWeaponSubclass.Guns))
 end
 
 function AutoGearIsItemTwoHanded(itemID)
@@ -3798,7 +3821,7 @@ function AutoGearDetermineItemScore(info)
 		else
 			return info.numBagSlots * E -- specialized bags suck, so consider them only better than nothing
 		end
-	elseif info.isAmmoBag and info.numBagSlots then
+	elseif info.isAmmoBag and info.numBagSlots and (UnitClassBase("player") == "HUNTER") then
 		return info.numBagSlots + (info.ammoBagRangedAttackSpeed and info.ammoBagRangedAttackSpeed or 0)
 	end
 
