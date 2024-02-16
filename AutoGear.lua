@@ -2867,15 +2867,9 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 				or AutoGearBestItems[lowestScoringValidGearSlot].info.empty
 				or AutoGearBestItems[lowestScoringValidGearSlot].info.unusable
 				or (info.isAmmoBag
-					and (score > lowestScoringValidGearSlotScore)
-					and AutoGearIsAmmoBagValidForRangedWeapon(
-						info,
-						(
-							(AutoGearBestItems and AutoGearBestItems[INVSLOT_RANGED])
-							and AutoGearBestItems[INVSLOT_RANGED].info
-							or AutoGearReadItemInfo(INVSLOT_RANGED)
-						)
-					)
+					and AutoGearIsAmmoBagValidForBestKnownRangedWeapon(info)
+					and ((score > lowestScoringValidGearSlotScore)
+					or (not AutoGearIsAmmoBagValidForBestKnownRangedWeapon(AutoGearBestItems[lowestScoringValidGearSlot].info)))
 				)
 			) then
 				AutoGearBestItemsAlreadyAdded[info.link] = 1
@@ -2890,6 +2884,15 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 			end
 		end
 	end
+end
+
+function AutoGearIsAmmoBagValidForBestKnownRangedWeapon(info)
+	return AutoGearIsAmmoBagValidForRangedWeapon (
+		info,
+		(AutoGearBestItems and AutoGearBestItems[INVSLOT_RANGED])
+		and AutoGearBestItems[INVSLOT_RANGED].info
+		or AutoGearReadItemInfo(INVSLOT_RANGED)
+	)
 end
 
 function AutoGearInitializeEquippableBagSlotsTable()
