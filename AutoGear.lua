@@ -364,9 +364,7 @@ local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "Ga
 AutoGearFrame = CreateFrame("Frame", nil, UIParent)
 AutoGearFrame:SetWidth(1) AutoGearFrame:SetHeight(1)
 AutoGearFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
-AutoGearFrame:SetScript("OnUpdate", function()
-	AutoGearMain()
-end)
+AutoGearFrame:SetScript("OnUpdate", AutoGearMain)
 
 local E = 0.000001 --epsilon; non-zero value that's insignificantly different from 0, used here for the purpose of valuing gear that has higher stats that give the player "almost no benefit"
 -- regex for finding 0 in this block to replace with E: (?<=[^ ] = )0(?=[^\.0-9])
@@ -2203,7 +2201,7 @@ if TOC_VERSION_CURRENT >= TOC_VERSION_MOP then
 end
 
 if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
-	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
+	-- AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")
 end
 
