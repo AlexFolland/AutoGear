@@ -2202,7 +2202,7 @@ if TOC_VERSION_CURRENT >= TOC_VERSION_MOP then
 end
 
 if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
-	-- Commented out because it isn't active yet in Cata, it will be in the future
+	-- "CONFIRM_DISENCHANT_ROLL" will be added to WoW Classic in a later phase of Cataclysm Classic. Source: https://youtube.com/watch?v=f8zWAPDUTkc&t=2498s
 	-- AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")
 end
