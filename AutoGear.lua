@@ -2198,9 +2198,11 @@ end
 
 if TOC_VERSION_CURRENT >= TOC_VERSION_MOP then
 	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 end
 
 if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
+	-- Commented out because it isn't active yet in Cata, it will be in the future
 	-- AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")
 end
