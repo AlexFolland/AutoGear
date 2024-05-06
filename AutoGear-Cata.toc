@@ -1,5 +1,5 @@
 ## Interface: 40400
-## Title: AutoGear |r|cffec8000(Cataclysm)|r
+## Title: AutoGear
 ## Notes: Automatically chooses loot and equips gear
 ## Author: Synthetikaryote, BujuArena
 ## OptionalDeps: Pawn
