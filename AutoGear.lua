@@ -4299,7 +4299,7 @@ function AutoGearTooltipHook(tooltip)
 	end
 end
 
-if TOC_VERSION_CURRENT < TOC_VERSION_DF then
+if TOC_VERSION_CURRENT < 100002 then
 	GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 	ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 	ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
