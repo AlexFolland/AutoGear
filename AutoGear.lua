@@ -1609,11 +1609,7 @@ end
 
 function AutoGearSetStatWeights()
 	local localizedClass, class, spec = AutoGearGetClassAndSpec()
-	if AutoGearDefaultWeights[class] then
-		AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec]
-	else
-		AutoGearCurrentWeighting = nil
-	end
+	AutoGearCurrentWeighting = AutoGearDefaultWeights[class] and AutoGearDefaultWeights[class][spec] or nil
 	weapons = AutoGearCurrentWeighting and (AutoGearCurrentWeighting.weapons or "any") or "any"
 	if (not AutoGearCurrentWeighting) then
 		if (not (AutoGearDB.UsePawn and PawnIsReady and PawnIsReady())) then
