@@ -1046,6 +1046,48 @@ else
 				DPS = 0.01
 			}
 		},
+		["EVOKER"] = {
+			["None"] = {
+				Strength = E, Agility = E, Stamina = E, Intellect = 4.14, Spirit = E,
+				Armor = E, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 3.47, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 2.65, Hit = E,
+				Expertise = E, Versatility = 2.89, Multistrike = E, Mastery = 0.24, ExperienceGained = E,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
+				DPS = E
+			},
+			["Devastation"] = {
+				Strength = E, Agility = E, Stamina = E, Intellect = 4.14, Spirit = E,
+				Armor = E, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 3.47, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 2.65, Hit = E,
+				Expertise = E, Versatility = 2.89, Multistrike = E, Mastery = 0.24, ExperienceGained = E,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
+				DPS = E
+			},
+			["Preservation"] = {
+				Strength = E, Agility = E, Stamina = E, Intellect = 4.14, Spirit = E,
+				Armor = E, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 3.47, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 2.65, Hit = E,
+				Expertise = E, Versatility = 2.89, Multistrike = E, Mastery = 0.24, ExperienceGained = E,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
+				DPS = E
+			},
+			["Augmentation"] = {
+				Strength = E, Agility = E, Stamina = E, Intellect = 4.14, Spirit = E,
+				Armor = E, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 3.47, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 2.65, Hit = E,
+				Expertise = E, Versatility = 2.89, Multistrike = E, Mastery = 0.24, ExperienceGained = E,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
+				DPS = E
+			}
+		},
 		["HUNTER"] = {
 			["None"] = {
 				weapons = "ranged",
@@ -1464,6 +1506,10 @@ AutoGearOverrideSpecs = {
 	{
 		["label"] = "Druid",
 		["subLabels"] = {"None", "Balance", "Feral", "Guardian", "Restoration"}
+	},
+	{
+		["label"] = "Evoker",
+		["subLabels"] = {"None", "Devastation", "Preservation", "Augmentation"}
 	},
 	{
 		["label"] = "Hunter",
