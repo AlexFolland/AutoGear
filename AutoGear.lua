@@ -1563,7 +1563,11 @@ end
 
 function AutoGearSetStatWeights()
 	local localizedClass, class, spec = AutoGearGetClassAndSpec()
-	AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec] or nil
+	if AutoGearDefaultWeights[class] then
+		AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec]
+	else
+		AutoGearCurrentWeighting = nil
+	end
 	weapons = AutoGearCurrentWeighting and (AutoGearCurrentWeighting.weapons or "any") or "any"
 	if (not AutoGearCurrentWeighting) then
 		if (not (AutoGearDB.UsePawn and PawnIsReady and PawnIsReady())) then
@@ -4248,10 +4252,20 @@ function AutoGearTooltipHook(tooltip)
 		)
 	end
 end
-GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+
+if TOC_VERSION_CURRENT < TOC_VERSION_DF then
+	GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+	ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+	ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+	ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+else
+	-- For Dragonflight and beyond, registering callbacks with the new TooltipDataProcessor.AddTooltipPostCall function is the way to hook tooltips.
+	-- Source: https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes#Tooltip_Changes
+	TooltipDataProcessor.AddTooltipPostCall(GameTooltip, AutoGearTooltipHook)
+	TooltipDataProcessor.AddTooltipPostCall(ShoppingTooltip1, AutoGearTooltipHook)
+	TooltipDataProcessor.AddTooltipPostCall(ShoppingTooltip2, AutoGearTooltipHook)
+	TooltipDataProcessor.AddTooltipPostCall(ItemRefTooltip, AutoGearTooltipHook)
+end
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
