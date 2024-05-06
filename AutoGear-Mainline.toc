@@ -1,5 +1,5 @@
-## Interface: 100000
-## Title: AutoGear
+## Interface: 100206
+## Title: AutoGear |cff33937F(Dragonflight)|r
 ## Notes: Automatically chooses loot and equips gear
 ## Author: Synthetikaryote, BujuArena
 ## OptionalDeps: Pawn
