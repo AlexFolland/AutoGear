@@ -4302,7 +4302,7 @@ if TOC_VERSION_CURRENT < 100002 then
 	ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 else
 	-- For Dragonflight and beyond, registering callbacks with the new TooltipDataProcessor.AddTooltipPostCall function is the way to hook tooltips.
-	-- Source: https://wowpedia.fandom.com/wiki/Patch_10.0.2/API_changes#Tooltip_Changes
+	-- Source: https://warcraft.wiki.gg/wiki/Patch_10.0.2/API_changes#Tooltip_Changes
 	TooltipDataProcessor.AddTooltipPostCall(GameTooltip, AutoGearTooltipHook)
 	TooltipDataProcessor.AddTooltipPostCall(ShoppingTooltip1, AutoGearTooltipHook)
 	TooltipDataProcessor.AddTooltipPostCall(ShoppingTooltip2, AutoGearTooltipHook)
