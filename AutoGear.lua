@@ -57,6 +57,21 @@ local TOC_VERSION_BFA = 80000
 local TOC_VERSION_SL = 90000
 local TOC_VERSION_DF = 100000
 
+-- store true or false for each expansion
+local isClassic = TOC_VERSION_CURRENT < TOC_VERSION_TBC
+local isTBC = isClassic and false or (TOC_VERSION_CURRENT >= TOC_VERSION_TBC and TOC_VERSION_CURRENT < TOC_VERSION_WOTLK)
+local isWrath = isTBC and false or (TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK and TOC_VERSION_CURRENT < TOC_VERSION_CATA)
+local isCata = isWrath and false or (TOC_VERSION_CURRENT >= TOC_VERSION_CATA and TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+local isMOP = isCata and false or (TOC_VERSION_CURRENT >= TOC_VERSION_MOP and TOC_VERSION_CURRENT < TOC_VERSION_WOD)
+local isWOD = isMOP and false or (TOC_VERSION_CURRENT >= TOC_VERSION_WOD and TOC_VERSION_CURRENT < TOC_VERSION_LEGION)
+local isLegion = isWOD and false or (TOC_VERSION_CURRENT >= TOC_VERSION_LEGION and TOC_VERSION_CURRENT < TOC_VERSION_BFA)
+local isBFA = isLegion and false or (TOC_VERSION_CURRENT >= TOC_VERSION_BFA and TOC_VERSION_CURRENT < TOC_VERSION_SL)
+local isSL = isBFA and false or (TOC_VERSION_CURRENT >= TOC_VERSION_SL and TOC_VERSION_CURRENT < TOC_VERSION_DF)
+local isDF = isSL and false or (TOC_VERSION_CURRENT >= TOC_VERSION_DF)
+
+
+
+
 local _ --prevent taint when using throwaway variable
 local next = next -- bind next locally for speed
 --local lastlink
@@ -242,11 +257,22 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		if (not numTalentTabs) or (numTalentTabs < 2) then
 			AutoGearPrint("AutoGear: numTalentTabs in AutoGearGetSpec() is "..tostring(numTalentTabs),0)
 		end
-		for i = 1, numTalentTabs do
-			local spec, _, pointsSpent = GetTalentTabInfo(i)
-			if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
-				highestPointsSpent = pointsSpent
-				highestSpec = spec
+		-- isCata function where GetTalentTabInfo() index is different
+		if isCata then
+			for i = 1, numTalentTabs do
+				local _, spec, _, _, pointsSpent = GetTalentTabInfo(i)
+				if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
+					highestPointsSpent = pointsSpent
+					highestSpec = spec
+				end
+			end
+		else
+			for i = 1, numTalentTabs do
+				local spec, _, pointsSpent = GetTalentTabInfo(i)
+				if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
+					highestPointsSpent = pointsSpent
+					highestSpec = spec
+				end
 			end
 		end
 		if (highestPointsSpent == 0) then
