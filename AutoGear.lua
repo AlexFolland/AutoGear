@@ -390,7 +390,9 @@ local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "Ga
 AutoGearFrame = CreateFrame("Frame", nil, UIParent)
 AutoGearFrame:SetWidth(1) AutoGearFrame:SetHeight(1)
 AutoGearFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
-AutoGearFrame:SetScript("OnUpdate", AutoGearMain)
+AutoGearFrame:SetScript("OnUpdate", function()
+	AutoGearMain()
+end)
 
 local E = 0.000001 --epsilon; non-zero value that's insignificantly different from 0, used here for the purpose of valuing gear that has higher stats that give the player "almost no benefit"
 -- regex for finding 0 in this block to replace with E: (?<=[^ ] = )0(?=[^\.0-9])
