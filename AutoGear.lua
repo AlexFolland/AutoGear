@@ -58,7 +58,6 @@ local TOC_VERSION_SL = 90000
 local TOC_VERSION_DF = 100000
 
 -- store true or false for each expansion
--- store true or false for each expansion
 local isClassic = TOC_VERSION_CURRENT < TOC_VERSION_TBC
 local isTBC = TOC_VERSION_CURRENT >= TOC_VERSION_TBC and TOC_VERSION_CURRENT < TOC_VERSION_WOTLK
 local isWrath = TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK and TOC_VERSION_CURRENT < TOC_VERSION_CATA
