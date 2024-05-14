@@ -57,20 +57,6 @@ local TOC_VERSION_BFA = 80000
 local TOC_VERSION_SL = 90000
 local TOC_VERSION_DF = 100000
 
--- store true or false for each expansion
-local isClassic = TOC_VERSION_CURRENT < TOC_VERSION_TBC
-local isTBC = TOC_VERSION_CURRENT >= TOC_VERSION_TBC and TOC_VERSION_CURRENT < TOC_VERSION_WOTLK
-local isWrath = TOC_VERSION_CURRENT >= TOC_VERSION_WOTLK and TOC_VERSION_CURRENT < TOC_VERSION_CATA
-local isCata = TOC_VERSION_CURRENT >= TOC_VERSION_CATA and TOC_VERSION_CURRENT < TOC_VERSION_MOP
-local isMOP = TOC_VERSION_CURRENT >= TOC_VERSION_MOP and TOC_VERSION_CURRENT < TOC_VERSION_WOD
-local isWOD = TOC_VERSION_CURRENT >= TOC_VERSION_WOD and TOC_VERSION_CURRENT < TOC_VERSION_LEGION
-local isLegion = TOC_VERSION_CURRENT >= TOC_VERSION_LEGION and TOC_VERSION_CURRENT < TOC_VERSION_BFA
-local isBFA = TOC_VERSION_CURRENT >= TOC_VERSION_BFA and TOC_VERSION_CURRENT < TOC_VERSION_SL
-local isSL = TOC_VERSION_CURRENT >= TOC_VERSION_SL and TOC_VERSION_CURRENT < TOC_VERSION_DF
-local isDF = TOC_VERSION_CURRENT >= TOC_VERSION_DF
-
-
-
 local _ --prevent taint when using throwaway variable
 local next = next -- bind next locally for speed
 --local lastlink
@@ -256,11 +242,12 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		if (not numTalentTabs) or (numTalentTabs < 2) then
 			AutoGearPrint("AutoGear: numTalentTabs in AutoGearGetSpec() is "..tostring(numTalentTabs),0)
 		end
-		-- isCata function where GetTalentTabInfo() index is different
-		if isCata then
-			for i = 1, numTalentTabs do
+		local _, spec, _, _, pointsSpent = GetTalentTabInfo(1)
+		if pointsSpent and pointsSpent >= 0 then
+			highestPointsSpent = pointsSpent
+			for i = 2, numTalentTabs do
 				local _, spec, _, _, pointsSpent = GetTalentTabInfo(i)
-				if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
+				if (pointsSpent > highestPointsSpent) then
 					highestPointsSpent = pointsSpent
 					highestSpec = spec
 				end
@@ -2171,7 +2158,6 @@ SlashCmdList["AutoGear"] = function(msg)
 		if usingPawn then
 			pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
 		end
-		realSpec = tostring(realSpec)
 		AutoGearPrint("AutoGear: Looks like you are a"..(realSpec:find("^[AEIOUaeiou]") and "n " or " ")..RAID_CLASS_COLORS[realClass]:WrapTextInColorCode(realSpec.." "..localizedRealClass).."."..((usingPawn or (AutoGearDB.Override and ((realClassID ~= overrideClassID) or (realSpec ~= overrideSpec)))) and ("  However, AutoGear is using "..(usingPawn and ("Pawn scale \""..PawnGetScaleColor(pawnScaleName)..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"") or (RAID_CLASS_COLORS[overrideClass]:WrapTextInColorCode(overrideSpec.." "..localizedOverrideClass).." weights")).." for gear evaluation due to the \""..(usingPawn and "Use Pawn to evaluate upgrades" or "Override specialization").."\" option.") or ""), 0)
 	elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
 		AutoGearSetAllowedVerbosity(param2)
@@ -4322,16 +4308,11 @@ function AutoGearTooltipHook(tooltip)
 	end
 end
 
-if TOC_VERSION_CURRENT < 100002 then
-	GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-	ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-	ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-	ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-else
-	-- For Dragonflight and beyond, registering callbacks with the new TooltipDataProcessor.AddTooltipPostCall function is the way to hook tooltips.
-	-- Source: https://warcraft.wiki.gg/wiki/Patch_10.0.2/API_changes#Tooltip_Changes
-	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, AutoGearTooltipHook)
-end
+GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
