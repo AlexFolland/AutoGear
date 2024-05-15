@@ -245,6 +245,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		local _, spec, _, _, pointsSpent = GetTalentTabInfo(1)
 		if pointsSpent and pointsSpent >= 0 then
 			highestPointsSpent = pointsSpent
+			highestSpec = spec
 			for i = 2, numTalentTabs do
 				local _, spec, _, _, pointsSpent = GetTalentTabInfo(i)
 				if (pointsSpent > highestPointsSpent) then
