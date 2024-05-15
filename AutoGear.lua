@@ -242,8 +242,9 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		if (not numTalentTabs) or (numTalentTabs < 2) then
 			AutoGearPrint("AutoGear: numTalentTabs in AutoGearGetSpec() is "..tostring(numTalentTabs),0)
 		end
+		-- It needs a condition of being above 0 or else it will assign highestSpec to the first talent tree even if there are 0 points in it.
 		local _, spec, _, _, pointsSpent = GetTalentTabInfo(1)
-		if pointsSpent and pointsSpent >= 0 then
+		if pointsSpent and pointsSpent > 0 then
 			highestPointsSpent = pointsSpent
 			highestSpec = spec
 			for i = 2, numTalentTabs do
