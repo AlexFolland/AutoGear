@@ -65,7 +65,7 @@ local weapons
 local tUpdate = 0
 local dataAvailable = nil
 local shouldPrintHelp = false
-local maxPlayerLevel = GetMaxLevelForExpansionLevel(GetExpansionLevel())
+local maxPlayerLevel = GetMaxPlayerLevel and GetMaxPlayerLevel() or GetMaxLevelForExpansionLevel(GetExpansionLevel())
 local L = T.Localization
 local ContainerIDToInventoryID = ContainerIDToInventoryID or (C_Container and (C_Container.ContainerIDToInventoryID))
 local GetContainerNumSlots = GetContainerNumSlots or (C_Container and (C_Container.GetContainerNumSlots))
@@ -244,9 +244,9 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		end
 		-- It needs a condition of being above 0 or else it will assign highestSpec to the first talent tree even if there are 0 points in it.
 		local _, spec, _, _, pointsSpent = GetTalentTabInfo(1)
-		if pointsSpent and pointsSpent > 0 then
+		if pointsSpent and pointsSpent >= 0 then
 			highestPointsSpent = pointsSpent
-			highestSpec = spec
+			if pointsSpent > 0 then highestSpec = spec end
 			for i = 2, numTalentTabs do
 				local _, spec, _, _, pointsSpent = GetTalentTabInfo(i)
 				if (pointsSpent > highestPointsSpent) then
