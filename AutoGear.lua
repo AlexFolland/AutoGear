@@ -242,11 +242,25 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		if (not numTalentTabs) or (numTalentTabs < 2) then
 			AutoGearPrint("AutoGear: numTalentTabs in AutoGearGetSpec() is "..tostring(numTalentTabs),0)
 		end
-		for i = 1, numTalentTabs do
-			local spec, _, pointsSpent = GetTalentTabInfo(i)
-			if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
-				highestPointsSpent = pointsSpent
-				highestSpec = spec
+		-- It needs a condition of being above 0 or else it will assign highestSpec to the first talent tree even if there are 0 points in it.
+		local _, spec, _, _, pointsSpent = GetTalentTabInfo(1)
+		if pointsSpent and pointsSpent > 0 then
+			highestPointsSpent = pointsSpent
+			highestSpec = spec
+			for i = 2, numTalentTabs do
+				local _, spec, _, _, pointsSpent = GetTalentTabInfo(i)
+				if (pointsSpent > highestPointsSpent) then
+					highestPointsSpent = pointsSpent
+					highestSpec = spec
+				end
+			end
+		else
+			for i = 1, numTalentTabs do
+				local spec, _, pointsSpent = GetTalentTabInfo(i)
+				if (highestPointsSpent == nil or pointsSpent > highestPointsSpent) then
+					highestPointsSpent = pointsSpent
+					highestSpec = spec
+				end
 			end
 		end
 		if (highestPointsSpent == 0) then
@@ -1048,6 +1062,48 @@ else
 				DPS = 0.01
 			}
 		},
+		["EVOKER"] = {
+			["None"] = {
+				Strength = E, Agility = E, Stamina = E, Intellect = 4.14, Spirit = E,
+				Armor = E, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 3.47, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 2.65, Hit = E,
+				Expertise = E, Versatility = 2.89, Multistrike = E, Mastery = 0.24, ExperienceGained = E,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
+				DPS = E
+			},
+			["Devastation"] = {
+				Strength = E, Agility = E, Stamina = E, Intellect = 4.14, Spirit = E,
+				Armor = E, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 3.47, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 2.65, Hit = E,
+				Expertise = E, Versatility = 2.89, Multistrike = E, Mastery = 0.24, ExperienceGained = E,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
+				DPS = E
+			},
+			["Preservation"] = {
+				Strength = E, Agility = E, Stamina = E, Intellect = 4.14, Spirit = E,
+				Armor = E, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 3.47, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 2.65, Hit = E,
+				Expertise = E, Versatility = 2.89, Multistrike = E, Mastery = 0.24, ExperienceGained = E,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
+				DPS = E
+			},
+			["Augmentation"] = {
+				Strength = E, Agility = E, Stamina = E, Intellect = 4.14, Spirit = E,
+				Armor = E, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = E, SpellPenetration = E, Haste = 3.47, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 2.65, Hit = E,
+				Expertise = E, Versatility = 2.89, Multistrike = E, Mastery = 0.24, ExperienceGained = E,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = E, DamageSpellProc = E, MeleeProc = E, RangedProc = E,
+				DPS = E
+			}
+		},
 		["HUNTER"] = {
 			["None"] = {
 				weapons = "ranged",
@@ -1468,6 +1524,10 @@ AutoGearOverrideSpecs = {
 		["subLabels"] = {"None", "Balance", "Feral", "Guardian", "Restoration"}
 	},
 	{
+		["label"] = "Evoker",
+		["subLabels"] = {"None", "Devastation", "Preservation", "Augmentation"}
+	},
+	{
 		["label"] = "Hunter",
 		["subLabels"] = {"None", "Beast Mastery", "Marksmanship", "Survival"}
 	},
@@ -1565,7 +1625,7 @@ end
 
 function AutoGearSetStatWeights()
 	local localizedClass, class, spec = AutoGearGetClassAndSpec()
-	AutoGearCurrentWeighting = AutoGearDefaultWeights[class][spec] or nil
+	AutoGearCurrentWeighting = AutoGearDefaultWeights[class] and AutoGearDefaultWeights[class][spec] or nil
 	weapons = AutoGearCurrentWeighting and (AutoGearCurrentWeighting.weapons or "any") or "any"
 	if (not AutoGearCurrentWeighting) then
 		if (not (AutoGearDB.UsePawn and PawnIsReady and PawnIsReady())) then
@@ -2200,10 +2260,12 @@ end
 
 if TOC_VERSION_CURRENT >= TOC_VERSION_MOP then
 	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 end
 
 if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
-	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
+	-- "CONFIRM_DISENCHANT_ROLL" will be added to WoW Classic in a later phase of Cataclysm Classic. Source: https://youtube.com/watch?v=f8zWAPDUTkc&t=2498s
+	-- AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")
 end
 
@@ -4247,10 +4309,12 @@ function AutoGearTooltipHook(tooltip)
 		)
 	end
 end
+
 GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
