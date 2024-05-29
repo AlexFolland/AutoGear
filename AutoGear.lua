@@ -4082,6 +4082,7 @@ function AutoGearGetOppositeHandSlot(invSlot)
 end
 
 function AutoGearIsGearPairEquippableTogether(a, b)
+	if a.empty or b.empty then return 1 end
 	if (not a.validGearSlots)
 	or (not b.validGearSlots)
 	or ((a.id == b.id)
