@@ -4216,13 +4216,13 @@ function AutoGearTooltipHook(tooltip)
 		-- AutoGearHandleLootRoll(tooltipItemInfo.link,1,1,tooltip)
 		tooltip:AddDoubleLine(
 			"AutoGear: item ID:",
-			tostring(tooltipItemInfo.id),
+			tostring(tooltipItemInfo.id or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: item level:",
-			tostring(GetDetailedItemLevelInfo(tooltipItemInfo.link)),
+			tostring(GetDetailedItemLevelInfo(tooltipItemInfo.link) or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
@@ -4249,7 +4249,19 @@ function AutoGearTooltipHook(tooltip)
 			local pawnItemData = PawnGetItemData(tooltipItemInfo.link)
 			tooltip:AddDoubleLine(
 				"AutoGear: Pawn value:",
-				tostring(tooltipItemInfo and ((tooltipItemInfo.link and (PawnCanItemHaveStats(tooltipItemInfo.link) and (pawnItemData and (PawnGetSingleValueFromItem(pawnItemData,AutoGearGetPawnScaleName()) or "Pawn says item can't have stats") or "nil Pawn item data") or "nil item data") or "nil")) or "nil AG item info"),
+				tostring(
+					tooltipItemInfo and (
+						tooltipItemInfo.link and (
+							PawnCanItemHaveStats(tooltipItemInfo.link) and (
+								pawnItemData and (
+									PawnGetSingleValueFromItem(
+										pawnItemData,AutoGearGetPawnScaleName()
+									) or "nil Pawn value"
+								) or "nil Pawn item data"
+							) or "Pawn says item can't have stats"
+						) or "nil AG item link"
+					) or "nil AG item info"
+				),
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 			)
@@ -4288,7 +4300,9 @@ function AutoGearTooltipHook(tooltip)
 			"AutoGear: rarity:",
 			tostring(tooltipItemInfo.rarity or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			tooltipItemInfo.rarityColor.r, tooltipItemInfo.rarityColor.g, tooltipItemInfo.rarityColor.b
+			tooltipItemInfo.rarityColor and tooltipItemInfo.rarityColor.r or HIGHLIGHT_FONT_COLOR.r,
+			tooltipItemInfo.rarityColor and tooltipItemInfo.rarityColor.g or HIGHLIGHT_FONT_COLOR.g,
+			tooltipItemInfo.rarityColor and tooltipItemInfo.rarityColor.b or HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: lowest-scoring equipped item slot:",
