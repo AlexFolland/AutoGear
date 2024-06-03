@@ -59,7 +59,7 @@ jobs:
         with:
           args: -g wrath
 
-      - name: Package and Release for Wrath of the Lich King Classic
+      - name: Package and Release for Cataclysm Classic
         uses: BigWigsMods/packager@master
         with:
           args: -g cata
