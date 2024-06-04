@@ -73,9 +73,13 @@ local PickupContainerItem = PickupContainerItem or (C_Container and (C_Container
 local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and (C_Container.GetContainerNumFreeSlots))
 AutoGearWouldRoll = "nil"
 AutoGearIsItemDataMissing = nil
-AutoGearFirstEquippableBagSlot = 0
-AutoGearLastEquippableBagSlot = 0
+AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID(1) or 20
+AutoGearLastEquippableBagSlot = ContainerIDToInventoryID(NUM_BAG_SLOTS) or 23
 AutoGearEquippableBagSlots = {}
+--initialize equippable bag slots table
+for i = BACKPACK_CONTAINER+1, NUM_BAG_SLOTS do
+	table.insert(AutoGearEquippableBagSlots, AutoGearFirstEquippableBagSlot+i-1)
+end
 
 function AutoGearSerializeTable(val, name, skipnewlines, depth)
 	skipnewlines = skipnewlines or false
@@ -347,6 +351,8 @@ end
 AutoGearDBDefaults = {
 	Enabled = true,
 	AutoLootRoll = true,
+	AutoRollOnBoEBlues = false,
+	AutoRollOnEpics = false,
 	RollOnNonGearLoot = true,
 	AutoConfirmBinding = true,
 	AutoConfirmBindingBlues = false,
@@ -1873,12 +1879,8 @@ optionsMenu:RegisterEvent("ADDON_LOADED")
 optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 	if event == "PLAYER_ENTERING_WORLD" then
 
-		AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID(1) or 20
-		AutoGearLastEquippableBagSlot = ContainerIDToInventoryID(NUM_BAG_SLOTS) or 23
-		AutoGearInitializeEquippableBagSlotsTable()
 		AutoGearInitializeDB(AutoGearDBDefaults)
 		AutoGearFixLockedGearSlots()
-		AutoGearUpdateEquippedItems()
 
 		--initialize options menu variables
 		AutoGearOptions = {
@@ -1891,17 +1893,37 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Automatically equip gear upgrades, depending on internal stat weights.  These stat weights are currently only configurable by editing the values in the AutoGearDefaultWeights table in AutoGear.lua.  If this is disabled, AutoGear will still scan for gear when receiving new items and viewing loot rolls, but will never equip an item automatically.",
 				["toggleDescriptionTrue"] = "Automatic gearing is now enabled.",
 				["toggleDescriptionFalse"] = "Automatic gearing is now disabled.  You can still manually scan bags for upgrades with the options menu button or \"/ag scan\".",
-				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,true) end
+				["togglePostHook"] = function() AutoGearUpdateBestItems() end
 			},
 			{
 				["option"] = "AutoLootRoll",
 				["cliCommands"] = { "roll", "loot", "rolling" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Automatically roll on loot",
-				["description"] = "Automatically roll on group loot, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate loot rolls and print its evaluation if verbosity is set to 1 ("..AutoGearGetAllowedVerbosityName(1)..") or higher.",
-				["toggleDescriptionTrue"] = "Automatically rolling on loot is now enabled.",
-				["toggleDescriptionFalse"] = "Automatically rolling on loot is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on loot manually."
+				["label"] = "Automatically roll on greens and BoP blues",
+				["description"] = "Automatically roll on group loot of green rarity and blues which bind when picked up, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate these loot rolls and print its evaluation if verbosity is set to 1 ("..AutoGearGetAllowedVerbosityName(1)..") or higher.",
+				["toggleDescriptionTrue"] = "Automatically rolling on loot of green rarity and blues which bind when picked up is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically rolling on loot of green rarity and blues which bind when picked up is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on this loot manually."
+			},
+			{
+				["option"] = "AutoRollOnBoEBlues",
+				["cliCommands"] = { "rollboeblues", "rollonboeblues", "lootboeblues" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically roll on BoE blues",
+				["description"] = "Automatically roll on group loot of blue rarity which binds when equipped, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate these loot rolls and print its evaluation if verbosity is set to 1 ("..AutoGearGetAllowedVerbosityName(1)..") or higher.",
+				["toggleDescriptionTrue"] = "Automatically rolling on group loot of blue rarity which binds when equipped is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically rolling on group loot of blue rarity which binds when equipped is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on this loot manually."
+			},
+			{
+				["option"] = "AutoRollOnEpics",
+				["cliCommands"] = { "rollepics", "rollonepics", "lootepics" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Automatically roll on epics",
+				["description"] = "Automatically roll on group loot of epic rarity, depending on internal stat weights.  If this is disabled, AutoGear will still evaluate these loot rolls and print its evaluation if verbosity is set to 1 ("..AutoGearGetAllowedVerbosityName(1)..") or higher.",
+				["toggleDescriptionTrue"] = "Automatically rolling on group loot of epic rarity is now enabled.",
+				["toggleDescriptionFalse"] = "Automatically rolling on group loot of epic rarity is now disabled.  AutoGear will still try to equip gear received through other means, but you will have to roll on this loot manually."
 			},
 			{
 				["option"] = "RollOnNonGearLoot",
@@ -2043,7 +2065,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Override specialization with the specialization chosen in this dropdown.  If this is enabled, AutoGear will evaluate gear by multiplying stats by the stat weights for the chosen specialization instead of the spec detected automatically.",
 				["toggleDescriptionTrue"] = "Specialization overriding is now enabled.  AutoGear will use the specialization selected in the dropdown for evaluating gear.",
 				["toggleDescriptionFalse"] = "Specialization overriding is now disabled.  AutoGear will use your class and its detected specialization for evaluating gear.  Type \"/ag spec\" to check what specialization AutoGear detects for your character.",
-				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,true) end,
+				["togglePostHook"] = function() AutoGearUpdateBestItems() end,
 				["child"] = {
 					["option"] = "OverrideSpec",
 					["options"] = AutoGearGetOverrideSpecs(),
@@ -2061,7 +2083,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "If Pawn (gear evaluation addon) is installed and configured, use a Pawn scale instead of AutoGear's internal stat weights for evaluating gear upgrades.  AutoGear will use the Pawn scale with a name matching the \"[class]: [spec]\" format; example \"Paladin: Retribution\". If \"Override specialization\" is also enabled, that class and spec will be used for detecting which Pawn scale name to use instead. Visible scales (not hidden in Pawn's settings) will be prioritized when detecting which scale to use."..(((PawnIsReady ~= nil) and PawnIsReady()) and "" or "\n\n"..RED_FONT_COLOR_CODE.."Pawn is not running, so this option will do nothing."..FONT_COLOR_CODE_CLOSE),
 				["toggleDescriptionTrue"] = "Using Pawn for evaluating gear upgrades is now enabled.",
 				["toggleDescriptionFalse"] = "Using Pawn for evaluating gear upgrades is now disabled.",
-				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,true) end
+				["togglePostHook"] = function() AutoGearUpdateBestItems() end
 			},
 			{
 				["option"] = "OverridePawnScale",
@@ -2073,7 +2095,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Override the Pawn scale that would normally be automatically detected in \"[class]: [spec]\" format with the Pawn scale chosen in this dropdown.\n\nThis override does nothing unless \"Use Pawn to evaluate upgrades\" is enabled.",
 				["toggleDescriptionTrue"] = "Overriding Pawn scale with the selected scale is now enabled.",
 				["toggleDescriptionFalse"] = "Overriding Pawn scale with the selected scale is now disabled.",
-				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,true) end,
+				["togglePostHook"] = function() AutoGearUpdateBestItems() end,
 				["child"] = {
 					["option"] = "PawnScale",
 					["options"] = (function() if PawnIsReady and PawnIsReady() then return AutoGearGetPawnScales() end end)(),
@@ -2100,7 +2122,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 				["description"] = "Lock the specified gear slots, so AutoGear will not remove or equip items in those slots.  If this is enabled and any slots are locked, AutoGear will still evaluate scores for items in all slots, but will not remove or equip items in the locked slots.",
 				["toggleDescriptionTrue"] = "Locking specified gear slots is now enabled.",
 				["toggleDescriptionFalse"] = "Locking specified gear slots is now disabled.",
-				["togglePostHook"] = function() AutoGearConsiderAllItems(nil,nil,nil,true) end,
+				["togglePostHook"] = function() AutoGearUpdateBestItems() end,
 				["child"] = {
 					["option"] = "LockedGearSlots",
 					["options"] = AutoGearGetLockedGearSlots(),
@@ -2128,7 +2150,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 		end
 		optionsSetup(optionsMenu)
 
-		AutoGearConsiderAllItems(nil,nil,nil,true)
+		AutoGearUpdateBestItems()
 
 		optionsMenu:UnregisterAllEvents()
 		optionsMenu:SetScript("OnEvent", nil)
@@ -2291,7 +2313,8 @@ AutoGearFrame:RegisterEvent("CHAT_MSG_LOOT")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
 AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when the player tries to equip a soulbound item that can still be traded to eligible players
 AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
-AutoGearFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")     --Fires when equipment is equipped or unequipped from the player, including bags
+AutoGearFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")     --Fires when equipment is equipped or unequipped from the player, excluding bags
+AutoGearFrame:RegisterEvent("BAG_CONTAINER_UPDATE")         --Fires when bags are equipped or unequipped from the player
 AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")               --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
 AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")         --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
 AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")           --Fires when a quest is automatically completed (remote handin available)
@@ -2359,7 +2382,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			GetQuestReward()
 		elseif (AutoGearDB.AutoCompleteItemQuests) then
 			--choose a quest reward
-			local questRewardID = {}
+			local questRewardIDs = {}
 			local itemLinkMissing
 			for i = 1, rewards do
 				local itemLink = GetQuestItemLink("choice", i)
@@ -2368,11 +2391,11 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					AutoGearPrint("AutoGear: No item link received from the server. To automatically choose a reward, you can try reopening quest rewards menu.", 0)
 				else
 					local _, _, Color, Ltype, id, Enchant, Gem1, Gem2, Gem3, Gem4, Suffix, Unique, LinkLvl, Name = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-					questRewardID[i] = id
+					questRewardIDs[i] = id
 				end
 			end
 			if not itemLinkMissing then
-				GetQuestReward(AutoGearConsiderAllItems(nil, questRewardID))
+				GetQuestReward(AutoGearConsiderAllItems(nil, questRewardIDs))
 			end
 		end
 	end
@@ -2395,16 +2418,14 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..".", 2)
 			AutoGearConsiderAllItems()
 		end
-	elseif event == "PLAYER_EQUIPMENT_CHANGED" then
-		AutoGearUpdateEquippedItems()
+	elseif event == "PLAYER_EQUIPMENT_CHANGED" or event == "BAG_CONTAINER_UPDATE" then
+		AutoGearUpdateBestItems()
 	elseif event == "START_LOOT_ROLL" then
 		local link = GetLootRollItemLink(arg1)
 		AutoGearHandleLootRoll(link, arg1)
-	elseif event == "CONFIRM_LOOT_ROLL" then
+	elseif event == "CONFIRM_LOOT_ROLL" or event == "CONFIRM_DISENCHANT_ROLL" then
 		ConfirmLootRoll(arg1, arg2)
-	elseif event == "CONFIRM_DISENCHANT_ROLL" then
-		ConfirmLootRoll(arg1, arg2)
-	elseif event == "CHAT_MSG_LOOT" then
+	elseif event == "CHAT_MSG_LOOT" then --when receiving a new item
 		local message, name, guid = arg1, arg5, arg12
 		local pattern1 = LOOT_ITEM_SELF_MULTIPLE:gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)"):gsub("^", "^")
 		local pattern2 = LOOT_ITEM_PUSHED_SELF_MULTIPLE:gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)"):gsub("^", "^")
@@ -2528,62 +2549,65 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 	end
 end)
 
-function AutoGearHandleLootRoll(link, lootRollID, simulate, tooltip)
-	local item = Item:CreateFromItemLink(link)
-	item:ContinueOnItemLoad(function()
-		AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
-	end)
-end
-
-function AutoGearHandleLootRollCallback(link, lootRollID, simulate, tooltip)
-	AutoGearSetStatWeights()
+function AutoGearDecideRoll(link, lootRollID)
+	if not AutoGearCurrentWeighting then AutoGearSetStatWeights() end
 	if AutoGearCurrentWeighting then
-		local roll = nil
-		local canNeed = select(6,GetLootRollItemInfo(lootRollID))
+		local rollDecision = nil
+		local canNeed = lootRollID and select(6,GetLootRollItemInfo(lootRollID)) or 1
 		local lootRollItemID = GetItemInfoInstant(link)
 		local rollItemInfo = AutoGearReadItemInfo(nil, nil, nil, nil, nil, link)
 		local reason = rollItemInfo.reason or "(no reason set)"
-		local wouldNeed = AutoGearConsiderAllItems(lootRollItemID, nil, rollItemInfo)
-		if simulate then canNeed = 1 end
+		local wouldNeed = AutoGearConsiderAllItems(lootRollItemID, nil, rollItemInfo, true)
 		if (AutoGearDB.RollOnNonGearLoot == false)
 		and (not rollItemInfo.isGear)
 		and (not rollItemInfo.isMount) then
 			AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
-			--local roll is nil, so no roll
+			--local rollDecision is nil, so no roll
 		elseif wouldNeed and canNeed then
-			if rollItemInfo.Within5levels then
-				local maxNumberOfCopiesAllowedToNeed = rollItemInfo.unique and 1 or #rollItemInfo.validGearSlots
+			if rollItemInfo.Within5levels or (rollItemInfo.isMount and (not rollItemInfo.alreadyKnown)) then
+				local maxNumberOfCopiesAllowedToNeed = (rollItemInfo.unique or (rollItemInfo.isMount and (not rollItemInfo.alreadyKnown))) and 1 or #rollItemInfo.validGearSlots
 				local numberOfCopiesOwned = GetItemCount(rollItemInfo.id, true)
 				if numberOfCopiesOwned >= maxNumberOfCopiesAllowedToNeed then
-					AutoGearPrint("AutoGear: "..rollItemInfo.link.." is an upgrade usable within 5 levels, but you already have "..tostring(numberOfCopiesOwned).." cop"..(numberOfCopiesOwned == 1 and "y" or "ies")..", so rolling "..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE..".",3)
-					roll = 2 --greed
+					AutoGearPrint("AutoGear: "..rollItemInfo.link.." is "..(rollItemInfo.isMount and "a mount" or "an upgrade usable within 5 levels")..", but you already have "..tostring(numberOfCopiesOwned).." cop"..(numberOfCopiesOwned == 1 and "y" or "ies")..", so rolling "..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE..".",3)
+					rollDecision = 2 --greed
 				else
-					roll = 1 --need
+					rollDecision = 1 --need
 				end
 			else
-				roll = 1 --need
+				rollDecision = 1 --need
 			end
 		else
-			roll = 2 --greed
+			rollDecision = 2 --greed
 			if (wouldNeed and not canNeed) then
-				AutoGearPrint("AutoGear: I would roll NEED, but NEED is not an option for "..rollItemInfo.link..".", 1)
+				AutoGearPrint("AutoGear: Would roll NEED, but NEED is not an option for "..rollItemInfo.link..".", 1)
 			end
 		end
-		if rollItemInfo.unusable then AutoGearPrint("AutoGear: "..rollItemInfo.link.." will not be equipped.  "..reason, 1) end
-		if roll then
-			local newAction = {}
-			newAction.action = (simulate and "simulateroll" or "roll")
-			newAction.t = GetTime() --roll right away
-			newAction.rollID = lootRollID
-			newAction.rollType = roll
-			newAction.info = rollItemInfo
-			newAction.tooltip = tooltip --to send tooltip context for NEED/GREED simulation
-			table.insert(futureAction, newAction)
-		end
+		return rollDecision, rollItemInfo, reason
 	else
 		local localizedClass, class, spec = AutoGearGetClassAndSpec()
 		AutoGearPrint("AutoGear: No weighting set for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..".", 0)
 	end
+end
+
+function AutoGearHandleLootRoll(link, lootRollID)
+	local item = Item:CreateFromItemLink(link)
+	item:ContinueOnItemLoad(function()
+		AutoGearHandleLootRollCallback(link, lootRollID)
+	end)
+end
+
+function AutoGearHandleLootRollCallback(link, lootRollID)
+		local rollDecision, rollItemInfo, reason = AutoGearDecideRoll(link, lootRollID)
+		if rollItemInfo.unusable then AutoGearPrint("AutoGear: "..link.." will not be equipped.  "..reason, 1) end
+		if rollDecision then
+			local newAction = {}
+			newAction.action = "roll"
+			newAction.t = GetTime() --roll right away
+			newAction.rollID = lootRollID
+			newAction.rollType = rollDecision
+			newAction.info = rollItemInfo
+			table.insert(futureAction, newAction)
+		end
 end
 
 -- from Attrition addon
@@ -2639,7 +2663,10 @@ function AutoGearUpdateEquippedItems()
 	end
 
 	--pretend the tabard slot is a separate slot for 2-handers
-	if (AutoGearEquippedItems[INVSLOT_MAINHAND].info.is2hWeapon and (not ((weapons == "2hDW") and CanDualWield() and IsPlayerSpell(46917)))) then
+	if (AutoGearEquippedItems[INVSLOT_MAINHAND] and
+	AutoGearEquippedItems[INVSLOT_MAINHAND].info and
+	AutoGearEquippedItems[INVSLOT_MAINHAND].info.is2hWeapon and
+	(not ((weapons == "2hDW") and CanDualWield() and IsPlayerSpell(46917)))) then
 		AutoGearEquippedItems[INVSLOT_TABARD] = AutoGearDeepCopy(AutoGearEquippedItems[INVSLOT_MAINHAND])
 		AutoGearEquippedItems[INVSLOT_MAINHAND].info = { name = "nothing", empty = 1 }
 		AutoGearEquippedItems[INVSLOT_MAINHAND].score = 0
@@ -2650,10 +2677,6 @@ function AutoGearUpdateEquippedItems()
 		AutoGearEquippedItems[INVSLOT_TABARD].score = 0
 		AutoGearEquippedItems[INVSLOT_TABARD].equipped = nil
 	end
-
-	--reset table of best items to reconsider all items
-	--set starting best scores from all equipped items
-	AutoGearBestItems = AutoGearDeepCopy(AutoGearEquippedItems)
 end
 
 function AutoGearDeepCopy(object)
@@ -2671,11 +2694,13 @@ function AutoGearDeepCopy(object)
     return newObject
 end
 
-function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemInfo, noActions)
-	local anythingBetter = nil
-	local info
-
+function AutoGearUpdateBestItems()
 	AutoGearUpdateEquippedItems()
+
+	--set starting best scores from all equipped items
+	AutoGearBestItems = AutoGearDeepCopy(AutoGearEquippedItems)
+
+	local info
 
 	-- table to track whether an item's been added
 	AutoGearBestItemsAlreadyAdded = {}
@@ -2688,20 +2713,29 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 			AutoGearConsiderItem(info, bag, slot, nil)
 		end
 	end
-	--consider item being rolled on (if any)
-	if (lootRollItemID) then
-		AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1)
-	end
 	--consider quest rewards (if any)
-	if (questRewardID) then
-		for i = 1, GetNumQuestChoices() do
-			info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
-			AutoGearConsiderItem(info, nil, nil, nil, i)
-		end
+	for i = 1, GetNumQuestChoices() do
+		info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
+		AutoGearConsiderItem(info, nil, nil, nil, i)
+	end
+end
+
+function AutoGearConsiderAllItems(lootRollItemID, questRewardIDs, arbitraryItemInfo, noActions)
+	if (arbitraryItemInfo and arbitraryItemInfo.isMount and (not arbitraryItemInfo.alreadyKnown)) then
+		return 1
+	end
+
+	local anythingBetter = nil
+
+	AutoGearUpdateBestItems()
+
+	--consider item being rolled on (if any)
+	if lootRollItemID and arbitraryItemInfo then
+		AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1)
 	end
 
 	--create all future equip actions required (only if not rolling currently)
-	if (not lootRollItemID and not questRewardID and not noActions) then
+	if (not lootRollItemID and not questRewardIDs and not noActions) then
 		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
 			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
 				if invSlot == INVSLOT_MAINHAND or invSlot == INVSLOT_OFFHAND or invSlot == INVSLOT_TABARD then
@@ -2833,18 +2867,17 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 		end
 	elseif (lootRollItemID) then
 		--decide whether to roll on the item or not
-		if (info.isMount and (not info.alreadyKnown)) then return 1 end
 		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
 			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
 				if (AutoGearBestItems[invSlot].rollOn and
 				(invSlot ~= INVSLOT_MAINHAND or invSlot ~= INVSLOT_OFFHAND or AutoGearIs1hWorthwhile(invSlot)) and
-				(invSlot ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff(invSlot))) then
+				(invSlot ~= INVSLOT_TABARD or AutoGearIsBest2hBetterThanBestMainAndOff())) then
 					return 1
 				end
 			end
 		end
 		return nil
-	elseif (not noActions) then
+	elseif (questRewardIDs and not noActions) then
 		--choose a quest reward
 		--pick the reward with the biggest score improvement
 		local bestRewardIndex
@@ -2864,8 +2897,8 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardID, arbitraryItemIn
 			--no gear upgrades, so choose the one with the highest sell value
 			local bestRewardVendorPrice
 			for i = 1, GetNumQuestChoices() do
-				local vendorPrice = select(11,GetItemInfo(questRewardID[i]))
-				if (not bestRewardVendorPrice or vendorPrice > bestRewardVendorPrice) then
+				local vendorPrice = select(11,GetItemInfo(questRewardIDs[i]))
+				if (not bestRewardVendorPrice) or (vendorPrice > bestRewardVendorPrice) then
 					bestRewardIndex = i
 					bestRewardVendorPrice = vendorPrice
 				end
@@ -2955,12 +2988,6 @@ function AutoGearIsAmmoBagValidForBestKnownRangedWeapon(info)
 		and AutoGearBestItems[INVSLOT_RANGED].info
 		or AutoGearReadItemInfo(INVSLOT_RANGED)
 	)
-end
-
-function AutoGearInitializeEquippableBagSlotsTable()
-	for i = BACKPACK_CONTAINER+1, NUM_BAG_SLOTS do
-		table.insert(AutoGearEquippableBagSlots, AutoGearFirstEquippableBagSlot+i-1)
-	end
 end
 
 function AutoGearGetValidGearSlots(info)
@@ -3307,7 +3334,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		end
 	end
 
-	for i = 1, AutoGearTooltip:NumLines() do
+	local numLines = AutoGearTooltip:NumLines()
+
+	for i = 1, numLines do
 		local textLeft = getglobal("AutoGearTooltipTextLeft"..i)
 		if textLeft then
 			local r, g, b = textLeft:GetTextColor()
@@ -3315,7 +3344,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			local text = select(1,string.gsub(textLeftText:lower(),",",""))
 			if i==1 then
 				info.name = textLeft:GetText()
-				if info.name == "Retrieving item information" then
+				if info.name == "Retrieving item information" or not info.item:IsItemDataCached() then
 					if not AutoGearIsItemDataMissing then
 						AutoGearPrint("AutoGear: An item was not yet ready on the client side when updating AutoGear's local item info, so updating AutoGear's table of equipped items again.",3)
 						table.insert(futureAction, { action = "localupdate", t = GetTime() + 0.5 })
@@ -3324,6 +3353,25 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 					info.unusable = 1
 					info.reason = "(this item's tooltip is not yet available)"
 				end
+			end
+			if (i==2 or i==3) then
+				-- local currentItem = GameTooltip:GetItem()
+				-- if currentItem and info.id == Item:CreateFromItemLink(currentItem):GetItemID() then AutoGearPrint(text,3) end
+				if string.find(textLeftText, ITEM_BIND_ON_EQUIP) or
+				string.find(textLeftText, ITEM_BIND_ON_USE) then
+					info.boe = 1
+				end
+				if string.find(textLeftText, ITEM_SOULBOUND) or
+				string.find(textLeftText, ITEM_BIND_ON_PICKUP) or
+				string.find(textLeftText, ITEM_BIND_TO_ACCOUNT) or
+				string.find(textLeftText, ITEM_BIND_TO_BNETACCOUNT) or
+				string.find(textLeftText, ITEM_BIND_QUEST) then
+					info.bop = 1
+				end
+			end
+			if (i==numLines) and
+			(not info.bop) then
+				info.boe = 1
 			end
 			local multiplier = 1.0
 			if string.find(text, "chance to") and not string.find(text, "improves") then multiplier = multiplier/3.0 end
@@ -4137,7 +4185,7 @@ function AutoGearGetBest1hPairing(info)
 end
 
 function AutoGearTooltipHook(tooltip)
-	if (not AutoGearDB.ScoreInTooltips) then return end
+	if (not AutoGearDB.ScoreInTooltips) then return	end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
 	local name, link = tooltip:GetItem()
 	local equipped = tooltip:IsEquippedItem()
@@ -4213,7 +4261,6 @@ function AutoGearTooltipHook(tooltip)
 		end
 	end
 	if (AutoGearDB.DebugInfoInTooltips == true) then
-		-- AutoGearHandleLootRoll(tooltipItemInfo.link,1,1,tooltip)
 		tooltip:AddDoubleLine(
 			"AutoGear: item ID:",
 			tostring(tooltipItemInfo.id or "nil"),
@@ -4304,6 +4351,17 @@ function AutoGearTooltipHook(tooltip)
 			tooltipItemInfo.rarityColor and tooltipItemInfo.rarityColor.g or HIGHLIGHT_FONT_COLOR.g,
 			tooltipItemInfo.rarityColor and tooltipItemInfo.rarityColor.b or HIGHLIGHT_FONT_COLOR.b
 		)
+		local soulbindingTable = {}
+		soulbindingTable[1] = tooltipItemInfo.boe and "BoE" or tooltipItemInfo.bop and "BoP" or "none"
+		if tooltipItemInfo.boe and tooltipItemInfo.bop then
+			soulbindingTable[2] = "BoP"
+		end
+		tooltip:AddDoubleLine(
+			"AutoGear: soulbinding:",
+			table.concat(soulbindingTable,", "),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
 		tooltip:AddDoubleLine(
 			"AutoGear: lowest-scoring equipped item slot:",
 			tostring(lowestScoringEquippedItemSlot or "nil"),
@@ -4322,6 +4380,13 @@ function AutoGearTooltipHook(tooltip)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
+		-- local rollDecision = AutoGearDecideRoll(tooltipItemInfo.link)
+		-- tooltip:AddDoubleLine(
+		-- 	"AutoGear: would roll:",
+		-- 	(rollDecision == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (rollDecision == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll"))..FONT_COLOR_CODE_CLOSE,
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		-- )
 	end
 end
 
@@ -4338,10 +4403,10 @@ function AutoGearMain()
 		for i, curAction in ipairs(futureAction) do
 			-- if there's any item data missing, don't do anything that matters and instead try updating again
 			if AutoGearIsItemDataMissing then
-				if curAction.action == "localupdate" then
+				if curAction.action == "localupdate" and dataAvailable then
 					if GetTime() > curAction.t then
 						AutoGearIsItemDataMissing = nil
-						AutoGearUpdateEquippedItems() -- this will set AutoGearIsItemDataMissing again if necessary
+						AutoGearUpdateBestItems() -- this will set AutoGearIsItemDataMissing again if necessary
 						table.remove(futureAction, i)
 					end
 				end
@@ -4353,21 +4418,12 @@ function AutoGearMain()
 						elseif curAction.rollType == 2 then
 							AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ")..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
 						end
-						if (AutoGearDB.AutoLootRoll ~= nil) and (AutoGearDB.AutoLootRoll == true) then
-							RollOnLoot(curAction.rollID, curAction.rollType)
+						local rarity = curAction.info.rarity
+						if (((rarity < 3) or (rarity == 3 and not (curAction.info.boe))) and (AutoGearDB.AutoLootRoll == true)) or
+						((rarity == 3) and curAction.info.boe and (AutoGearDB.AutoRollOnBoEBlues == true)) or
+						((rarity == 4) and (AutoGearDB.AutoRollOnEpics == true)) then
+								RollOnLoot(curAction.rollID, curAction.rollType)
 						end
-						table.remove(futureAction, i)
-					end
-				elseif (curAction.action == "simulateroll") and curAction.tooltip then
-					if GetTime() > curAction.t then
-						AutoGearWouldRoll = (curAction.rollType == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (curAction.rollType == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll"))..FONT_COLOR_CODE_CLOSE
-						curAction.tooltip:AddDoubleLine(
-							"AutoGear: Would roll:",
-							AutoGearWouldRoll,
-							HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-							HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
-						)
-						curAction.tooltip:Show()
 						table.remove(futureAction, i)
 					end
 				elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then

@@ -154,6 +154,14 @@
         "CanGuildBankRepair",
         "EquipCursorItem",
         "PickupInventoryItem",
-        "GetLocale"
+        "GetLocale",
+        "GREED",
+        "ITEM_BIND_ON_EQUIP",
+        "ITEM_SOULBOUND",
+        "ITEM_BIND_ON_PICKUP",
+        "ITEM_BIND_ON_USE",
+        "ITEM_BIND_TO_ACCOUNT",
+        "ITEM_BIND_TO_BNETACCOUNT",
+        "ITEM_BIND_QUEST"
     ]
 }
