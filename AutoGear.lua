@@ -1047,6 +1047,16 @@ else
 				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 0.8
 			},
+			["Feral Combat"] = { -- Cataclysm Classic spec name
+				Strength = E, Agility = 1.05, Stamina = 1, Intellect = E, Spirit = E,
+				Armor = 0.8, Dodge = 0.4, Parry = E, Block = E,
+				SpellPower = E, SpellPenetration = E, Haste = 0.8, Mp5 = E,
+				AttackPower = 1, ArmorPenetration = E, Crit = 1.1, Hit = 0.3,
+				Expertise = 0.4, Versatility = 0.8, Multistrike = 1, Mastery = 1, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
+				DPS = 0.8
+			},
 			["Guardian"] = {
 				Strength = E, Agility = 1.05, Stamina = 1, Intellect = E, Spirit = E,
 				Armor = 0.8, Dodge = 0.4, Parry = E, Block = E,
@@ -2950,10 +2960,11 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 					end
 				end
 				if not skipThisSlot and
+				((not AutoGearBestItems[gearSlot]) or
 				((AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore)
-				or AutoGearBestItems[gearSlot].info.empty) then
+				or AutoGearBestItems[gearSlot].info.empty)) then
 					lowestScoringValidGearSlot = gearSlot
-					lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot].score
+					lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot] and AutoGearBestItems[gearSlot].score or 0
 				end
 			end
 
@@ -4130,7 +4141,7 @@ function AutoGearGetOppositeHandSlot(invSlot)
 end
 
 function AutoGearIsGearPairEquippableTogether(a, b)
-	if a.empty or b.empty then return 1 end
+	if (not a) or (not b) or a.empty or b.empty then return 1 end
 	if (not a.validGearSlots)
 	or (not b.validGearSlots)
 	or ((a.id == b.id)
