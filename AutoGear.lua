@@ -4091,6 +4091,10 @@ function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 	local lowestScoringValidGearSlot
 	local lowestScoringValidGearSlotScore = AutoGearDetermineItemScore(info)
 	local lowestScoringValidGearInfo = info
+	local equippedSetScore = 0
+	for i=1,info.numValidGearSlots do
+		equippedSetScore = equippedSetScore + (AutoGearEquippedItems[info.validGearSlots[i]].score or 0)
+	end
 	if info.is2hWeapon and (not (CanDualWield() and IsPlayerSpell(46917))) then
 		local mainHandInfo = AutoGearReadItemInfo(INVSLOT_MAINHAND)
 		local mainHandScore = AutoGearDetermineItemScore(mainHandInfo)
@@ -4099,11 +4103,13 @@ function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 		lowestScoringValidGearInfo = mainHandInfo
 		lowestScoringValidGearSlot = INVSLOT_MAINHAND
 		lowestScoringValidGearSlotScore = oneHandedWeaponsScore
+		equippedSetScore = oneHandedWeaponsScore
 	elseif info.is1hWeaponOrOffHand
 	and AutoGearIsTwoHandEquipped() then
 		lowestScoringValidGearInfo = AutoGearReadItemInfo(INVSLOT_MAINHAND)
 		lowestScoringValidGearSlot = INVSLOT_MAINHAND
 		lowestScoringValidGearSlotScore = AutoGearDetermineItemScore(lowestScoringValidGearInfo)
+		equippedSetScore = lowestScoringValidGearSlotScore
 	else
 		if info.validGearSlots then
 			local firstValidGearSlot = info.validGearSlots[1]
@@ -4129,10 +4135,10 @@ function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 			end
 		end
 		if info.is1hWeaponOrOffHand and not equipped then
-			lowestScoringValidGearSlotScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND].score
+			equippedSetScore = AutoGearEquippedItems[INVSLOT_MAINHAND].score + AutoGearEquippedItems[INVSLOT_OFFHAND].score
 		end
 	end
-	return lowestScoringValidGearInfo, lowestScoringValidGearSlotScore, lowestScoringValidGearSlot
+	return lowestScoringValidGearInfo, lowestScoringValidGearSlotScore, lowestScoringValidGearSlot, equippedSetScore
 end
 
 function AutoGearGetOppositeHandSlot(invSlot)
@@ -4189,7 +4195,7 @@ function AutoGearGetBest1hPairing(info)
 			end
 		end
 		if bestScoreSlot then
-			return AutoGearBestItems[bestScoreSlot], bestScore
+			return AutoGearBestItems[bestScoreSlot], AutoGearBestItems[bestScoreSlot].score
 		end
 	end
 	return { info = { name = "nothing", empty = 1 }, score = 0 }, score
@@ -4215,7 +4221,10 @@ function AutoGearTooltipHook(tooltip)
 	local lowestScoringEquippedItemInfo
 	local lowestScoringEquippedItemScore
 	local lowestScoringEquippedItemSlot
+	local equippedSetScore
+	local best1hPairingScore
 	local score
+	local scoreWithBestPairing
 	local best1hPairing
 	local scoreColor = HIGHLIGHT_FONT_COLOR
 	local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
@@ -4224,32 +4233,32 @@ function AutoGearTooltipHook(tooltip)
 		and (not equipped)
 		and (not isAComparisonTooltip))
 		if shouldShowBest1hPairing then
-			best1hPairing, score = AutoGearGetBest1hPairing(tooltipItemInfo)
-		else
-			score = AutoGearDetermineItemScore(tooltipItemInfo)
+			best1hPairing, best1hPairingScore = AutoGearGetBest1hPairing(tooltipItemInfo)
 		end
-		lowestScoringEquippedItemInfo, lowestScoringEquippedItemScore, lowestScoringEquippedItemSlot = AutoGearGetTooltipScoreComparisonInfo(tooltipItemInfo, equipped)
+		score = AutoGearDetermineItemScore(tooltipItemInfo)
+		scoreWithBestPairing = score + (best1hPairingScore or 0)
+		lowestScoringEquippedItemInfo, lowestScoringEquippedItemScore, lowestScoringEquippedItemSlot, equippedSetScore = AutoGearGetTooltipScoreComparisonInfo(tooltipItemInfo, equipped)
 		local isAnyComparisonTooltipVisible = ItemRefTooltip:IsVisible() or ShoppingTooltip1:IsVisible() or ShoppingTooltip2:IsVisible()
 		local shouldShowComparisonLine = (not isAComparisonTooltip and (not isAnyComparisonTooltipVisible or AutoGearDB.AlwaysShowScoreComparisons)) and not equipped
-		if (not equipped) and (not isAComparisonTooltip) then
-			if (score > lowestScoringEquippedItemScore) then
-				scoreColor = GREEN_FONT_COLOR
-			elseif (score < lowestScoringEquippedItemScore) then
-				scoreColor = RED_FONT_COLOR
-			end
+		if (score > lowestScoringEquippedItemScore) then
+			scoreColor = GREEN_FONT_COLOR
+		elseif (score < lowestScoringEquippedItemScore) then
+			scoreColor = RED_FONT_COLOR
 		end
 		-- 3 decimal places max
 		score = math.floor(score * 1000) / 1000
+		scoreWithBestPairing = math.floor(scoreWithBestPairing * 1000) / 1000
+		equippedSetScore = math.floor(equippedSetScore * 1000) / 1000
 		local scoreLinePrefix = (((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear")
 		if shouldShowComparisonLine or shouldShowBest1hPairing then
 			lowestScoringEquippedItemScore = math.floor(lowestScoringEquippedItemScore * 1000) / 1000
 			tooltip:AddDoubleLine(scoreLinePrefix.." score".." (equipped"..(((not AutoGearIsTwoHandEquipped()) and tooltipItemInfo.isWeaponOrOffHand) and " pair" or "").."):",
-			lowestScoringEquippedItemScore or "nil",
+			equippedSetScore,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
 		tooltip:AddDoubleLine(scoreLinePrefix.." score"..((shouldShowComparisonLine and not isAComparisonTooltip or shouldShowBest1hPairing) and " (this"..((shouldShowBest1hPairing and (not best1hPairing.info.empty)) and " and best pairing" or "")..")" or "")..":",
-		(((tooltipItemInfo.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..score) or "nil",
+		(((tooltipItemInfo.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..scoreWithBestPairing) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
 		if (AutoGearDB.ReasonsInTooltips == true) and tooltipItemInfo.unusable then
