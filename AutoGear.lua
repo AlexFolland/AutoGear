@@ -60,7 +60,7 @@ local TOC_VERSION_DF = 100000
 local _ --prevent taint when using throwaway variable
 local next = next -- bind next locally for speed
 --local lastlink
-local futureAction = {}
+AutoGearActionQueue = {}
 local weapons
 local tUpdate = 0
 local shouldPrintHelp = false
@@ -2474,7 +2474,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 		if (not AutoGearIsMainHandAFishingPole()) then
 			--check if there's already a scan action in queue
 			local scanFound = nil
-			for i, curAction in ipairs(futureAction) do
+			for i, curAction in ipairs(AutoGearActionQueue) do
 				if (curAction.action == "scan") then
 					--push the time ahead until all the items have arrived
 					curAction.t = GetTime() + 1.0
@@ -2487,7 +2487,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 				newAction.action = "scan"
 				--give the item some time to arrive
 				newAction.t = GetTime() + 0.5
-				table.insert(futureAction, newAction)
+				table.insert(AutoGearActionQueue, newAction)
 			end
 		end
 	elseif (event == "EQUIP_BIND_CONFIRM") or
@@ -2614,7 +2614,7 @@ function AutoGearHandleLootRollCallback(link, lootRollID)
 			newAction.rollID = lootRollID
 			newAction.rollType = rollDecision
 			newAction.info = rollItemInfo
-			table.insert(futureAction, newAction)
+			table.insert(AutoGearActionQueue, newAction)
 		end
 end
 
@@ -2718,13 +2718,9 @@ function AutoGearUpdateBestItems()
 		local slotMax = GetContainerNumSlots(bag)
 		for slot = 0, slotMax do
 			info = AutoGearReadItemInfo(nil, nil, bag, slot)
+			-- AutoGearPrint((info.link or info.name or "nil").." bag and slot: "..tostring(bag or "nil").." "..tostring(slot or "nil"),0)
 			AutoGearConsiderItem(info, bag, slot, nil)
 		end
-	end
-	--consider quest rewards (if any)
-	for i = 1, GetNumQuestChoices() do
-		info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
-		AutoGearConsiderItem(info, nil, nil, nil, i)
 	end
 end
 
@@ -2740,6 +2736,14 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardIDs, arbitraryItemI
 	--consider item being rolled on (if any)
 	if lootRollItemID and arbitraryItemInfo then
 		AutoGearConsiderItem(arbitraryItemInfo, nil, nil, 1)
+	end
+
+	--consider quest rewards (if any)
+	if questRewardIDs and not noActions then
+		for i = 1, GetNumQuestChoices() do
+			local info = AutoGearReadItemInfo(nil, nil, nil, nil, i)
+			AutoGearConsiderItem(info, nil, nil, nil, i)
+		end
 	end
 
 	--create all future equip actions required (only if not rolling currently)
@@ -2766,7 +2770,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardIDs, arbitraryItemI
 							newAction.replaceSlot = invSlot
 							newAction.info = AutoGearBestItems[invSlot].info
 							newAction.score = AutoGearBestItems[invSlot].score
-							table.insert(futureAction, newAction)
+							table.insert(AutoGearActionQueue, newAction)
 						end
 					end
 				end
@@ -2794,7 +2798,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardIDs, arbitraryItemI
 					newAction.replaceSlot = INVSLOT_MAINHAND
 					newAction.info = AutoGearBestItems[INVSLOT_MAINHAND].info
 					newAction.score = AutoGearBestItems[INVSLOT_MAINHAND].score
-					table.insert(futureAction, newAction)
+					table.insert(AutoGearActionQueue, newAction)
 					extraDelay = 0.5
 				end
 			end
@@ -2810,7 +2814,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardIDs, arbitraryItemI
 					newAction.replaceSlot = INVSLOT_OFFHAND
 					newAction.info = AutoGearBestItems[INVSLOT_OFFHAND].info
 					newAction.score = AutoGearBestItems[INVSLOT_OFFHAND].score
-					table.insert(futureAction, newAction)
+					table.insert(AutoGearActionQueue, newAction)
 				end
 			end
 			if (mainSwap or offSwap) then
@@ -2869,7 +2873,7 @@ function AutoGearConsiderAllItems(lootRollItemID, questRewardIDs, arbitraryItemI
 					newAction.replaceSlot = INVSLOT_MAINHAND
 					newAction.info = AutoGearBestItems[INVSLOT_TABARD].info
 					newAction.score = AutoGearBestItems[INVSLOT_TABARD].score
-					table.insert(futureAction, newAction)
+					table.insert(AutoGearActionQueue, newAction)
 				end
 			end
 		end
@@ -2976,6 +2980,7 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 					or (not AutoGearIsAmmoBagValidForBestKnownRangedWeapon(AutoGearBestItems[lowestScoringValidGearSlot].info)))
 				)
 			) then
+				-- AutoGearPrint(info.link.." bag and slot: "..tostring(bag or "nil").." "..tostring(slot or "nil"),0)
 				AutoGearBestItemsAlreadyAdded[info.link] = 1
 				AutoGearBestItems[lowestScoringValidGearSlot].info = info
 				AutoGearBestItems[lowestScoringValidGearSlot].score = score
@@ -3443,7 +3448,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				if info.name == "Retrieving item information" or not info.item:IsItemDataCached() then
 					if not AutoGearSomeItemDataIsMissing then
 						AutoGearPrint("AutoGear: An item was not yet ready on the client side when updating AutoGear's local item info, so updating AutoGear's table of equipped items again.",3)
-						table.insert(futureAction, { action = "localupdate", t = GetTime() + 0.5 })
+						table.insert(AutoGearActionQueue, { action = "localupdate", t = GetTime() + 0.5 })
 						AutoGearSomeItemDataIsMissing = 1
 					end
 					info.unusable = 1
@@ -4527,14 +4532,14 @@ function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
 		tUpdate = GetTime()
 		--future actions
-		for i, curAction in ipairs(futureAction) do
+		for i, curAction in ipairs(AutoGearActionQueue) do
 			-- if there's any item data missing, don't do anything that matters and instead try updating again
 			if AutoGearSomeItemDataIsMissing then
 				if curAction.action == "localupdate" and AutoGearItemDataIsGenerallyAvailable then
 					if GetTime() > curAction.t then
 						AutoGearSomeItemDataIsMissing = nil
 						AutoGearUpdateBestItems() -- this will set AutoGearSomeItemDataIsMissing again if necessary
-						table.remove(futureAction, i)
+						table.remove(AutoGearActionQueue, i)
 					end
 				end
 			else
@@ -4551,7 +4556,7 @@ function AutoGearMain()
 						((rarity == 4) and (AutoGearDB.AutoRollOnEpics == true)) then
 								RollOnLoot(curAction.rollID, curAction.rollType)
 						end
-						table.remove(futureAction, i)
+						table.remove(AutoGearActionQueue, i)
 					end
 				elseif (curAction.action == "equip" and not UnitAffectingCombat("player") and not UnitIsDeadOrGhost("player")) then
 					if (GetTime() > curAction.t) then
@@ -4569,7 +4574,7 @@ function AutoGearMain()
 									curAction.waitingOnEmptyMainHand = 1
 								else
 									AutoGearPrint("AutoGear: Cannot equip the off-hand because bags are too full to remove the two-hander", 0)
-									table.remove(futureAction, i)
+									table.remove(AutoGearActionQueue, i)
 								end
 							elseif (curAction.waitingOnEmptyMainHand and not AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
 							elseif (curAction.waitingOnEmptyMainHand and AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
@@ -4579,24 +4584,32 @@ function AutoGearMain()
 								-- AutoGearPrint("checking whether equipped: "..curAction.info.link,3)
 								if (GetInventoryItemID("player", curAction.replaceSlot) == curAction.info.id) then
 									curAction.ensuringEquipped = nil
-									if (not futureAction[i+1]) or (not futureAction[i+1].ensuringEquipped) then
+									if (not AutoGearActionQueue[i+1]) or (not AutoGearActionQueue[i+1].ensuringEquipped) then
 										AutoGearUpdateEquippedItems()
 									end
-									table.remove(futureAction, i)
+									table.remove(AutoGearActionQueue, i)
 								end
 							else
+								if ((not curAction.container) or (not curAction.slot))
+								and curAction.info and curAction.info.item and curAction.info.item.GetItemLocation and curAction.info.item:HasItemLocation() then
+									local itemLocation = curAction.info.item:GetItemLocation()
+									curAction.container, curAction.slot = itemLocation:GetBagAndSlot()
+								else
+									AutoGearPrint("Error: AutoGearActionQueue current action has either no container or no slot!", 3)
+									-- table.remove(AutoGearActionQueue, i)
+								end
 								PickupContainerItem(curAction.container, curAction.slot)
 								EquipCursorItem(curAction.replaceSlot)
 								curAction.ensuringEquipped = 1
 							end
 						else
-							table.remove(futureAction, i)
+							table.remove(AutoGearActionQueue, i)
 						end
 					end
 				elseif (curAction.action == "scan") then
 					if (GetTime() > curAction.t) then
 						AutoGearConsiderAllItems()
-						table.remove(futureAction, i)
+						table.remove(AutoGearActionQueue, i)
 					end
 				end
 			end
