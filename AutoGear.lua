@@ -63,7 +63,6 @@ local next = next -- bind next locally for speed
 local futureAction = {}
 local weapons
 local tUpdate = 0
-local dataAvailable = nil
 local shouldPrintHelp = false
 local maxPlayerLevel = GetMaxPlayerLevel and GetMaxPlayerLevel() or GetMaxLevelForExpansionLevel(GetExpansionLevel())
 local L = T.Localization
@@ -71,8 +70,9 @@ local ContainerIDToInventoryID = ContainerIDToInventoryID or (C_Container and (C
 local GetContainerNumSlots = GetContainerNumSlots or (C_Container and (C_Container.GetContainerNumSlots))
 local PickupContainerItem = PickupContainerItem or (C_Container and (C_Container.PickupContainerItem))
 local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and (C_Container.GetContainerNumFreeSlots))
+local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
 AutoGearWouldRoll = "nil"
-AutoGearIsItemDataMissing = nil
+AutoGearSomeItemDataIsMissing = nil
 AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID(1) or 20
 AutoGearLastEquippableBagSlot = ContainerIDToInventoryID(NUM_BAG_SLOTS) or 23
 AutoGearEquippableBagSlots = {}
@@ -244,7 +244,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		local highestPointsSpent = nil
 		local numTalentTabs = GetNumTalentTabs()
 		if (not numTalentTabs) or (numTalentTabs < 2) then
-			AutoGearPrint("AutoGear: numTalentTabs in AutoGearGetSpec() is "..tostring(numTalentTabs),0)
+			AutoGearPrint("AutoGear: numTalentTabs in AutoGearGetSpec() is "..tostring(numTalentTabs).."; item data generally available: "..tostring(AutoGearItemDataIsGenerallyAvailable or "nil"),0)
 		end
 		-- It needs a condition of being above 0 or else it will assign highestSpec to the first talent tree even if there are 0 points in it.
 		local _, spec, _, _, pointsSpent = GetTalentTabInfo(1)
@@ -347,36 +347,6 @@ function AutoGearFixLockedGearSlots() -- finds missing slots and adds them, in c
 	end
 end
 
---default values for variables saved between sessions
-AutoGearDBDefaults = {
-	Enabled = true,
-	AutoLootRoll = true,
-	AutoRollOnBoEBlues = false,
-	AutoRollOnEpics = false,
-	RollOnNonGearLoot = true,
-	AutoConfirmBinding = true,
-	AutoConfirmBindingBlues = false,
-	AutoConfirmBindingEpics = false,
-	AutoAcceptQuests = true,
-	AutoCompleteItemQuests = true,
-	AutoAcceptPartyInvitations = true,
-	ScoreInTooltips = true,
-	ReasonsInTooltips = false,
-	AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
-	AlwaysShowScoreComparisons = false,
-	AutoSellGreys = true,
-	AutoRepair = true,
-	Override = false,
-	OverrideSpec = AutoGearGetDefaultOverrideSpec(),
-	UsePawn = true, --AutoGear built-in weights are deprecated.  We're using Pawn mainly now, so default true.
-	OverridePawnScale = false,
-	PawnScale = "",
-	DebugInfoInTooltips = false,
-	AllowedVerbosity = 1,
-	LockGearSlots = true,
-	LockedGearSlots = AutoGearGetDefaultLockedGearSlots()
-}
-
 --an invisible tooltip that AutoGear can scan for various information
 local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "GameTooltipTemplate")
 
@@ -384,9 +354,6 @@ local tooltipFrame = CreateFrame("GameTooltip", "AutoGearTooltip", UIParent, "Ga
 AutoGearFrame = CreateFrame("Frame", nil, UIParent)
 AutoGearFrame:SetWidth(1) AutoGearFrame:SetHeight(1)
 AutoGearFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
-AutoGearFrame:SetScript("OnUpdate", function()
-	AutoGearMain()
-end)
 
 local E = 0.000001 --epsilon; non-zero value that's insignificantly different from 0, used here for the purpose of valuing gear that has higher stats that give the player "almost no benefit"
 -- regex for finding 0 in this block to replace with E: (?<=[^ ] = )0(?=[^\.0-9])
@@ -1882,12 +1849,40 @@ optionsMenu.name = "AutoGear"
 InterfaceOptions_AddCategory(optionsMenu)
 if InterfaceAddOnsList_Update then InterfaceAddOnsList_Update() end
 
---handle PLAYER_ENTERING_WORLD events for initializing GUI options menu widget states at the right time
---UI reload doesn't seem to fire ADDON_LOADED
+--handle PLAYER_ENTERING_WORLD events for initialization
 optionsMenu:RegisterEvent("PLAYER_ENTERING_WORLD")
-optionsMenu:RegisterEvent("ADDON_LOADED")
-optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
+optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 	if event == "PLAYER_ENTERING_WORLD" then
+
+		--default values for variables saved between sessions
+		AutoGearDBDefaults = {
+			Enabled = true,
+			AutoLootRoll = true,
+			AutoRollOnBoEBlues = false,
+			AutoRollOnEpics = false,
+			RollOnNonGearLoot = true,
+			AutoConfirmBinding = true,
+			AutoConfirmBindingBlues = false,
+			AutoConfirmBindingEpics = false,
+			AutoAcceptQuests = true,
+			AutoCompleteItemQuests = true,
+			AutoAcceptPartyInvitations = true,
+			ScoreInTooltips = true,
+			ReasonsInTooltips = false,
+			AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
+			AlwaysShowScoreComparisons = false,
+			AutoSellGreys = true,
+			AutoRepair = true,
+			Override = false,
+			OverrideSpec = AutoGearGetDefaultOverrideSpec(),
+			UsePawn = true, --AutoGear built-in weights are deprecated.  We're using Pawn mainly now, so default true.
+			OverridePawnScale = false,
+			PawnScale = "",
+			DebugInfoInTooltips = false,
+			AllowedVerbosity = 1,
+			LockGearSlots = true,
+			LockedGearSlots = AutoGearGetDefaultLockedGearSlots()
+		}
 
 		AutoGearInitializeDB(AutoGearDBDefaults)
 		AutoGearFixLockedGearSlots()
@@ -2164,6 +2159,48 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, ...)
 
 		optionsMenu:UnregisterAllEvents()
 		optionsMenu:SetScript("OnEvent", nil)
+
+		AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+		AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
+		AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
+		AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
+		AutoGearFrame:RegisterEvent("CHAT_MSG_LOOT")
+		AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
+		AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when the player tries to equip a soulbound item that can still be traded to eligible players
+		AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
+		AutoGearFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")     --Fires when equipment is equipped or unequipped from the player, excluding bags
+		AutoGearFrame:RegisterEvent("BAG_CONTAINER_UPDATE")         --Fires when bags are equipped or unequipped from the player
+		AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")               --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
+		AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")         --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
+		AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")           --Fires when a quest is automatically completed (remote handin available)
+		AutoGearFrame:RegisterEvent("QUEST_COMPLETE")               --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
+		AutoGearFrame:RegisterEvent("QUEST_DETAIL")                 --Fires when details of an available quest are presented by a questgiver
+		AutoGearFrame:RegisterEvent("QUEST_FINISHED")               --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
+		AutoGearFrame:RegisterEvent("QUEST_GREETING")               --Fires when a questgiver presents a greeting along with a list of active or available quests
+		AutoGearFrame:RegisterEvent("QUEST_ITEM_UPDATE")            --Fires when information about items in a questgiver dialog is updated
+		AutoGearFrame:RegisterEvent("QUEST_LOG_UPDATE")             --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
+		AutoGearFrame:RegisterEvent("QUEST_PROGRESS")               --Fires when interacting with a questgiver about an active quest
+		--AutoGearFrame:RegisterEvent("QUEST_QUERY_COMPLETE")       --Fires when quest completion information is available from the server; deprecated and registering returns an error as of 8.x
+		AutoGearFrame:RegisterEvent("QUEST_WATCH_UPDATE")           --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
+		AutoGearFrame:RegisterEvent("GOSSIP_CLOSED")                --Fires when an NPC gossip interaction ends
+		AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM")               --Fires when the player is requested to confirm a gossip choice
+		AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")        --Fires when an attempt to confirm a gossip choice is canceled
+		AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the player attempts a gossip choice which requires entering a code
+		AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
+		AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
+
+		if TOC_VERSION_CURRENT >= TOC_VERSION_MOP then
+			AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+			AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
+		end
+		
+		if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
+			-- "CONFIRM_DISENCHANT_ROLL" will be added to WoW Classic in a later phase of Cataclysm Classic. Source: https://youtube.com/watch?v=f8zWAPDUTkc&t=2498s
+			-- AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
+			AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")
+		end
+
+		AutoGearFrame:SetScript("OnUpdate", AutoGearMain)
 	end
 end)
 
@@ -2290,17 +2327,6 @@ function AutoGearSetAllowedVerbosity(allowedverbosity)
 	end
 end
 
-if TOC_VERSION_CURRENT >= TOC_VERSION_MOP then
-	AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-	AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
-end
-
-if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
-	-- "CONFIRM_DISENCHANT_ROLL" will be added to WoW Classic in a later phase of Cataclysm Classic. Source: https://youtube.com/watch?v=f8zWAPDUTkc&t=2498s
-	-- AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
-	AutoGearFrame:RegisterEvent("QUEST_POI_UPDATE")
-end
-
 function AutoGearGetContainerItemInfo(bagIndex, bagSlot)
 	if GetContainerItemInfo then
 		local _, count, locked, quality, _, _, link = GetContainerItemInfo(bagIndex, bagSlot)
@@ -2315,34 +2341,6 @@ function AutoGearGetContainerItemInfo(bagIndex, bagSlot)
 	end
 end
 
-AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
-AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
-AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
-AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
-AutoGearFrame:RegisterEvent("CHAT_MSG_LOOT")
-AutoGearFrame:RegisterEvent("EQUIP_BIND_CONFIRM")
-AutoGearFrame:RegisterEvent("EQUIP_BIND_TRADEABLE_CONFIRM") --Fires when the player tries to equip a soulbound item that can still be traded to eligible players
-AutoGearFrame:RegisterEvent("MERCHANT_SHOW")
-AutoGearFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")     --Fires when equipment is equipped or unequipped from the player, excluding bags
-AutoGearFrame:RegisterEvent("BAG_CONTAINER_UPDATE")         --Fires when bags are equipped or unequipped from the player
-AutoGearFrame:RegisterEvent("QUEST_ACCEPTED")               --Fires when a new quest is added to the player's quest log (which is what happens after a player accepts a quest).
-AutoGearFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")         --Fires when certain kinds of quests (e.g. NPC escort quests) are started by another member of the player's group
-AutoGearFrame:RegisterEvent("QUEST_AUTOCOMPLETE")           --Fires when a quest is automatically completed (remote handin available)
-AutoGearFrame:RegisterEvent("QUEST_COMPLETE")               --Fires when the player is looking at the "Complete" page for a quest, at a questgiver.
-AutoGearFrame:RegisterEvent("QUEST_DETAIL")                 --Fires when details of an available quest are presented by a questgiver
-AutoGearFrame:RegisterEvent("QUEST_FINISHED")               --Fires when the player ends interaction with a questgiver or ends a stage of the questgiver dialog
-AutoGearFrame:RegisterEvent("QUEST_GREETING")               --Fires when a questgiver presents a greeting along with a list of active or available quests
-AutoGearFrame:RegisterEvent("QUEST_ITEM_UPDATE")            --Fires when information about items in a questgiver dialog is updated
-AutoGearFrame:RegisterEvent("QUEST_LOG_UPDATE")             --Fires when the game client receives updates relating to the player's quest log (this event is not just related to the quests inside it)
-AutoGearFrame:RegisterEvent("QUEST_PROGRESS")               --Fires when interacting with a questgiver about an active quest
---AutoGearFrame:RegisterEvent("QUEST_QUERY_COMPLETE")       --Fires when quest completion information is available from the server; deprecated and registering returns an error as of 8.x
-AutoGearFrame:RegisterEvent("QUEST_WATCH_UPDATE")           --Fires when the player's status regarding a quest's objectives changes, for instance picking up a required object or killing a mob for that quest. All forms of (quest objective) progress changes will trigger this event.
-AutoGearFrame:RegisterEvent("GOSSIP_CLOSED")                --Fires when an NPC gossip interaction ends
-AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM")               --Fires when the player is requested to confirm a gossip choice
-AutoGearFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")        --Fires when an attempt to confirm a gossip choice is canceled
-AutoGearFrame:RegisterEvent("GOSSIP_ENTER_CODE")            --Fires when the player attempts a gossip choice which requires entering a code
-AutoGearFrame:RegisterEvent("GOSSIP_SHOW")                  --Fires when an NPC gossip interaction begins
-AutoGearFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")       --Fires when a unit's quests change (accepted/objective progress/abandoned/completed)
 AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, ...)
 
 	if (AutoGearDB.AutoAcceptQuests) then
@@ -2423,7 +2421,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 
 	if event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player" then
 		--make sure this doesn't happen as part of logon
-		if dataAvailable then
+		if AutoGearItemDataIsGenerallyAvailable then
 			local localizedClass, class, spec = AutoGearGetClassAndSpec()
 			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..".", 2)
 			AutoGearConsiderAllItems()
@@ -2550,8 +2548,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			end
 		end
 	elseif event == "GET_ITEM_INFO_RECEIVED" then
-		if not dataAvailable then
-			dataAvailable = 1
+		if not AutoGearItemDataIsGenerallyAvailable then
+			AutoGearItemDataIsGenerallyAvailable = 1
 			AutoGearFrame:UnregisterEvent(event)
 		end
 	elseif event ~= "ADDON_LOADED" then
@@ -3443,10 +3441,10 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			if i==1 then
 				info.name = textLeft:GetText()
 				if info.name == "Retrieving item information" or not info.item:IsItemDataCached() then
-					if not AutoGearIsItemDataMissing then
+					if not AutoGearSomeItemDataIsMissing then
 						AutoGearPrint("AutoGear: An item was not yet ready on the client side when updating AutoGear's local item info, so updating AutoGear's table of equipped items again.",3)
 						table.insert(futureAction, { action = "localupdate", t = GetTime() + 0.5 })
-						AutoGearIsItemDataMissing = 1
+						AutoGearSomeItemDataIsMissing = 1
 					end
 					info.unusable = 1
 					info.reason = "(this item's tooltip is not yet available)"
@@ -4309,7 +4307,7 @@ function AutoGearGetBestSetItems(info)
 end
 
 function AutoGearTooltipHook(tooltip)
-	if (not AutoGearDB.ScoreInTooltips) then return	end
+	if (not AutoGearDB.ScoreInTooltips) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
 	local name, link = tooltip:GetItem()
 	local equipped = tooltip:IsEquippedItem()
@@ -4499,7 +4497,7 @@ function AutoGearTooltipHook(tooltip)
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: lowest-scoring equipped item:",
-			lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.empty and "nothing" or (lowestScoringEquippedItemInfo.link or "nil"),
+			lowestScoringEquippedItemInfo and ((lowestScoringEquippedItemInfo.empty and "nothing") or (lowestScoringEquippedItemInfo.link or lowestScoringEquippedItemInfo.name or "nil")) or "nil",
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
@@ -4531,11 +4529,11 @@ function AutoGearMain()
 		--future actions
 		for i, curAction in ipairs(futureAction) do
 			-- if there's any item data missing, don't do anything that matters and instead try updating again
-			if AutoGearIsItemDataMissing then
-				if curAction.action == "localupdate" and dataAvailable then
+			if AutoGearSomeItemDataIsMissing then
+				if curAction.action == "localupdate" and AutoGearItemDataIsGenerallyAvailable then
 					if GetTime() > curAction.t then
-						AutoGearIsItemDataMissing = nil
-						AutoGearUpdateBestItems() -- this will set AutoGearIsItemDataMissing again if necessary
+						AutoGearSomeItemDataIsMissing = nil
+						AutoGearUpdateBestItems() -- this will set AutoGearSomeItemDataIsMissing again if necessary
 						table.remove(futureAction, i)
 					end
 				end
