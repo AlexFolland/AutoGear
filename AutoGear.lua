@@ -4376,7 +4376,7 @@ function AutoGearTooltipHook(tooltip)
 			tooltip:AddDoubleLine(scoreLinePrefix.." score (this; "..tooltipItemInfo.link.."):",
 			tostring(thisScore or 0),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+			scoreColor.r, scoreColor.g, scoreColor.b)
 			for i=1,(#bestSet or 0) do
 				if bestSet[i] and bestSet[i].info then
 					tooltip:AddDoubleLine(scoreLinePrefix.." score (best "..((tooltipItemInfo.numValidGearSlots or 0) > 2 and "set item "..tostring(i) or "pairing").."; "..(bestSet[i].info.link or bestSet[i].info.name).."):",
