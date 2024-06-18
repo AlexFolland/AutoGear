@@ -2961,8 +2961,8 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 				end
 				if not skipThisSlot and
 				((not AutoGearBestItems[gearSlot]) or
-				((AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore)
-				or AutoGearBestItems[gearSlot].info.empty)) then
+				(AutoGearBestItems[gearSlot].info.empty or
+				(AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore))) then
 					lowestScoringValidGearSlot = gearSlot
 					lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot] and AutoGearBestItems[gearSlot].score or 0
 				end
@@ -3086,6 +3086,93 @@ function AutoGearGetValidGearSlots(info)
 	}
 
 	return gearSlotTable[info.invType]
+end
+
+function AutoGearGetSetSlots(info)
+	local setSlotTable = {
+		[Enum.InventoryType.IndexNonEquipType]       = nil,
+		[Enum.InventoryType.IndexAmmoType]           = nil, -- ignore ammo because it's hard to match with weapon type
+		[Enum.InventoryType.IndexHeadType]           = { INVSLOT_HEAD },
+		[Enum.InventoryType.IndexNeckType]           = { INVSLOT_NECK },
+		[Enum.InventoryType.IndexShoulderType]       = { INVSLOT_SHOULDER },
+		[Enum.InventoryType.IndexBodyType]           = { INVSLOT_BODY },
+		[Enum.InventoryType.IndexChestType]          = { INVSLOT_CHEST },
+		[Enum.InventoryType.IndexRobeType]           = { INVSLOT_CHEST },
+		[Enum.InventoryType.IndexWaistType]          = { INVSLOT_WAIST },
+		[Enum.InventoryType.IndexLegsType]           = { INVSLOT_LEGS },
+		[Enum.InventoryType.IndexFeetType]           = { INVSLOT_FEET },
+		[Enum.InventoryType.IndexWristType]          = { INVSLOT_WRIST },
+		[Enum.InventoryType.IndexHandType]           = { INVSLOT_HAND },
+		[Enum.InventoryType.IndexFingerType]         = { INVSLOT_FINGER1, INVSLOT_FINGER2 },
+		[Enum.InventoryType.IndexTrinketType]        = { INVSLOT_TRINKET1, INVSLOT_TRINKET2 },
+		[Enum.InventoryType.IndexCloakType]          = { INVSLOT_BACK },
+		[Enum.InventoryType.IndexWeaponType]         = ((weapons == "any")
+		                                               or (weapons == "dagger and any")
+		                                               or (weapons == "dagger")
+		                                               or ((weapons == "dual wield") and (not IsPlayerSpell(46917)))
+		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and (weapons == "ranged")))
+		                                               and (CanDualWield()
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
+		                                               or { INVSLOT_MAINHAND })
+		                                               or ((weapons == "weapon and shield")
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
+		                                               or nil),
+		[Enum.InventoryType.IndexShieldType]         = ((weapons == "any")
+		                                               or (weapons == "weapon and shield"))
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
+		                                               or nil,
+		[Enum.InventoryType.Index2HweaponType]       = ((weapons == "2hDW")
+		                                               and CanDualWield() and IsPlayerSpell(46917)
+		                                               and (info.subclassID ~= Enum.ItemWeaponSubclass.Staff)
+		                                               and ((TOC_VERSION_CURRENT >= TOC_VERSION_MOP)
+		                                               or (info.subclassID ~= Enum.ItemWeaponSubclass.Polearm)))
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
+		                                               or (((weapons == "any")
+		                                               or (weapons == "2h"))
+		                                               and { INVSLOT_TABARD }
+		                                               or nil),
+		[Enum.InventoryType.IndexWeaponmainhandType] = ((weapons == "any")
+		                                               or (weapons == "weapon and shield")
+		                                               or (weapons == "dagger and any")
+		                                               or (weapons == "dagger")
+		                                               or ((weapons == "dual wield") and (not IsPlayerSpell(46917)))
+		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and (weapons == "ranged")))
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
+		                                               or nil,
+		[Enum.InventoryType.IndexWeaponoffhandType]  = (CanDualWield()
+		                                               and ((weapons == "any")
+		                                               or (weapons == "dagger and any")
+		                                               or (weapons == "dagger")
+		                                               or ((weapons == "dual wield") and (not IsPlayerSpell(46917))))
+		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and (weapons == "ranged")))
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
+		                                               or nil,
+		[Enum.InventoryType.IndexHoldableType]       = (weapons == "any")
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
+		                                               or nil,
+		[Enum.InventoryType.IndexRangedType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and { INVSLOT_RANGED }
+		                                               or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexThrownType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and { INVSLOT_RANGED }
+		                                               or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexRangedrightType]    = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and { INVSLOT_RANGED }
+		                                               or { INVSLOT_MAINHAND },
+		[Enum.InventoryType.IndexRelicType]          = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
+		                                               and { INVSLOT_RANGED }
+		                                               or nil,
+		[Enum.InventoryType.IndexTabardType]         = nil, -- INVSLOT_TABARD is used for evaluating 2h weapons
+		[Enum.InventoryType.IndexBagType]            = AutoGearEquippableBagSlots,
+		[Enum.InventoryType.IndexQuiverType]         = (weapons == "ranged")
+		                                               and AutoGearEquippableBagSlots
+                                                       or nil
+	}
+
+	return setSlotTable[info.invType]
 end
 
 function AutoGearIsInvTypeWeapon(invType)
@@ -4092,7 +4179,7 @@ function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 	local lowestScoringValidGearSlotScore = AutoGearDetermineItemScore(info)
 	local lowestScoringValidGearInfo = info
 	local equippedSetScore = 0
-	for i=1,info.numValidGearSlots do
+	for i=1,(info.numValidGearSlots or 0) do
 		equippedSetScore = equippedSetScore + (AutoGearEquippedItems[info.validGearSlots[i]].score or 0)
 	end
 	if info.is2hWeapon and (not (CanDualWield() and IsPlayerSpell(46917))) then
@@ -4125,9 +4212,9 @@ function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 						end
 					end
 				end
-				if (not skipThisSlot)
-				and ((AutoGearEquippedItems[gearSlot].score <= lowestScoringValidGearSlotScore)
-				or AutoGearEquippedItems[gearSlot].info.empty) then
+				if (not skipThisSlot) and
+				(AutoGearEquippedItems[gearSlot].info.empty or
+				(AutoGearEquippedItems[gearSlot].score <= lowestScoringValidGearSlotScore)) then
 					lowestScoringValidGearInfo = AutoGearEquippedItems[gearSlot].info
 					lowestScoringValidGearSlot = gearSlot
 					lowestScoringValidGearSlotScore = AutoGearEquippedItems[gearSlot].score
@@ -4179,26 +4266,46 @@ function AutoGearIsGearPairEquippableTogether(a, b)
 	end
 end
 
-function AutoGearGetBest1hPairing(info)
-	local score = AutoGearDetermineItemScore(info)
-	if info.is1hWeaponOrOffHand and info.validGearSlots then
-		local totalScore = 0
-		local bestScore = 0
-		local bestScoreSlot
-		for hand = INVSLOT_MAINHAND, INVSLOT_OFFHAND do
-			if AutoGearIsGearPairEquippableTogether(info, AutoGearBestItems[hand].info) then
-				totalScore = score + AutoGearBestItems[hand].score
-				if totalScore > bestScore then
-					bestScore = totalScore
-					bestScoreSlot = hand
+function AutoGearGetBestSetItems(info)
+	local setSlots = AutoGearGetSetSlots(info)
+	local bestSetScore = 0
+	local bestSet = {}
+	local bestSetIndex = 0
+	local lowestBestItemIndex = 0
+	local lowestBestItemScore = 0
+	local bestItem
+	local thisIsABestItem
+	if setSlots then
+		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
+			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
+				if AutoGearBestItems[invSlot].info
+				and AutoGearBestItems[invSlot].info.link
+				and AutoGearBestItems[invSlot].info.link == info.link
+				then
+					thisIsABestItem = 1
 				end
 			end
 		end
-		if bestScoreSlot then
-			return AutoGearBestItems[bestScoreSlot], AutoGearBestItems[bestScoreSlot].score
+		for slot = 1,#setSlots do
+			if AutoGearIsGearPairEquippableTogether(info, AutoGearBestItems[setSlots[slot]].info) then
+				bestSetIndex = bestSetIndex + 1
+				bestItem = AutoGearBestItems[setSlots[slot]]
+				if lowestBestItemScore == 0
+				or bestItem.score < lowestBestItemScore then
+					lowestBestItemIndex = slot
+					lowestBestItemScore = bestItem.score
+				end
+				bestSet[bestSetIndex] = bestItem
+			end
+		end
+		if not thisIsABestItem then
+			table.remove(bestSet, lowestBestItemIndex)
+		end
+		for i = 1,(#bestSet or 0) do
+			bestSetScore = bestSetScore + bestSet[i].score
 		end
 	end
-	return { info = { name = "nothing", empty = 1 }, score = 0 }, score
+	return bestSet, bestSetScore, thisIsABestItem, lowestBestItemScore
 end
 
 function AutoGearTooltipHook(tooltip)
@@ -4222,43 +4329,42 @@ function AutoGearTooltipHook(tooltip)
 	local lowestScoringEquippedItemScore
 	local lowestScoringEquippedItemSlot
 	local equippedSetScore
-	local best1hPairingScore
 	local score
-	local scoreWithBestPairing
-	local best1hPairing
+	local bestSetScore
+	local scoreWithBestSet
+	local bestSet
 	local scoreColor = HIGHLIGHT_FONT_COLOR
 	local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
 	if tooltipItemInfo.shouldShowScoreInTooltip then
-		local shouldShowBest1hPairing = (tooltipItemInfo.is1hWeaponOrOffHand
-		and (not equipped)
+		local shouldShowBestSet = ((tooltipItemInfo.is1hWeaponOrOffHand
+		or (tooltipItemInfo.numValidGearSlots and tooltipItemInfo.numValidGearSlots > 1))
 		and (not isAComparisonTooltip))
-		if shouldShowBest1hPairing then
-			best1hPairing, best1hPairingScore = AutoGearGetBest1hPairing(tooltipItemInfo)
-		end
 		score = AutoGearDetermineItemScore(tooltipItemInfo)
-		scoreWithBestPairing = score + (best1hPairingScore or 0)
+		bestSet, bestSetScore = AutoGearGetBestSetItems(tooltipItemInfo)
+		scoreWithBestSet = score + (bestSetScore or 0)
 		lowestScoringEquippedItemInfo, lowestScoringEquippedItemScore, lowestScoringEquippedItemSlot, equippedSetScore = AutoGearGetTooltipScoreComparisonInfo(tooltipItemInfo, equipped)
 		local isAnyComparisonTooltipVisible = ItemRefTooltip:IsVisible() or ShoppingTooltip1:IsVisible() or ShoppingTooltip2:IsVisible()
 		local shouldShowComparisonLine = (not isAComparisonTooltip and (not isAnyComparisonTooltipVisible or AutoGearDB.AlwaysShowScoreComparisons)) and not equipped
-		if (score > lowestScoringEquippedItemScore) then
+		if (scoreWithBestSet > equippedSetScore) then
 			scoreColor = GREEN_FONT_COLOR
-		elseif (score < lowestScoringEquippedItemScore) then
+		elseif (scoreWithBestSet < equippedSetScore) then
 			scoreColor = RED_FONT_COLOR
 		end
 		-- 3 decimal places max
 		score = math.floor(score * 1000) / 1000
-		scoreWithBestPairing = math.floor(scoreWithBestPairing * 1000) / 1000
+		bestSetScore = math.floor(bestSetScore * 1000) / 1000
+		scoreWithBestSet = math.floor(scoreWithBestSet * 1000) / 1000
 		equippedSetScore = math.floor(equippedSetScore * 1000) / 1000
 		local scoreLinePrefix = (((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear")
-		if shouldShowComparisonLine or shouldShowBest1hPairing then
+		if shouldShowComparisonLine or shouldShowBestSet then
 			lowestScoringEquippedItemScore = math.floor(lowestScoringEquippedItemScore * 1000) / 1000
-			tooltip:AddDoubleLine(scoreLinePrefix.." score".." (equipped"..(((not AutoGearIsTwoHandEquipped()) and tooltipItemInfo.isWeaponOrOffHand) and " pair" or "").."):",
+			tooltip:AddDoubleLine(scoreLinePrefix.." score".." (equipped"..(((not AutoGearIsTwoHandEquipped()) and tooltipItemInfo.isWeaponOrOffHand) and " pair" or (shouldShowBestSet and " set" or "")).."):",
 			equippedSetScore,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine(scoreLinePrefix.." score"..((shouldShowComparisonLine and not isAComparisonTooltip or shouldShowBest1hPairing) and " (this"..((shouldShowBest1hPairing and (not best1hPairing.info.empty)) and " and best pairing" or "")..")" or "")..":",
-		(((tooltipItemInfo.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..scoreWithBestPairing) or "nil",
+		tooltip:AddDoubleLine(scoreLinePrefix.." score"..((shouldShowComparisonLine and not isAComparisonTooltip or shouldShowBestSet) and " (this"..((shouldShowBestSet) and " and best "..(tooltipItemInfo.numValidGearSlots > 2 and "set" or "pairing") or "")..")" or "")..":",
+		(((tooltipItemInfo.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..scoreWithBestSet) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
 		if (AutoGearDB.ReasonsInTooltips == true) and tooltipItemInfo.unusable then
@@ -4267,17 +4373,20 @@ function AutoGearTooltipHook(tooltip)
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b,
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b)
 		end
-		if shouldShowBest1hPairing and (not best1hPairing.info.empty) then
+		if shouldShowBestSet then
 			local thisScore = math.floor(AutoGearDetermineItemScore(tooltipItemInfo) * 1000) / 1000
-			local best1hPairingScore = math.floor(best1hPairing.score * 1000) / 1000
 			tooltip:AddDoubleLine(scoreLinePrefix.." score (this; "..tooltipItemInfo.link.."):",
 			tostring(thisScore or 0),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-			tooltip:AddDoubleLine(scoreLinePrefix.." score (best pairing; "..(best1hPairing.info.link or best1hPairing.info.name).."):",
-			tostring(best1hPairingScore or 0),
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+			for i=1,(#bestSet or 0) do
+				if bestSet[i] and bestSet[i].info then
+					tooltip:AddDoubleLine(scoreLinePrefix.." score (best "..((tooltipItemInfo.numValidGearSlots or 0) > 2 and "set item "..tostring(i) or "pairing").."; "..(bestSet[i].info.link or bestSet[i].info.name).."):",
+					tostring(math.floor((bestSet[i].score or 0) * 1000) / 1000),
+					HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+					HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+				end
+			end
 		end
 	end
 	if (AutoGearDB.DebugInfoInTooltips == true) then
@@ -4390,7 +4499,7 @@ function AutoGearTooltipHook(tooltip)
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: lowest-scoring equipped item:",
-			lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.link or "nil",
+			lowestScoringEquippedItemInfo and lowestScoringEquippedItemInfo.empty and "nothing" or (lowestScoringEquippedItemInfo.link or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
