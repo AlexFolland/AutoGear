@@ -2939,7 +2939,7 @@ end
 --companion function to AutoGearConsiderAllItems
 function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 	if info.empty
-	or (info.link and AutoGearBestItemsAlreadyAdded[info.link])
+	or (info.guid and AutoGearBestItemsAlreadyAdded[info.guid])
 	or (info.isAmmoBag
 	and	AutoGearBestItems[INVSLOT_RANGED].info.isRangedWeapon)
 	and (not AutoGearIsAmmoBagValidForRangedWeapon(info, AutoGearBestItems[INVSLOT_RANGED].info)) then
@@ -2981,7 +2981,7 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 				)
 			) then
 				-- AutoGearPrint(info.link.." bag and slot: "..tostring(bag or "nil").." "..tostring(slot or "nil"),0)
-				AutoGearBestItemsAlreadyAdded[info.link] = 1
+				if info.guid then AutoGearBestItemsAlreadyAdded[info.guid] = 1 end
 				AutoGearBestItems[lowestScoringValidGearSlot].info = info
 				AutoGearBestItems[lowestScoringValidGearSlot].score = score
 				AutoGearBestItems[lowestScoringValidGearSlot].equipped = nil
@@ -3368,6 +3368,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.name = C_Item.GetItemNameByID(info.id)
 	info.rarity = info.item:GetItemQuality()
 	info.rarityColor = info.item:GetItemQualityColor()
+	info.guid = info.item:GetItemGUID()
 	if info.link == nil then
 		AutoGearPrint("Error: "..tostring(info.name or "nil").." doesn't have a link",3)
 		AutoGearPrint(
@@ -4240,6 +4241,7 @@ function AutoGearIsGearPairEquippableTogether(a, b)
 	if (not a) or (not b) or a.empty or b.empty then return 1 end
 	if (not a.validGearSlots)
 	or (not b.validGearSlots)
+	or (a.guid == b.guid)
 	or ((a.id == b.id)
 	and ((GetItemCount(a.id, true) < 2)
 	or (a.unique)))
@@ -4273,32 +4275,40 @@ function AutoGearGetBestSetItems(info)
 	local setSlots = AutoGearGetSetSlots(info)
 	local bestSetScore = 0
 	local bestSet = {}
-	local bestSetIndex = 0
 	local lowestBestItemIndex = 0
 	local lowestBestItemScore = 0
 	local bestItem
 	local thisIsABestItem
 	if setSlots then
-		for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
-			if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
-				if AutoGearBestItems[invSlot].info
-				and AutoGearBestItems[invSlot].info.link
-				and AutoGearBestItems[invSlot].info.link == info.link
-				then
-					thisIsABestItem = 1
-				end
+		for i,slot in ipairs(setSlots) do
+			if AutoGearBestItems[slot].info and (
+				(
+					AutoGearBestItems[slot].info.link
+					and AutoGearBestItems[slot].info.link == info.link
+				) or (
+					info.guid
+					and (
+						(
+							AutoGearBestItems[slot].info.guid and
+							AutoGearBestItems[slot].info.guid == info.guid
+						) or (
+							AutoGearBestItems[slot].info
+							and AutoGearBestItems[slot].info.item
+							and AutoGearBestItems[slot].info.item:GetItemGUID() == info.guid
+						)
+					)
+				)
+			) then
+				thisIsABestItem = 1
 			end
-		end
-		for slot = 1,#setSlots do
-			if AutoGearIsGearPairEquippableTogether(info, AutoGearBestItems[setSlots[slot]].info) then
-				bestSetIndex = bestSetIndex + 1
-				bestItem = AutoGearBestItems[setSlots[slot]]
+			if AutoGearIsGearPairEquippableTogether(info, AutoGearBestItems[slot].info) then
+				bestItem = AutoGearBestItems[slot]
 				if lowestBestItemScore == 0
 				or bestItem.score < lowestBestItemScore then
-					lowestBestItemIndex = slot
+					lowestBestItemIndex = i
 					lowestBestItemScore = bestItem.score
 				end
-				bestSet[bestSetIndex] = bestItem
+				table.insert(bestSet, bestItem)
 			end
 		end
 		if not thisIsABestItem then
@@ -4311,6 +4321,31 @@ function AutoGearGetBestSetItems(info)
 	return bestSet, bestSetScore, thisIsABestItem, lowestBestItemScore
 end
 
+function AutoGearDetectHoveredItemGUID()
+	local focus = GetMouseFocus()
+	if not focus then return end
+	local focusType = focus:GetObjectType()
+	if (not focusType) or (focusType ~= "Button") then return end
+	local focusParent = focus.GetParent and focus:GetParent()
+	if not focusParent then return end
+	local focusParentName = focusParent.GetName and focusParent:GetName()
+
+	if (
+		focusParentName and
+		focusParentName.match
+	) then
+		if focusParentName:match("PaperDoll") then
+			return Item:CreateFromEquipmentSlot(focus:GetID()):GetItemGUID()
+		elseif (
+			focusParentName:match("Inv") or
+			focusParentName:match("Bag") or
+			focusParentName:match("Container")
+	 	) then
+			return Item:CreateFromBagAndSlot(focusParent:GetID(), focus:GetID()):GetItemGUID()
+		end
+	end
+end
+
 function AutoGearTooltipHook(tooltip)
 	if (not AutoGearDB.ScoreInTooltips) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
@@ -4320,7 +4355,12 @@ function AutoGearTooltipHook(tooltip)
 		AutoGearPrint("AutoGear: No item link for "..(name or "(no name)").." on "..tooltip:GetName(),3)
 		return
 	end
-	local tooltipItemInfo = AutoGearReadItemInfo(nil,nil,nil,nil,nil,link)
+	local info = AutoGearReadItemInfo(nil,nil,nil,nil,nil,link)
+
+	local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
+	if (not isAComparisonTooltip) and (not info.guid) then
+		info.guid = AutoGearDetectHoveredItemGUID()
+	end
 	local pawnScaleName
 	local pawnScaleLocalizedName
 	local pawnScaleColor
@@ -4337,15 +4377,14 @@ function AutoGearTooltipHook(tooltip)
 	local scoreWithBestSet
 	local bestSet
 	local scoreColor = HIGHLIGHT_FONT_COLOR
-	local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
-	if tooltipItemInfo.shouldShowScoreInTooltip then
-		local shouldShowBestSet = ((tooltipItemInfo.is1hWeaponOrOffHand
-		or (tooltipItemInfo.numValidGearSlots and tooltipItemInfo.numValidGearSlots > 1))
+	if info.shouldShowScoreInTooltip then
+		local shouldShowBestSet = ((info.is1hWeaponOrOffHand
+		or (info.numValidGearSlots and info.numValidGearSlots > 1))
 		and (not isAComparisonTooltip))
-		score = AutoGearDetermineItemScore(tooltipItemInfo)
-		bestSet, bestSetScore = AutoGearGetBestSetItems(tooltipItemInfo)
+		score = AutoGearDetermineItemScore(info)
+		bestSet, bestSetScore = AutoGearGetBestSetItems(info)
 		scoreWithBestSet = score + (bestSetScore or 0)
-		lowestScoringEquippedItemInfo, lowestScoringEquippedItemScore, lowestScoringEquippedItemSlot, equippedSetScore = AutoGearGetTooltipScoreComparisonInfo(tooltipItemInfo, equipped)
+		lowestScoringEquippedItemInfo, lowestScoringEquippedItemScore, lowestScoringEquippedItemSlot, equippedSetScore = AutoGearGetTooltipScoreComparisonInfo(info, equipped)
 		local isAnyComparisonTooltipVisible = ItemRefTooltip:IsVisible() or ShoppingTooltip1:IsVisible() or ShoppingTooltip2:IsVisible()
 		local shouldShowComparisonLine = (not isAComparisonTooltip and (not isAnyComparisonTooltipVisible or AutoGearDB.AlwaysShowScoreComparisons)) and not equipped
 		if (scoreWithBestSet > equippedSetScore) then
@@ -4361,30 +4400,30 @@ function AutoGearTooltipHook(tooltip)
 		local scoreLinePrefix = (((pawnScaleLocalizedName or pawnScaleName) and pawnScaleColor) and "AutoGear: Pawn \""..pawnScaleColor..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"" or "AutoGear")
 		if shouldShowComparisonLine or shouldShowBestSet then
 			lowestScoringEquippedItemScore = math.floor(lowestScoringEquippedItemScore * 1000) / 1000
-			tooltip:AddDoubleLine(scoreLinePrefix.." score".." (equipped"..(((not AutoGearIsTwoHandEquipped()) and tooltipItemInfo.isWeaponOrOffHand and not tooltipItemInfo.isRangedWeapon) and " pair" or (shouldShowBestSet and " set" or "")).."):",
+			tooltip:AddDoubleLine(scoreLinePrefix.." score".." (equipped"..(((not AutoGearIsTwoHandEquipped()) and info.isWeaponOrOffHand and not info.isRangedWeapon) and " pair" or (shouldShowBestSet and " set" or "")).."):",
 			equippedSetScore,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		end
-		tooltip:AddDoubleLine(scoreLinePrefix.." score"..((shouldShowComparisonLine and not isAComparisonTooltip or shouldShowBestSet) and " (this"..((shouldShowBestSet) and " and best "..(tooltipItemInfo.numValidGearSlots > 2 and "set" or "pairing") or "")..")" or "")..":",
-		(((tooltipItemInfo.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..scoreWithBestSet) or "nil",
+		tooltip:AddDoubleLine(scoreLinePrefix.." score"..((shouldShowComparisonLine and not isAComparisonTooltip or shouldShowBestSet) and " (this"..((shouldShowBestSet) and " and best "..(info.numValidGearSlots > 2 and "set" or "pairing") or "")..")" or "")..":",
+		(((info.unusable == 1) and (RED_FONT_COLOR_CODE.."(won't equip) "..FONT_COLOR_CODE_CLOSE) or "")..scoreWithBestSet) or "nil",
 		HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 		scoreColor.r, scoreColor.g, scoreColor.b)
-		if (AutoGearDB.ReasonsInTooltips == true) and tooltipItemInfo.unusable then
+		if (AutoGearDB.ReasonsInTooltips == true) and info.unusable then
 			tooltip:AddDoubleLine("AutoGear: won't auto-equip",
-			tooltipItemInfo.reason,
+			info.reason,
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b,
 			RED_FONT_COLOR.r,RED_FONT_COLOR.g,RED_FONT_COLOR.b)
 		end
 		if shouldShowBestSet then
-			local thisScore = math.floor(AutoGearDetermineItemScore(tooltipItemInfo) * 1000) / 1000
-			tooltip:AddDoubleLine(scoreLinePrefix.." score (this; "..tooltipItemInfo.link.."):",
+			local thisScore = math.floor(AutoGearDetermineItemScore(info) * 1000) / 1000
+			tooltip:AddDoubleLine(scoreLinePrefix.." score (this; "..info.link.."):",
 			tostring(thisScore or 0),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			scoreColor.r, scoreColor.g, scoreColor.b)
 			for i=1,(#bestSet or 0) do
 				if bestSet[i] and bestSet[i].info then
-					tooltip:AddDoubleLine(scoreLinePrefix.." score (best "..((tooltipItemInfo.numValidGearSlots or 0) > 2 and "set item "..tostring(i) or "pairing").."; "..(bestSet[i].info.link or bestSet[i].info.name).."):",
+					tooltip:AddDoubleLine(scoreLinePrefix.." score (best "..((info.numValidGearSlots or 0) > 2 and "set item "..tostring(i) or "pairing").."; "..(bestSet[i].info.link or bestSet[i].info.name).."):",
 					tostring(math.floor((bestSet[i].score or 0) * 1000) / 1000),
 					HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 					HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
@@ -4394,20 +4433,26 @@ function AutoGearTooltipHook(tooltip)
 	end
 	if (AutoGearDB.DebugInfoInTooltips == true) then
 		tooltip:AddDoubleLine(
+			"AutoGear: item GUID:",
+			tostring(info.guid or (info.item and info.item:GetItemGUID()) or "nil"),
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
+			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
+		)
+		tooltip:AddDoubleLine(
 			"AutoGear: item ID:",
-			tostring(tooltipItemInfo.id or "nil"),
+			tostring(info.id or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: item level:",
-			tostring(GetDetailedItemLevelInfo(tooltipItemInfo.link) or "nil"),
+			tostring(GetDetailedItemLevelInfo(info.link) or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: InventoryType:",
-			tostring(tooltipItemInfo.invType or "nil"),
+			tostring(info.invType or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
@@ -4425,13 +4470,13 @@ function AutoGearTooltipHook(tooltip)
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 				HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 			)
-			local pawnItemData = PawnGetItemData(tooltipItemInfo.link)
+			local pawnItemData = PawnGetItemData(info.link)
 			tooltip:AddDoubleLine(
 				"AutoGear: Pawn value:",
 				tostring(
-					tooltipItemInfo and (
-						tooltipItemInfo.link and (
-							PawnCanItemHaveStats(tooltipItemInfo.link) and (
+					info and (
+						info.link and (
+							PawnCanItemHaveStats(info.link) and (
 								pawnItemData and (
 									PawnGetSingleValueFromItem(
 										pawnItemData,AutoGearGetPawnScaleName()
@@ -4447,45 +4492,45 @@ function AutoGearTooltipHook(tooltip)
 		end
 		tooltip:AddDoubleLine(
 			"AutoGear: info.is1hWeaponOrOffHand:",
-			tostring(tooltipItemInfo.is1hWeaponOrOffHand or "nil"),
+			tostring(info.is1hWeaponOrOffHand or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: info.is2hWeapon:",
-			tostring(tooltipItemInfo.is2hWeapon or "nil"),
+			tostring(info.is2hWeapon or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: item class ID:",
-			tostring(tooltipItemInfo.classID or "nil"),
+			tostring(info.classID or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: item subclass ID:",
-			tostring(tooltipItemInfo.subclassID or "nil"),
+			tostring(info.subclassID or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: valid gear slots:",
-			table.concat(tooltipItemInfo.validGearSlots or {}, ", "),
+			table.concat(info.validGearSlots or {}, ", "),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
 		tooltip:AddDoubleLine(
 			"AutoGear: rarity:",
-			tostring(tooltipItemInfo.rarity or "nil"),
+			tostring(info.rarity or "nil"),
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
-			tooltipItemInfo.rarityColor and tooltipItemInfo.rarityColor.r or HIGHLIGHT_FONT_COLOR.r,
-			tooltipItemInfo.rarityColor and tooltipItemInfo.rarityColor.g or HIGHLIGHT_FONT_COLOR.g,
-			tooltipItemInfo.rarityColor and tooltipItemInfo.rarityColor.b or HIGHLIGHT_FONT_COLOR.b
+			info.rarityColor and info.rarityColor.r or HIGHLIGHT_FONT_COLOR.r,
+			info.rarityColor and info.rarityColor.g or HIGHLIGHT_FONT_COLOR.g,
+			info.rarityColor and info.rarityColor.b or HIGHLIGHT_FONT_COLOR.b
 		)
 		local soulbindingTable = {}
-		soulbindingTable[1] = tooltipItemInfo.boe and "BoE" or tooltipItemInfo.bop and "BoP" or "none"
-		if tooltipItemInfo.boe and tooltipItemInfo.bop then
+		soulbindingTable[1] = info.boe and "BoE" or info.bop and "BoP" or "none"
+		if info.boe and info.bop then
 			soulbindingTable[2] = "BoP"
 		end
 		tooltip:AddDoubleLine(

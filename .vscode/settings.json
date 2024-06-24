@@ -162,6 +162,7 @@
         "ITEM_BIND_ON_USE",
         "ITEM_BIND_TO_ACCOUNT",
         "ITEM_BIND_TO_BNETACCOUNT",
-        "ITEM_BIND_QUEST"
+        "ITEM_BIND_QUEST",
+        "Background"
     ]
 }
