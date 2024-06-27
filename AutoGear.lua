@@ -2182,6 +2182,8 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 		end
 		optionsSetup(optionsMenu)
 
+		hooksecurefunc("GetQuestReward", function() AutoGearQueueLocalUpdate() end)
+
 		AutoGearQueueLocalUpdate()
 
 		optionsMenu:UnregisterAllEvents()
