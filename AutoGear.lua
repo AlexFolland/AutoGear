@@ -70,6 +70,7 @@ local ContainerIDToInventoryID = ContainerIDToInventoryID or (C_Container and (C
 local GetContainerNumSlots = GetContainerNumSlots or (C_Container and (C_Container.GetContainerNumSlots))
 local PickupContainerItem = PickupContainerItem or (C_Container and (C_Container.PickupContainerItem))
 local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and (C_Container.GetContainerNumFreeSlots))
+local GetItemInventorySlotInfo = GetItemInventorySlotInfo or (C_Item and (C_Item.GetItemInventorySlotInfo))
 local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
 AutoGearWouldRoll = "nil"
 AutoGearSomeItemDataIsMissing = nil
@@ -79,6 +80,17 @@ AutoGearEquippableBagSlots = {}
 --initialize equippable bag slots table
 for i = BACKPACK_CONTAINER+1, NUM_BAG_SLOTS do
 	table.insert(AutoGearEquippableBagSlots, AutoGearFirstEquippableBagSlot+i-1)
+end
+
+--initialize gear slot names table
+AutoGearSlotNames = {}
+for _,v in pairs({PaperDollItemsFrame:GetChildren()}) do
+	if v.GetID and v.GetName then
+		local slotID = v:GetID()
+		if slotID >= INVSLOT_FIRST_EQUIPPED and slotID <= INVSLOT_LAST_EQUIPPED then
+			AutoGearSlotNames[slotID] = _G[strupper(strsub(v:GetName(), 10))]
+		end
+	end
 end
 
 function AutoGearSerializeTable(val, name, skipnewlines, depth)
@@ -313,12 +325,25 @@ function AutoGearGetDefaultOverrideSpec()
 	end
 end
 
+function AutoGearGetLockedGearSlotLabel(slot)
+	if slot >= INVSLOT_FIRST_EQUIPPED and slot <= INVSLOT_LAST_EQUIPPED then
+		local slotName = AutoGearSlotNames[slot] or GetItemInventorySlotInfo(slot)
+		return tostring(slot)..(slotName and ": "..slotName or "")
+	elseif slot >= AutoGearFirstEquippableBagSlot and slot <= AutoGearLastEquippableBagSlot then
+		local slotNumber = slot-AutoGearFirstEquippableBagSlot+1
+		local slotName = (BAGSLOT or "Bag").." "..tostring(slotNumber)
+		return tostring(slot)..(slotName and ": "..slotName or "")
+	else
+		return tostring(slot)
+	end
+end
+
 function AutoGearGetDefaultLockedGearSlots()
 	local lockedGearSlots = {}
-	for gearSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
-		if gearSlot <= INVSLOT_LAST_EQUIPPED or gearSlot >= AutoGearFirstEquippableBagSlot then
-			lockedGearSlots[gearSlot] = {
-				["label"] = tostring(gearSlot),
+	for slot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
+		if slot <= INVSLOT_LAST_EQUIPPED or slot >= AutoGearFirstEquippableBagSlot then
+			lockedGearSlots[slot] = {
+				["label"] = AutoGearGetLockedGearSlotLabel(slot),
 				["enabled"] = false
 			}
 		end
@@ -335,13 +360,15 @@ end
 
 function AutoGearFixLockedGearSlots() -- finds missing slots and adds them, in case Blizzard changed them around
 	if not AutoGearDB.LockedGearSlots then AutoGearDB.LockedGearSlots = AutoGearGetDefaultLockedGearSlots() return end
-	for gearSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
-		if gearSlot <= INVSLOT_LAST_EQUIPPED or gearSlot >= AutoGearFirstEquippableBagSlot then
-			if not AutoGearDB.LockedGearSlots[gearSlot] then
-				AutoGearDB.LockedGearSlots[gearSlot] = {
-					["label"] = tostring(gearSlot),
+	for slot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
+		if slot <= INVSLOT_LAST_EQUIPPED or slot >= AutoGearFirstEquippableBagSlot then
+			if not AutoGearDB.LockedGearSlots[slot] then
+				AutoGearDB.LockedGearSlots[slot] = {
+					["label"] = AutoGearGetLockedGearSlotLabel(slot),
 					["enabled"] = false
 				}
+			elseif AutoGearDB.LockedGearSlots[slot].label then
+				AutoGearDB.LockedGearSlots[slot].label = AutoGearGetLockedGearSlotLabel(slot)
 			end
 		end
 	end
@@ -2155,7 +2182,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 		end
 		optionsSetup(optionsMenu)
 
-		AutoGearUpdateBestItems()
+		AutoGearQueueLocalUpdate()
 
 		optionsMenu:UnregisterAllEvents()
 		optionsMenu:SetScript("OnEvent", nil)
@@ -2193,7 +2220,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 			AutoGearFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 			AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
 		end
-		
+
 		if TOC_VERSION_CURRENT >= TOC_VERSION_CATA then
 			-- "CONFIRM_DISENCHANT_ROLL" will be added to WoW Classic in a later phase of Cataclysm Classic. Source: https://youtube.com/watch?v=f8zWAPDUTkc&t=2498s
 			-- AutoGearFrame:RegisterEvent("CONFIRM_DISENCHANT_ROLL")
@@ -2427,7 +2454,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			AutoGearConsiderAllItems()
 		end
 	elseif event == "PLAYER_EQUIPMENT_CHANGED" or event == "BAG_CONTAINER_UPDATE" then
-		AutoGearUpdateBestItems()
+		AutoGearQueueLocalUpdate()
 	elseif event == "START_LOOT_ROLL" then
 		local link = GetLootRollItemLink(arg1)
 		AutoGearHandleLootRoll(link, arg1)
@@ -2654,6 +2681,16 @@ function AutoGearItemContainsText(container, slot, search)
 	return nil
 end
 
+function AutoGearUpdateEquippedItem(invSlot)
+	local info, score
+	info = AutoGearReadItemInfo(invSlot)
+	score = AutoGearDetermineItemScore(info)
+	AutoGearEquippedItems[invSlot] = {}
+	AutoGearEquippedItems[invSlot].info = info
+	AutoGearEquippedItems[invSlot].score = score
+	AutoGearEquippedItems[invSlot].equipped = 1
+end
+
 function AutoGearUpdateEquippedItems()
 	AutoGearSetStatWeights()
 	-- AutoGearItemInfoCache = {}
@@ -2661,12 +2698,7 @@ function AutoGearUpdateEquippedItems()
 	local info, score
 	for invSlot = INVSLOT_FIRST_EQUIPPED, AutoGearLastEquippableBagSlot do
 		if invSlot <= INVSLOT_LAST_EQUIPPED or invSlot >= AutoGearFirstEquippableBagSlot then
-			info = AutoGearReadItemInfo(invSlot)
-			score = AutoGearDetermineItemScore(info)
-			AutoGearEquippedItems[invSlot] = {}
-			AutoGearEquippedItems[invSlot].info = info
-			AutoGearEquippedItems[invSlot].score = score
-			AutoGearEquippedItems[invSlot].equipped = 1
+			AutoGearUpdateEquippedItem(invSlot)
 		end
 	end
 
@@ -3448,9 +3480,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				info.name = textLeft:GetText()
 				if info.name == "Retrieving item information" or not info.item:IsItemDataCached() then
 					if not AutoGearSomeItemDataIsMissing then
-						AutoGearPrint("AutoGear: An item was not yet ready on the client side when updating AutoGear's local item info, so updating AutoGear's table of equipped items again.",3)
-						table.insert(AutoGearActionQueue, { action = "localupdate", t = GetTime() + 0.5 })
 						AutoGearSomeItemDataIsMissing = 1
+						AutoGearPrint("AutoGear: An item was not yet ready on the client side when updating AutoGear's local item info, so updating AutoGear's table of equipped items again.",3)
+						AutoGearQueueLocalUpdate()
 					end
 					info.unusable = 1
 					info.reason = "(this item's tooltip is not yet available)"
@@ -4165,17 +4197,21 @@ function AutoGearRecursivePrint(s, l, i) -- recursive Print (structure, limit, i
 	return l
 end
 
-function AutoGearDump(o)
+local function localDump(o)
     if type(o) == 'table' then
-        local s = '{ '
+        local s = '{' .. string.char(10)
         for k,v in pairs(o) do
-                if type(k) ~= 'number' then k = '"'..k..'"' end
-                s = s .. '['..k..'] = ' .. AutoGearDump(v) .. ','
+                if type(k) == 'string' then k = '"'..k..'"' end
+                s = '  ' .. s .. '['..tostring(k)..'] = ' .. localDump(v) .. ',' .. string.char(10)
         end
-        return s .. '} '
+        return s .. '}' .. string.char(10)
     else
         return tostring(o)
     end
+end
+
+function AutoGearDump(o)
+	AutoGearPrint(localDump(o))
 end
 
 function AutoGearGetTooltipScoreComparisonInfo(info, equipped)
@@ -4572,6 +4608,9 @@ ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
 
+function AutoGearQueueLocalUpdate()
+	table.insert(AutoGearActionQueue, { action = "localupdate", t = GetTime() + 0.5 })
+end
 
 function AutoGearMain()
 	if (GetTime() - tUpdate > 0.05) then
@@ -4579,15 +4618,14 @@ function AutoGearMain()
 		--future actions
 		for i, curAction in ipairs(AutoGearActionQueue) do
 			-- if there's any item data missing, don't do anything that matters and instead try updating again
-			if AutoGearSomeItemDataIsMissing then
-				if curAction.action == "localupdate" and AutoGearItemDataIsGenerallyAvailable then
-					if GetTime() > curAction.t then
-						AutoGearSomeItemDataIsMissing = nil
-						AutoGearUpdateBestItems() -- this will set AutoGearSomeItemDataIsMissing again if necessary
-						table.remove(AutoGearActionQueue, i)
-					end
+			if curAction.action == "localupdate" and AutoGearItemDataIsGenerallyAvailable then
+				if GetTime() > curAction.t then
+					AutoGearSomeItemDataIsMissing = nil
+					AutoGearUpdateBestItems() -- this will set AutoGearSomeItemDataIsMissing again if necessary
+					table.remove(AutoGearActionQueue, i)
 				end
-			else
+			end
+			if AutoGearItemDataIsGenerallyAvailable and (not AutoGearSomeItemDataIsMissing) then
 				if curAction.action == "roll" then
 					if GetTime() > curAction.t then
 						if curAction.rollType == 1 then
@@ -4622,6 +4660,7 @@ function AutoGearMain()
 									table.remove(AutoGearActionQueue, i)
 								end
 							elseif (curAction.waitingOnEmptyMainHand and not AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
+								AutoGearUpdateEquippedItem(INVSLOT_MAINHAND)
 							elseif (curAction.waitingOnEmptyMainHand and AutoGearEquippedItems[INVSLOT_MAINHAND].info.empty) then
 								AutoGearPrint("AutoGear: Main hand detected to be clear.  Equipping now.", 1)
 								curAction.waitingOnEmptyMainHand = nil
@@ -4654,7 +4693,7 @@ function AutoGearMain()
 				elseif (curAction.action == "scan") then
 					if (GetTime() > curAction.t) then
 						AutoGearConsiderAllItems()
-						table.remove(AutoGearActionQueue, i)
+						if not AutoGearSomeItemDataIsMissing then table.remove(AutoGearActionQueue, i) end
 					end
 				end
 			end

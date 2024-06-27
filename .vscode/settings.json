@@ -163,6 +163,9 @@
         "ITEM_BIND_TO_ACCOUNT",
         "ITEM_BIND_TO_BNETACCOUNT",
         "ITEM_BIND_QUEST",
-        "Background"
+        "Background",
+        "INVTYPE_BAG",
+        "BAGSLOT",
+        "PaperDollItemsFrame"
     ]
 }
