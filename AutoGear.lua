@@ -4310,6 +4310,7 @@ function AutoGearIsGearPairEquippableTogether(a, b)
 end
 
 function AutoGearGetBestSetItems(info)
+	if not AutoGearBestItems then AutoGearUpdateBestItems() end
 	local setSlots = AutoGearGetSetSlots(info)
 	local bestSetScore = 0
 	local bestSet = {}
@@ -4319,6 +4320,9 @@ function AutoGearGetBestSetItems(info)
 	local thisIsABestItem
 	if setSlots then
 		for i,slot in ipairs(setSlots) do
+			if (not AutoGearBestItems) or (not AutoGearBestItems[slot]) or (AutoGearBestItems[slot].info and AutoGearBestItems[slot].info.empty) then
+				return bestSet, bestSetScore, 1, lowestBestItemScore
+			end
 			if AutoGearBestItems[slot].info and (
 				(
 					AutoGearBestItems[slot].info.link
@@ -4339,7 +4343,8 @@ function AutoGearGetBestSetItems(info)
 			) then
 				thisIsABestItem = 1
 			end
-			if AutoGearIsGearPairEquippableTogether(info, AutoGearBestItems[slot].info) then
+			if AutoGearBestItems[slot].info
+			and AutoGearIsGearPairEquippableTogether(info, AutoGearBestItems[slot].info) then
 				bestItem = AutoGearBestItems[slot]
 				if lowestBestItemScore == 0
 				or bestItem.score < lowestBestItemScore then
