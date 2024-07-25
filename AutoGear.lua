@@ -4676,9 +4676,11 @@ function AutoGearMain()
 								and curAction.info and curAction.info.item and curAction.info.item.GetItemLocation and curAction.info.item:HasItemLocation() then
 									local itemLocation = curAction.info.item:GetItemLocation()
 									curAction.container, curAction.slot = itemLocation:GetBagAndSlot()
-								else
-									AutoGearPrint("Error: AutoGearActionQueue current action has either no container or no slot!", 3)
-									-- table.remove(AutoGearActionQueue, i)
+								end
+								if (not curAction.container) or (not curAction.slot) then
+									AutoGearBrokenAction = curAction
+									AutoGearPrint("Error: The current equip action has either no container or no slot! This should never happen, so it must be a bug. It's now been saved to global variable AutoGearBrokenAction, so try \"/dump AutoGearBrokenAction\" and send the output to the AutoGear author.",0)
+									table.remove(AutoGearActionQueue, i)
 								end
 								PickupContainerItem(curAction.container, curAction.slot)
 								EquipCursorItem(curAction.replaceSlot)
