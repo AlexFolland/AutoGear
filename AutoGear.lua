@@ -256,7 +256,7 @@ if TOC_VERSION_CURRENT < TOC_VERSION_MOP then
 		local highestPointsSpent = nil
 		local numTalentTabs = GetNumTalentTabs()
 		if (not numTalentTabs) or (numTalentTabs < 2) then
-			AutoGearPrint("AutoGear: numTalentTabs in AutoGearGetSpec() is "..tostring(numTalentTabs).."; item data generally available: "..tostring(AutoGearItemDataIsGenerallyAvailable or "nil"),0)
+			AutoGearPrint("AutoGear: numTalentTabs in AutoGearGetSpec() is "..tostring(numTalentTabs),0)
 		end
 		-- It needs a condition of being above 0 or else it will assign highestSpec to the first talent tree even if there are 0 points in it.
 		local _, spec, _, _, pointsSpent = GetTalentTabInfo(1)
@@ -2189,7 +2189,6 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 		optionsMenu:UnregisterAllEvents()
 		optionsMenu:SetScript("OnEvent", nil)
 
-		AutoGearFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 		AutoGearFrame:RegisterEvent("PARTY_INVITE_REQUEST")
 		AutoGearFrame:RegisterEvent("START_LOOT_ROLL")
 		AutoGearFrame:RegisterEvent("CONFIRM_LOOT_ROLL")
@@ -2449,12 +2448,9 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 	end
 
 	if event == "PLAYER_SPECIALIZATION_CHANGED" and arg1 == "player" then
-		--make sure this doesn't happen as part of logon
-		if AutoGearItemDataIsGenerallyAvailable then
-			local localizedClass, class, spec = AutoGearGetClassAndSpec()
-			AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..".", 2)
-			AutoGearConsiderAllItems()
-		end
+		local localizedClass, class, spec = AutoGearGetClassAndSpec()
+		AutoGearPrint("AutoGear: Talent specialization changed.  Considering all items for gear that's better suited for "..RAID_CLASS_COLORS[class]:WrapTextInColorCode(spec.." "..localizedClass)..".", 2)
+		AutoGearConsiderAllItems()
 	elseif event == "PLAYER_EQUIPMENT_CHANGED" or event == "BAG_CONTAINER_UPDATE" then
 		AutoGearQueueLocalUpdate()
 	elseif event == "START_LOOT_ROLL" then
@@ -2575,11 +2571,6 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					AutoGearPrint("AutoGear: Not enough money to repair all items ("..cashString..").", 0)
 				end
 			end
-		end
-	elseif event == "GET_ITEM_INFO_RECEIVED" then
-		if not AutoGearItemDataIsGenerallyAvailable then
-			AutoGearItemDataIsGenerallyAvailable = 1
-			AutoGearFrame:UnregisterEvent(event)
 		end
 	elseif event ~= "ADDON_LOADED" then
 		AutoGearPrint("AutoGear: event fired: "..event, 3)
@@ -4625,14 +4616,14 @@ function AutoGearMain()
 		--future actions
 		for i, curAction in ipairs(AutoGearActionQueue) do
 			-- if there's any item data missing, don't do anything that matters and instead try updating again
-			if curAction.action == "localupdate" and AutoGearItemDataIsGenerallyAvailable then
+			if curAction.action == "localupdate" then
 				if GetTime() > curAction.t then
 					AutoGearSomeItemDataIsMissing = nil
 					AutoGearUpdateBestItems() -- this will set AutoGearSomeItemDataIsMissing again if necessary
 					table.remove(AutoGearActionQueue, i)
 				end
 			end
-			if AutoGearItemDataIsGenerallyAvailable and (not AutoGearSomeItemDataIsMissing) then
+			if (not AutoGearSomeItemDataIsMissing) then
 				if curAction.action == "roll" then
 					if GetTime() > curAction.t then
 						if curAction.rollType == 1 then
