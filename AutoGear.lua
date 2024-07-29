@@ -3525,7 +3525,8 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			and (
 				string.find(text, " bag") or
 				string.find(text, " quiver") or
-				string.find(text, " ammo pouch")
+				string.find(text, " ammo pouch") or
+				string.find(text, " tackle box")
 			) then
 				info.numBagSlots = (info.numBagSlots or 0) + value
 			end
