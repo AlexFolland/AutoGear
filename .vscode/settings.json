@@ -166,6 +166,7 @@
         "Background",
         "INVTYPE_BAG",
         "BAGSLOT",
-        "PaperDollItemsFrame"
+        "PaperDollItemsFrame",
+        "Settings"
     ]
 }

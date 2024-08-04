@@ -72,6 +72,22 @@ local PickupContainerItem = PickupContainerItem or (C_Container and (C_Container
 local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and (C_Container.GetContainerNumFreeSlots))
 local GetItemInventorySlotInfo = GetItemInventorySlotInfo or (C_Item and (C_Item.GetItemInventorySlotInfo))
 local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
+local InterfaceOptions_AddCategory = InterfaceOptions_AddCategory or function(frame, addOn, position)
+	frame.OnCommit = frame.okay
+	frame.OnDefault = frame.default
+	frame.OnRefresh = frame.refresh
+
+	if frame.parent then
+		local category = Settings.GetCategory(frame.parent)
+		local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, frame, frame.name, frame.name)
+		return subcategory, category
+	else
+		local category, layout = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name)
+		Settings.RegisterCategory(category)
+		return category
+	end
+end
+local InterfaceOptionsFrame_OpenToCategory = InterfaceOptionsFrame_OpenToCategory or Settings.OpenToCategory
 AutoGearWouldRoll = "nil"
 AutoGearSomeItemDataIsMissing = nil
 AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID(1) or 20
