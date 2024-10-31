@@ -72,6 +72,10 @@ local PickupContainerItem = PickupContainerItem or (C_Container and (C_Container
 local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and (C_Container.GetContainerNumFreeSlots))
 local GetItemInventorySlotInfo = GetItemInventorySlotInfo or (C_Item and (C_Item.GetItemInventorySlotInfo))
 local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
+local GetMouseFocus = GetMouseFocus or (GetMouseFoci and (function()
+	local frames = GetMouseFoci()
+	return frames and frames[1];
+end))
 local InterfaceOptions_AddCategory = InterfaceOptions_AddCategory or function(frame, addOn, position)
 	frame.OnCommit = frame.okay
 	frame.OnDefault = frame.default
