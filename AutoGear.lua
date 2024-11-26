@@ -183,9 +183,13 @@ if (not AutoGearDB) then AutoGearDB = {} end
 -- AutoGearItemInfoCache = {}
 
 --fill class lists for lookups later
-AutoGearClassList = {}
 local playerIsFemale = (C_PlayerInfo.GetSex(PlayerLocation:CreateFromUnit("player")) == 1)
-FillLocalizedClassList(AutoGearClassList, playerIsFemale)
+if _G.FillLocalizedClassList then
+	AutoGearClassList = {}
+	FillLocalizedClassList(AutoGearClassList, playerIsFemale)
+else
+	AutoGearClassList = LocalizedClassList(playerIsFemale)
+end
 if not AutoGearClassList["DEATHKNIGHT"] then AutoGearClassList["DEATHKNIGHT"] = "Death Knight" end
 if not AutoGearClassList["DEMONHUNTER"] then AutoGearClassList["DEMONHUNTER"] = "Demon Hunter" end
 if not AutoGearClassList["EVOKER"] then AutoGearClassList["EVOKER"] = "Evoker" end
