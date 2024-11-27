@@ -4420,16 +4420,9 @@ function AutoGearGetBestSetItems(info)
 					bestInfo.link
 					and bestInfo.link == info.link
 				) or (
-					info.guid
-					and (
-						(
-							bestInfo.guid and
-							bestInfo.guid == info.guid
-						) or (
-							bestInfo.itemLocation
-							and C_Item.GetItemGUID(bestInfo.itemLocation) == info.guid
-						)
-					)
+					info.guid and
+					bestInfo.guid and
+					bestInfo.guid == info.guid
 				)
 			) then
 				thisIsABestItem = 1
