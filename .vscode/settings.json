@@ -92,7 +92,9 @@
         "INVTYPE_BAG",
         "BAGSLOT",
         "PaperDollItemsFrame",
-        "Settings"
+        "Settings",
+        "EmbeddedItemTooltip",
+        "SettingsPanel"
     ],
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {

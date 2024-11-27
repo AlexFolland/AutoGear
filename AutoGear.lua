@@ -68,11 +68,13 @@ local tUpdate = 0
 local shouldPrintHelp = false
 local maxPlayerLevel = GetMaxPlayerLevel and GetMaxPlayerLevel() or GetMaxLevelForExpansionLevel(GetExpansionLevel())
 local L = T.Localization
-local ContainerIDToInventoryID = ContainerIDToInventoryID or (C_Container and (C_Container.ContainerIDToInventoryID))
-local GetContainerNumSlots = GetContainerNumSlots or (C_Container and (C_Container.GetContainerNumSlots))
-local PickupContainerItem = PickupContainerItem or (C_Container and (C_Container.PickupContainerItem))
-local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and (C_Container.GetContainerNumFreeSlots))
-local GetItemInventorySlotInfo = GetItemInventorySlotInfo or (C_Item and (C_Item.GetItemInventorySlotInfo))
+local ContainerIDToInventoryID = ContainerIDToInventoryID or (C_Container and C_Container.ContainerIDToInventoryID)
+local GetContainerNumSlots = GetContainerNumSlots or (C_Container and C_Container.GetContainerNumSlots)
+local PickupContainerItem = PickupContainerItem or (C_Container and C_Container.PickupContainerItem)
+local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and C_Container.GetContainerNumFreeSlots)
+local GetItemInventorySlotInfo = GetItemInventorySlotInfo or (C_Item and C_Item.GetItemInventorySlotInfo)
+local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
+local GetItemInfoInstant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
 local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
 local GetMouseFocus = GetMouseFocus or (GetMouseFoci and (function()
 	local frames = GetMouseFoci()
@@ -85,11 +87,11 @@ local InterfaceOptions_AddCategory = InterfaceOptions_AddCategory or function(fr
 
 	if frame.parent then
 		local category = Settings.GetCategory(frame.parent)
-		local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, frame, frame.name, frame.name)
+		local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, frame, frame.name)
 		return subcategory, category
 	else
 		local category, layout = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name)
-		Settings.RegisterCategory(category)
+		Settings.RegisterAddOnCategory(category)
 		return category
 	end
 end
@@ -1680,14 +1682,22 @@ local function newCheckbox(dbname, label, description, onClick, optionsMenu)
 		local tick = self:GetChecked()
 		onClick(self, tick and true or false)
 		if tick then
-			PlaySound(856) -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 		else
-			PlaySound(857) -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF
+			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 		end
 	end)
 	check.label = _G[check:GetName().."Text"]
 	check.label:SetText(label)
 	check.tooltipText = label
+	check:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_NONE")
+		GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+		GameTooltip:AddLine(label,NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b,true)
+		GameTooltip:AddLine(description,HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,true)
+		GameTooltip:Show()
+	end)
+	check:SetScript("OnLeave", function() GameTooltip:Hide() end)
 	check.tooltipRequirement = description
 	return check
 end
@@ -1897,7 +1907,8 @@ local function optionsSetup(optionsMenu)
 	frame[i]:SetScript("OnLeave", function() GameTooltip:Hide() end)
 end
 
-local optionsMenu = CreateFrame("Frame", "AutoGearOptionsPanel", InterfaceOptionsFramePanelContainer)
+local optionsMenu = CreateFrame("Frame", "AutoGearOptionsPanel")
+-- local optionsMenu = CreateFrame("Frame", "AutoGearOptionsPanel", InterfaceOptionsFramePanelContainer)
 optionsMenu.name = "AutoGear"
 InterfaceOptions_AddCategory(optionsMenu)
 if InterfaceAddOnsList_Update then InterfaceAddOnsList_Update() end
@@ -2333,10 +2344,22 @@ SlashCmdList["AutoGear"] = function(msg)
 			AutoGearPrint("AutoGear: Pawn is not installed.",0)
 		end
 	elseif (param1 == "") then
-		if not InterfaceAddOnsList_Update then
+		if Settings and Settings.OpenToCategory then
+			local categoryID
+			local categoryName = C_AddOns.GetAddOnMetadata("AutoGear", "Title")
+			for _, category in next, SettingsPanel:GetAllCategories() do
+				if category.name == categoryName then
+					assert(not categoryID, 'found multiple instances of the same category')
+					categoryID = category:GetID()
+				end
+			end
+			Settings.OpenToCategory(categoryID)
+		else
+			if not InterfaceAddOnsList_Update then
+				InterfaceOptionsFrame_OpenToCategory(optionsMenu)
+			end
 			InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 		end
-		InterfaceOptionsFrame_OpenToCategory(optionsMenu)
 	else
 		shouldPrintHelp = true
 	end
@@ -4456,17 +4479,16 @@ end
 function AutoGearTooltipHook(tooltip)
 	if (not AutoGearDB.ScoreInTooltips) then return end
 	local tooltipName = tooltip:GetName()
-	if not (tooltipName=="GameTooltip" or tooltipName=="ShoppingTooltip1" or tooltipName=="ShoppingTooltip2" or tooltipName=="ItemRefTooltip") then return end
+	if (not (tooltipName=="GameTooltip" or tooltipName=="ShoppingTooltip1" or tooltipName=="ShoppingTooltip2" or tooltipName=="ItemRefTooltip")) or (not tooltip:IsVisible()) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
 	local name, link, equipped, guid, tooltipData
 	if tooltip.GetTooltipData then
 		tooltipData = tooltip:GetTooltipData()
-		if not tooltipData then return end
+		if not tooltipData then tooltip:AddDoubleLine("AutoGear error:", "no tooltip data") return end
 		guid = tooltipData.guid
-		if not guid then return end
 		name = tooltipData.lines[1].leftText
-		link = C_Item.GetItemLinkByGUID(guid)
-		equipped = AutoGearGetEquippedSlotFromItemGUID(guid)
+		link = tooltipData.hyperlink or (guid and C_Item.GetItemLinkByGUID(guid))
+		equipped = guid and AutoGearGetEquippedSlotFromItemGUID(guid)
 	elseif tooltip.GetItem then
 		name, link = tooltip:GetItem()
 		if tooltip.IsEquippedItem then
@@ -4474,6 +4496,9 @@ function AutoGearTooltipHook(tooltip)
 		else return end
 	end
 	if not link then
+		if not guid then
+			tooltip:AddDoubleLine("AutoGear tooltip error:", "no item link or GUID")
+		end
 		AutoGearPrint("AutoGear: No item link for "..(name or "(no name)").." on "..tooltipName,3)
 		return
 	end
