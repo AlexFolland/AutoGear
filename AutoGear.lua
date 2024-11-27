@@ -46,6 +46,7 @@ local _, T = ...
 --- - BfA: 80000
 --- - SL: 90000
 --- - DF: 100000
+--- - DF: 110000
 local TOC_VERSION_CURRENT = select(4, GetBuildInfo())
 local TOC_VERSION_TBC = 20000
 local TOC_VERSION_WOTLK = 30000
@@ -56,6 +57,7 @@ local TOC_VERSION_LEGION = 70000
 local TOC_VERSION_BFA = 80000
 local TOC_VERSION_SL = 90000
 local TOC_VERSION_DF = 100000
+local TOC_VERSION_TWW = 110000
 
 local _ --prevent taint when using throwaway variable
 local next = next -- bind next locally for speed
@@ -3351,11 +3353,15 @@ function AutoGearPrintItem(info)
 	end
 end
 
-function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex, link)
-	AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE")
-	AutoGearTooltip:ClearLines()
+function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRewardIndex, link, tooltipData)
+	if not tooltipData then
+		AutoGearTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+		AutoGearTooltip:ClearLines()
+	end
 
 	local info = {}
+
+	info.link = link
 
 	if container and slot then
 		info.item = Item:CreateFromBagAndSlot(container, slot)
@@ -3364,8 +3370,10 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			info.name = "nothing"
 			return info
 		end
-		info.link = info.item:GetItemLink()
-		AutoGearTooltip:SetBagItem(container, slot)
+		if not info.link then
+			info.link = info.item:GetItemLink()
+		end
+		if not tooltipData then AutoGearTooltip:SetBagItem(container, slot) end
 	elseif inventoryID then
 		info.item = Item:CreateFromEquipmentSlot(inventoryID)
 		if info.item:IsItemEmpty() then
@@ -3373,20 +3381,26 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			info.name = "nothing"
 			return info
 		end
-		info.link = info.item:GetItemLink()
-		AutoGearTooltip:SetInventoryItem("player", inventoryID)
+		if not info.link then
+			info.link = info.item:GetItemLink()
+		end
+		if not tooltipData then AutoGearTooltip:SetInventoryItem("player", inventoryID) end
 	elseif lootRollID then
-		info.link = GetLootRollItemLink(lootRollID)
+		if not info.link then
+			info.link = GetLootRollItemLink(lootRollID)
+		end
 		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(info.link)))
-		AutoGearTooltip:SetLootRollItem(lootRollID)
+		if not tooltipData then AutoGearTooltip:SetLootRollItem(lootRollID) end
 	elseif questRewardIndex then
-		info.link = GetQuestItemLink("choice", questRewardIndex)
+		if not info.link then
+			info.link = GetQuestItemLink("choice", questRewardIndex)
+		end
 		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(info.link)))
-		AutoGearTooltip:SetQuestItem("choice", questRewardIndex)
+		if not tooltipData then AutoGearTooltip:SetQuestItem("choice", questRewardIndex) end
 	elseif link then
 		info.link = link
 		info.item = Item:CreateFromItemLink(select(3,ExtractHyperlinkString(info.link)))
-		AutoGearTooltip:SetHyperlink(info.link)
+		if not tooltipData then AutoGearTooltip:SetHyperlink(info.link) end
 	else
 		AutoGearPrint(
 			"inventoryID: "..tostring(inventoryID or "nil")..
@@ -3417,7 +3431,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	info.name = C_Item.GetItemNameByID(info.id)
 	info.rarity = info.item:GetItemQuality()
 	info.rarityColor = info.item:GetItemQualityColor()
-	info.guid = info.item:GetItemGUID()
+	info.guid = tooltipData and tooltipData.guid or info.item:GetItemGUID()
 	if info.link == nil then
 		AutoGearPrint("Error: "..tostring(info.name or "nil").." doesn't have a link",3)
 		AutoGearPrint(
@@ -3485,16 +3499,30 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 		end
 	end
 
-	local numLines = AutoGearTooltip:NumLines()
+	local numLines = tooltipData and #tooltipData.lines or AutoGearTooltip:NumLines()
+	local textLeft, textRight
 
 	for i = 1, numLines do
-		local textLeft = getglobal("AutoGearTooltipTextLeft"..i)
+		local textLeftText
+		if tooltipData and tooltipData.lines then
+			textLeft = tooltipData.lines[i].leftText
+			textLeftText = textLeft
+		else
+			textLeft = getglobal("AutoGearTooltipTextLeft"..i)
+		end
 		if textLeft then
-			local r, g, b = textLeft:GetTextColor()
-			local textLeftText = textLeft:GetText()
+			local r, g, b
+			if textLeft.GetTextColor then
+				r, g, b = textLeft:GetTextColor()
+			else
+				r, g, b = tooltipData.lines[i].leftColor:GetRGB()
+			end
+			if not textLeftText then
+				textLeftText = textLeft:GetText()
+			end
 			local text = select(1,string.gsub(textLeftText:lower(),",",""))
 			if i==1 then
-				info.name = textLeft:GetText()
+				info.name = textLeftText
 				if info.name == "Retrieving item information" or not info.item:IsItemDataCached() then
 					if not AutoGearSomeItemDataIsMissing then
 						AutoGearSomeItemDataIsMissing = 1
@@ -3635,10 +3663,23 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			end
 
 			--check for red text on the right side
-			local textRight = getglobal("AutoGearTooltipTextRight"..i)
+			local textRight, textRightText
+			if tooltipData and tooltipData.lines then
+				textRight = tooltipData.lines[i].textRight
+				textRightText = textRight
+			else
+				textRight = getglobal("AutoGearTooltipTextRight"..i)
+			end
 			if textRight then
-				local r, g, b = textRight:GetTextColor()
-				local textRightText = textRight:GetText()
+				local r, g, b
+				if textRight.GetTextColor then
+					r, g, b = textRight:GetTextColor()
+				else
+					r, g, b = tooltipData.lines[i].rightColor:GetRGB()
+				end
+				if not textRightText then
+					textRightText = textRight:GetText()
+				end
 				if ((g==0 or r/g>3) and (b==0 or r/b>3) and math.abs(b-g)<0.1 and r>0.5 and textRightText) then --this is red text
 					info.reason = "(found red text: \""..textRightText.."\")"
 					info.unusable = 1
@@ -4405,18 +4446,40 @@ function AutoGearDetectHoveredItemGUID()
 	end
 end
 
+function AutoGearGetEquippedSlotFromItemGUID(guid)
+	if not guid then return end
+	for slot,item in pairs(AutoGearEquippedItems) do
+		if (item.info.guid == guid) and item.equipped then return slot end
+	end
+end
+
 function AutoGearTooltipHook(tooltip)
 	if (not AutoGearDB.ScoreInTooltips) then return end
+	local tooltipName = tooltip:GetName()
+	if not (tooltipName=="GameTooltip" or tooltipName=="ShoppingTooltip1" or tooltipName=="ShoppingTooltip2" or tooltipName=="ItemRefTooltip") then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
-	local name, link = tooltip:GetItem()
-	local equipped = tooltip:IsEquippedItem()
+	local name, link, equipped, guid, tooltipData
+	if tooltip.GetTooltipData then
+		tooltipData = tooltip:GetTooltipData()
+		if not tooltipData then return end
+		guid = tooltipData.guid
+		if not guid then return end
+		name = tooltipData.lines[1].leftText
+		link = C_Item.GetItemLinkByGUID(guid)
+		equipped = AutoGearGetEquippedSlotFromItemGUID(guid)
+	elseif tooltip.GetItem then
+		name, link = tooltip:GetItem()
+		if tooltip.IsEquippedItem then
+			equipped = tooltip:IsEquippedItem(tooltip)
+		else return end
+	end
 	if not link then
-		AutoGearPrint("AutoGear: No item link for "..(name or "(no name)").." on "..tooltip:GetName(),3)
+		AutoGearPrint("AutoGear: No item link for "..(name or "(no name)").." on "..tooltipName,3)
 		return
 	end
-	local info = AutoGearReadItemInfo(nil,nil,nil,nil,nil,link)
+	local info = AutoGearReadItemInfo(nil,nil,nil,nil,nil,link,tooltipData)
 
-	local isAComparisonTooltip = tooltip:GetName() ~= "GameTooltip"
+	local isAComparisonTooltip = tooltipName ~= "GameTooltip"
 	if (not isAComparisonTooltip) and (not info.guid) then
 		info.guid = AutoGearDetectHoveredItemGUID()
 	end
@@ -4624,12 +4687,18 @@ function AutoGearTooltipHook(tooltip)
 		-- 	HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		-- )
 	end
+	-- AutoGearPrint("tooltip type:"..tostring(tooltipData))
+	-- AutoGearPrint("name: "..tostring(name).."; link: "..tostring(link).."; guid: "..tostring(guid).."; equipped: "..tostring(AutoGearSlotNames and AutoGearSlotNames[equipped] or equipped))
 end
 
-GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
-ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+if TooltipDataProcessor then
+	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, AutoGearTooltipHook)
+else
+	GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+	ShoppingTooltip1:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+	ShoppingTooltip2:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+	ItemRefTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
+end
 
 function AutoGearQueueLocalUpdate()
 	table.insert(AutoGearActionQueue, { action = "localupdate", t = GetTime() + 0.5 })

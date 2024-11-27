@@ -1,4 +1,4 @@
-## Interface: 40400
+## Interface: 40401
 ## Title: AutoGear
 ## Notes: Automatically chooses loot and equips gear
 ## Author: Synthetikaryote, BujuArena
