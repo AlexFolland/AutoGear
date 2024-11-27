@@ -73,6 +73,13 @@ local GetContainerNumSlots = GetContainerNumSlots or (C_Container and C_Containe
 local PickupContainerItem = PickupContainerItem or (C_Container and C_Container.PickupContainerItem)
 local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and C_Container.GetContainerNumFreeSlots)
 local GetItemInventorySlotInfo = GetItemInventorySlotInfo or (C_Item and C_Item.GetItemInventorySlotInfo)
+local GetItemCount = (C_Item and function(info, includeBank, includeUses, includeReagentBank, includeAccountBank)
+	if info then
+		return C_Item.GetItemCount(info, includeBank or false, includeUses or false, includeReagentBank or true, includeAccountBank or true)
+	end
+end) or GetItemCount
+local GetItemSpell = GetItemSpell or (C_Item and C_Item.GetItemSpell)
+local GetDetailedItemLevelInfo = (C_Item and C_Item.GetDetailedItemLevelInfo) or GetDetailedItemLevelInfo
 local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
 local GetItemInfoInstant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
 local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
@@ -2762,18 +2769,18 @@ function AutoGearUpdateEquippedItems()
 end
 
 function AutoGearDeepCopy(object)
-    local object_type = type(object)
-    local newObject
-    if object_type == 'table' then
-        newObject = {}
-        for orig_key, orig_value in next, object, nil do
-            newObject[AutoGearDeepCopy(orig_key)] = AutoGearDeepCopy(orig_value)
-        end
-        setmetatable(newObject, AutoGearDeepCopy(getmetatable(object)))
-    else -- number, string, boolean, etc
-        newObject = object
-    end
-    return newObject
+	local object_type = type(object)
+	local newObject
+	if object_type == 'table' then
+		newObject = {}
+		for orig_key, orig_value in next, object, nil do
+			newObject[AutoGearDeepCopy(orig_key)] = AutoGearDeepCopy(orig_value)
+		end
+		setmetatable(newObject, AutoGearDeepCopy(getmetatable(object)))
+	else -- number, string, boolean, etc
+		newObject = object
+	end
+	return newObject
 end
 
 function AutoGearUpdateBestItems()
@@ -3437,6 +3444,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 	end
 
 	info.id = info.item:GetItemID()
+	info.itemLocation = info.item and info.item.HasItemLocation and info.item:HasItemLocation() and info.item:GetItemLocation()
 	if not info.id then
 		AutoGearPrint("Error: "..tostring(info.name or "nil").." doesn't have an item ID",3)
 		AutoGearPrint(
@@ -4280,16 +4288,16 @@ function AutoGearRecursivePrint(s, l, i) -- recursive Print (structure, limit, i
 end
 
 local function localDump(o)
-    if type(o) == 'table' then
-        local s = '{' .. string.char(10)
-        for k,v in pairs(o) do
-                if type(k) == 'string' then k = '"'..k..'"' end
-                s = '  ' .. s .. '['..tostring(k)..'] = ' .. localDump(v) .. ',' .. string.char(10)
-        end
-        return s .. '}' .. string.char(10)
-    else
-        return tostring(o)
-    end
+	if type(o) == 'table' then
+		local s = '{' .. string.char(10)
+		for k,v in pairs(o) do
+			if type(k) == 'string' then k = '"'..k..'"' end
+			s = '  ' .. s .. '['..tostring(k)..'] = ' .. localDump(v) .. ',' .. string.char(10)
+		end
+		return s .. '}' .. string.char(10)
+	else
+		return tostring(o)
+	end
 end
 
 function AutoGearDump(o)
@@ -4403,28 +4411,28 @@ function AutoGearGetBestSetItems(info)
 			if (not AutoGearBestItems) or (not AutoGearBestItems[slot]) or (AutoGearBestItems[slot].info and AutoGearBestItems[slot].info.empty) then
 				return bestSet, bestSetScore, 1, lowestBestItemScore
 			end
-			if AutoGearBestItems[slot].info and (
+			local bestInfo = AutoGearBestItems[slot].info
+			if bestInfo and (
 				(
-					AutoGearBestItems[slot].info.link
-					and AutoGearBestItems[slot].info.link == info.link
+					bestInfo.link
+					and bestInfo.link == info.link
 				) or (
 					info.guid
 					and (
 						(
-							AutoGearBestItems[slot].info.guid and
-							AutoGearBestItems[slot].info.guid == info.guid
+							bestInfo.guid and
+							bestInfo.guid == info.guid
 						) or (
-							AutoGearBestItems[slot].info
-							and AutoGearBestItems[slot].info.item
-							and AutoGearBestItems[slot].info.item:GetItemGUID() == info.guid
+							bestInfo.itemLocation
+							and C_Item.GetItemGUID(bestInfo.itemLocation) == info.guid
 						)
 					)
 				)
 			) then
 				thisIsABestItem = 1
 			end
-			if AutoGearBestItems[slot].info
-			and AutoGearIsGearPairEquippableTogether(info, AutoGearBestItems[slot].info) then
+			if bestInfo
+			and AutoGearIsGearPairEquippableTogether(info, bestInfo) then
 				bestItem = AutoGearBestItems[slot]
 				if lowestBestItemScore == 0
 				or bestItem.score < lowestBestItemScore then
@@ -4446,26 +4454,23 @@ end
 
 function AutoGearDetectHoveredItemGUID()
 	local focus = GetMouseFocus()
-	if not focus then return end
-	local focusType = focus:GetObjectType()
-	if (not focusType) or (focusType ~= "Button") then return end
+	if (not focus) or (focus:GetObjectType() ~= "Button") then return end
 	local focusParent = focus.GetParent and focus:GetParent()
 	if not focusParent then return end
 	local focusParentName = focusParent.GetName and focusParent:GetName()
-
-	if (
-		focusParentName and
-		focusParentName.match
-	) then
-		if focusParentName:match("PaperDoll") then
-			return Item:CreateFromEquipmentSlot(focus:GetID()):GetItemGUID()
-		elseif (
-			focusParentName:match("Inv") or
-			focusParentName:match("Bag") or
-			focusParentName:match("Container")
-	 	) then
-			return Item:CreateFromBagAndSlot(focusParent:GetID(), focus:GetID()):GetItemGUID()
-		end
+	if not focusParentName then return end
+	if focusParentName:match("PaperDoll") then
+		local item = Item:CreateFromEquipmentSlot(focus:GetID())
+		if (not item) or (not item.IsItemEmpty) or item:IsItemEmpty() then return end
+		return item:GetItemGUID()
+	elseif (
+		focusParentName:match("Inv") or
+		focusParentName:match("Bag") or
+		focusParentName:match("Container")
+	 ) then
+		local item = Item:CreateFromBagAndSlot(focusParent:GetID(), focus:GetID())
+		if (not item) or (not item.IsItemEmpty) or item:IsItemEmpty() then return end
+		return item:GetItemGUID()
 	end
 end
 
@@ -4792,8 +4797,8 @@ function AutoGearMain()
 								end
 							else
 								if ((not curAction.container) or (not curAction.slot))
-								and curAction.info and curAction.info.item and curAction.info.item.GetItemLocation and curAction.info.item:HasItemLocation() then
-									local itemLocation = curAction.info.item:GetItemLocation()
+								and curAction.info and curAction.info.itemLocation or (curAction.info.item and curAction.info.item.GetItemLocation and curAction.info.item:HasItemLocation()) then
+									local itemLocation = curAction.info.itemLocation or curAction.info.item:GetItemLocation()
 									curAction.container, curAction.slot = itemLocation:GetBagAndSlot()
 								end
 								if (not curAction.container) or (not curAction.slot) then
