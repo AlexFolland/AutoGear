@@ -3445,6 +3445,9 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 
 	info.id = info.item:GetItemID()
 	info.itemLocation = info.item and info.item.HasItemLocation and info.item:HasItemLocation() and info.item:GetItemLocation()
+	if not (info.itemLocation and info.itemLocation.IsValid and info.itemLocation:IsValid() and info.itemLocation:HasAnyLocation()) then
+		info.itemLocation = nil
+	end
 	if not info.id then
 		AutoGearPrint("Error: "..tostring(info.name or "nil").." doesn't have an item ID",3)
 		AutoGearPrint(
