@@ -6,20 +6,10 @@
 --	In general, needing on one-handers that are near-worthless.  The plan is to only roll if it passes a minimum threshold.  That threshold should be 3x the highest weight among the 5 main stats.
 -- Don't roll on loot I already have in my bag
 -- Greeded in something within 5 levels that was an upgrade.  Specifically, Gauntlets of Divinity versus equipped Algae Fists.
--- Auto-equip bags if they're not BOP and you have an empty slot
 
 -- accomodate for "no item link received"
--- identify bag rolls and roll need when appropriate
--- roll need on mounts that the character doesn't have
--- identify bag rolls and roll need when appropriate
 -- fix guild repairs
--- make seperate stat weights for main and off hand
--- add a weight for weapon damage
--- fix weapons for rogues properly.  (dagger and any can equip dagger and shield, put slow in main hand for outlaw, etc)
--- remove the armor penetration weight
--- make gem weights have level tiers (70-79, 80-84, 85)
 -- other non-gear it should let you roll
--- add a ui
 -- add rolling on offset
 -- factor in racial weapon bonuses
 -- eye of arachnida slot nil error
@@ -1942,8 +1932,8 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 			ReasonsInTooltips = false,
 			AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
 			AlwaysShowScoreComparisons = false,
-			AutoSellGreys = true,
-			AutoRepair = true,
+			AutoSellGreys = false,
+			AutoRepair = false,
 			Override = false,
 			OverrideSpec = AutoGearGetDefaultOverrideSpec(),
 			UsePawn = true, --AutoGear built-in weights are deprecated.  We're using Pawn mainly now, so default true.
@@ -2117,9 +2107,9 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 				["cliCommands"] = { "sell", "sellgreys", "greys" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Automatically sell greys",
-				["description"] = "Automatically sell all grey items when interacting with a vendor.",
-				["toggleDescriptionTrue"] = "Automatic selling of grey items is now enabled.",
+				["label"] = "Automatically sell greys ("..RED_FONT_COLOR_CODE.."warning"..FONT_COLOR_CODE_CLOSE..": not feature-complete; use Leatrix Plus instead)",
+				["description"] = "Automatically sell all grey items when interacting with a vendor.\n\n"..RED_FONT_COLOR_CODE.."Warning"..FONT_COLOR_CODE_CLOSE..": This feature is not feature-complete and does not correctly handle having max gold, vendors who can't buy items, and avoiding selling greys that can be used for trading with vendors.  Using Leatrix Plus instead for this feature is recommended."..FONT_COLOR_CODE_CLOSE,
+				["toggleDescriptionTrue"] = "Automatic selling of grey items is now enabled. ("..RED_FONT_COLOR_CODE.."warning"..FONT_COLOR_CODE_CLOSE..": This feature is not feature-complete and does not correctly handle having max gold, vendors who can't buy items, and avoiding selling greys that can be used for trading with vendors.  Using Leatrix Plus instead for this feature is recommended.)",
 				["toggleDescriptionFalse"] = "Automatic selling of grey items is now disabled."
 			},
 			{
@@ -2211,9 +2201,9 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 				["cliCommands"] = { "debuginfo", "debuginfointooltips", "test", "testmode", "rolltestmode" },
 				["cliTrue"] = { "enable", "on", "start" },
 				["cliFalse"] = { "disable", "off", "stop" },
-				["label"] = "Show debug info in item tooltips (warning: "..RED_FONT_COLOR_CODE.."laggy"..FONT_COLOR_CODE_CLOSE.."!)",
-				["description"] = "This is a test mode to show debug info in tooltips, such as the real roll outcome if the item viewed dropped as a loot roll.  This is to help the developers find and fix bugs in AutoGear.  You can use it to help too and report issues.  (warning: "..RED_FONT_COLOR_CODE.."laggy"..FONT_COLOR_CODE_CLOSE.."!)",
-				["toggleDescriptionTrue"] = "Debug info in tooltips is now enabled. Info such as whether AutoGear would \""..GREEN_FONT_COLOR_CODE.."NEED"..FONT_COLOR_CODE_CLOSE.."\" or \""..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.."\" on an item will be shown in item tooltips.  (warning: "..RED_FONT_COLOR_CODE.."laggy"..FONT_COLOR_CODE_CLOSE.."!)",
+				["label"] = "Show debug info in item tooltips ("..RED_FONT_COLOR_CODE.."warning"..FONT_COLOR_CODE_CLOSE..": laggy!)",
+				["description"] = "This is a test mode to show debug info in tooltips, such as the real roll outcome if the item viewed dropped as a loot roll.  This is to help the developers find and fix bugs in AutoGear.  You can use it to help too and report issues.\n\n"..RED_FONT_COLOR_CODE.."Warning"..FONT_COLOR_CODE_CLOSE..": laggy!",
+				["toggleDescriptionTrue"] = "Debug info in tooltips is now enabled. Info such as whether AutoGear would \""..GREEN_FONT_COLOR_CODE.."NEED"..FONT_COLOR_CODE_CLOSE.."\" or \""..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.."\" on an item will be shown in item tooltips.  ("..RED_FONT_COLOR_CODE.."warning"..FONT_COLOR_CODE_CLOSE..": laggy!)",
 				["toggleDescriptionFalse"] = "Debug info in tooltips is now disabled."
 			}
 		}
@@ -3127,6 +3117,7 @@ function AutoGearGetValidGearSlots(info)
 		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
 		                                               or (((weapons == "any")
 		                                               or (weapons == "2h"))
+													   -- or ((weapons == "dual wield") and (not CanDualWield()))
 		                                               and { INVSLOT_TABARD }
 		                                               or nil),
 		[Enum.InventoryType.IndexWeaponmainhandType] = ((weapons == "any")
@@ -4483,8 +4474,8 @@ function AutoGearTooltipHook(tooltip)
 	if (not (tooltipName=="GameTooltip" or tooltipName=="ShoppingTooltip1" or tooltipName=="ShoppingTooltip2" or tooltipName=="ItemRefTooltip")) or (not tooltip:IsVisible()) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
 	local name, link, equipped, guid, tooltipData
-	if tooltip.GetTooltipData then
-		tooltipData = tooltip:GetTooltipData()
+	if tooltip.GetPrimaryTooltipData or tooltip.GetTooltipData then
+		tooltipData = tooltip.GetPrimaryTooltipData and tooltip:GetPrimaryTooltipData() or (tooltip.GetTooltipData and tooltip:GetTooltipData())
 		if not tooltipData then tooltip:AddDoubleLine("AutoGear error:", "no tooltip data") return end
 		guid = tooltipData.guid
 		name = tooltipData.lines[1].leftText
