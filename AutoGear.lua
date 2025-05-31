@@ -3022,7 +3022,7 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 		if info.isGear and info.validGearSlots then
 			local firstValidGearSlot = info.validGearSlots[1]
 			local lowestScoringValidGearSlot = firstValidGearSlot
-			local lowestScoringValidGearSlotScore = AutoGearBestItems[firstValidGearSlot].score
+			local lowestScoringValidGearSlotScore = AutoGearBestItems[firstValidGearSlot].score or 0
 			for _, gearSlot in pairs(info.validGearSlots) do
 				local skipThisSlot = false
 				for _, otherGearSlot in pairs(info.validGearSlots) do
@@ -3035,6 +3035,7 @@ function AutoGearConsiderItem(info, bag, slot, rollOn, chooseReward)
 				if not skipThisSlot and
 				((not AutoGearBestItems[gearSlot]) or
 				(AutoGearBestItems[gearSlot].info.empty or
+				(not AutoGearBestItems[gearSlot].score) or
 				(AutoGearBestItems[gearSlot].score < lowestScoringValidGearSlotScore))) then
 					lowestScoringValidGearSlot = gearSlot
 					lowestScoringValidGearSlotScore = AutoGearBestItems[gearSlot] and AutoGearBestItems[gearSlot].score or 0
