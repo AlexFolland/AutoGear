@@ -2527,40 +2527,36 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 			if not link then
 				link, quantity = message:match(pattern3)
 				if not link then
-					quantity, link = 1, message:match(pattern4)
+					link, quantity = message:match(pattern4), 1
 					if not link then
-						quantity, link = 1, message:match(pattern5)
+						link, quantity = message:match(pattern5), 1
 						if not link then
-							quantity, link = 1, message:match(pattern6)
+							link, quantity = message:match(pattern6), 1
 						end
 					end
 				end
 			end
 		end
 
-		-- if it's not gear, return early to avoid scanning for upgrades
-		if link and (C_Item.GetItemInventoryTypeByID(link) == Enum.InventoryType.IndexNonEquipType) then return end
-
-		--make sure a fishing pole isn't replaced while fishing
-		if (not AutoGearIsMainHandAFishingPole()) then
-			--check if there's already a scan action in queue
-			local scanFound = nil
-			for i, curAction in ipairs(AutoGearActionQueue) do
-				if (curAction.action == "scan") then
-					--push the time ahead until all the items have arrived
-					curAction.t = GetTime() + 1.0
-					scanFound = 1
+		local linkInvType
+		if link then
+			linkInvType = C_Item.GetItemInventoryTypeByID(link)
+			if linkInvType then
+				-- if it's not gear, return early to avoid scanning for upgrades
+				if (linkInvType == Enum.InventoryType.IndexNonEquipType) then
+					AutoGearPrint("AutoGear: Skipping scan because looted item "..link.." is not equippable gear.", 3)
+					return
+				--make sure a fishing pole isn't replaced while fishing
+				elseif (AutoGearIsInvTypeWeapon(linkInvType) and AutoGearIsMainHandAFishingPole()) then
+					AutoGearPrint("AutoGear: Skipping scan because "..link.." is a weapon and a fishing pole is equipped. This is intentional to prevent replacing fishing poles while fishing.", 3)
+					return
 				end
 			end
-			if (not scanFound) then
-				--no scan found, so create a new one
-				local newAction = {}
-				newAction.action = "scan"
-				--give the item some time to arrive
-				newAction.t = GetTime() + 0.5
-				table.insert(AutoGearActionQueue, newAction)
-			end
+		else
+			AutoGearPrint("AutoGear: No item link was found in CHAT_MSG_LOOT event message \""..message.."\". Scanning anyway in case the looted item was gear.", 3)
 		end
+
+		AutoGearQueueScan()
 	elseif (event == "EQUIP_BIND_CONFIRM") or
 	(event == "EQUIP_BIND_REFUNDABLE_CONFIRM") or
 	(event == "EQUIP_BIND_TRADEABLE_CONFIRM") then
@@ -4719,7 +4715,33 @@ else
 end
 
 function AutoGearQueueLocalUpdate()
-	table.insert(AutoGearActionQueue, { action = "localupdate", t = GetTime() + 0.5 })
+	--check if there's already a local update action in queue
+	local localUpdateFound = nil
+	for i, curAction in ipairs(AutoGearActionQueue) do
+		if (curAction.action == "localupdate") then
+			localUpdateFound = 1
+		end
+	end
+	if (not localUpdateFound) then
+		--no local update found, so create a new one and set it to run immediately
+		table.insert(AutoGearActionQueue, { action = "localupdate", t = 0.0 })
+	end
+end
+
+function AutoGearQueueScan()
+	--check if there's already a scan action in queue
+	local scanFound = nil
+	for i, curAction in ipairs(AutoGearActionQueue) do
+		if (curAction.action == "scan") then
+			--push the time ahead until all the items have arrived
+			curAction.t = GetTime() + 1.0
+			scanFound = 1
+		end
+	end
+	if (not scanFound) then
+		--no scan found, so create a new one
+		table.insert(AutoGearActionQueue, { action = "scan", t = GetTime() + 0.5 })
+	end
 end
 
 function AutoGearMain()
