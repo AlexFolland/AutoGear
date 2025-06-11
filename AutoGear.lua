@@ -2551,6 +2551,8 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					AutoGearPrint("AutoGear: Skipping scan because "..link.." is a weapon and a fishing pole is equipped. This is intentional to prevent replacing fishing poles while fishing.", 3)
 					return
 				end
+			else
+				AutoGearPrint("AutoGear: No inventory type was found for item "..link.." from CHAT_MSG_LOOT event message \""..message.."\". Scanning anyway in case the looted item was gear.", 3)
 			end
 		else
 			AutoGearPrint("AutoGear: No item link was found in CHAT_MSG_LOOT event message \""..message.."\". Scanning anyway in case the looted item was gear.", 3)
