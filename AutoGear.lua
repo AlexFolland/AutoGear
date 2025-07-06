@@ -73,6 +73,8 @@ local GetDetailedItemLevelInfo = (C_Item and C_Item.GetDetailedItemLevelInfo) or
 local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
 local GetItemInfoInstant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
 local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
+local GetSpecialization = GetSpecialization or (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization)
+local GetSpecializationInfo = GetSpecializationInfo or (C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo)
 local GetMouseFocus = GetMouseFocus or (GetMouseFoci and (function()
 	local frames = GetMouseFoci()
 	return frames and frames[1];
@@ -2552,7 +2554,7 @@ AutoGearFrame:SetScript("OnEvent", function (this, event, arg1, arg2, arg3, arg4
 					return
 				end
 			else
-				AutoGearPrint("AutoGear: No inventory type was found for item "..link.." from CHAT_MSG_LOOT event message \""..message.."\". Scanning anyway in case the looted item was gear.", 3)
+				AutoGearPrint("AutoGear: No inventory type was found for looted item "..link.." from CHAT_MSG_LOOT event message \""..message.."\". Scanning anyway in case it was gear.", 3)
 			end
 		else
 			AutoGearPrint("AutoGear: No item link was found in CHAT_MSG_LOOT event message \""..message.."\". Scanning anyway in case the looted item was gear.", 3)
