@@ -4461,14 +4461,16 @@ function AutoGearGetEquippedSlotFromItemGUID(guid)
 	end
 end
 
-function AutoGearTooltipHook(tooltip)
+function AutoGearTooltipHook(tooltip, tooltipData)
 	if (not AutoGearDB.ScoreInTooltips) then return end
 	local tooltipName = tooltip:GetName()
 	if (not (tooltipName=="GameTooltip" or tooltipName=="ShoppingTooltip1" or tooltipName=="ShoppingTooltip2" or tooltipName=="ItemRefTooltip")) or (not tooltip:IsVisible()) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
-	local name, link, equipped, guid, tooltipData
+	local name, link, equipped, guid
 	if tooltip.GetPrimaryTooltipData or tooltip.GetTooltipData then
-		tooltipData = tooltip.GetPrimaryTooltipData and tooltip:GetPrimaryTooltipData() or (tooltip.GetTooltipData and tooltip:GetTooltipData())
+		if not tooltipData then
+			tooltipData = tooltip.GetPrimaryTooltipData and tooltip:GetPrimaryTooltipData() or (tooltip.GetTooltipData and tooltip:GetTooltipData())
+		end
 		if not tooltipData then tooltip:AddDoubleLine("AutoGear error:", "no tooltip data") return end
 		guid = tooltipData.guid
 		name = tooltipData.lines[1].leftText
@@ -4701,7 +4703,7 @@ function AutoGearTooltipHook(tooltip)
 	-- AutoGearPrint("name: "..tostring(name).."; link: "..tostring(link).."; guid: "..tostring(guid).."; equipped: "..tostring(AutoGearSlotNames and AutoGearSlotNames[equipped] or equipped))
 end
 
-if TooltipDataProcessor then
+if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and C_TooltipInfo then
 	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, AutoGearTooltipHook)
 else
 	GameTooltip:HookScript("OnTooltipSetItem", AutoGearTooltipHook)
