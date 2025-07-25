@@ -3136,13 +3136,19 @@ function AutoGearGetValidGearSlots(info)
 		                                               or nil,
 		[Enum.InventoryType.IndexRangedType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
-		                                               or { INVSLOT_MAINHAND },
+		                                               or ((weapons == "ranged")
+													   and { INVSLOT_MAINHAND }
+													   or nil),
 		[Enum.InventoryType.IndexThrownType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
-		                                               or { INVSLOT_MAINHAND },
+		                                               or ((weapons == "ranged")
+													   and { INVSLOT_MAINHAND }
+													   or nil),
 		[Enum.InventoryType.IndexRangedrightType]    = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
-		                                               or { INVSLOT_MAINHAND },
+		                                               or ((weapons == "ranged")
+													   and { INVSLOT_MAINHAND }
+													   or nil),
 		[Enum.InventoryType.IndexRelicType]          = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
 		                                               or nil,
@@ -3223,13 +3229,19 @@ function AutoGearGetSetSlots(info)
 		                                               or nil,
 		[Enum.InventoryType.IndexRangedType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
-		                                               or { INVSLOT_MAINHAND },
+		                                               or ((weapons == "ranged")
+													   and { INVSLOT_MAINHAND }
+													   or nil),
 		[Enum.InventoryType.IndexThrownType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
-		                                               or { INVSLOT_MAINHAND },
+		                                               or ((weapons == "ranged")
+													   and { INVSLOT_MAINHAND }
+													   or nil),
 		[Enum.InventoryType.IndexRangedrightType]    = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
-		                                               or { INVSLOT_MAINHAND },
+		                                               or ((weapons == "ranged")
+													   and { INVSLOT_MAINHAND }
+													   or nil),
 		[Enum.InventoryType.IndexRelicType]          = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
 		                                               or nil,
