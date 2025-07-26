@@ -4153,9 +4153,9 @@ function AutoGearDetermineItemScore(info)
 	end
 	if info.classID == Enum.ItemClass.Container then
 		if info.subclassID == 0 then -- generic (typical) bag; there's no Enum.ItemContainerSubclass
-			return info.numBagSlots
+			return info.numBagSlots or 0
 		else
-			return info.numBagSlots * E -- specialized bags suck, so consider them only better than nothing
+			return (info.numBagSlots or 0) * E -- specialized bags suck, so consider them only better than nothing
 		end
 	elseif info.isAmmoBag and info.numBagSlots and (UnitClassBase("player") == "HUNTER") then
 		return info.numBagSlots + (info.ammoBagRangedAttackSpeed and info.ammoBagRangedAttackSpeed or 0)
@@ -4168,7 +4168,7 @@ function AutoGearDetermineItemScore(info)
 			if score == 0 then
 				return E
 			else
-				return score
+				return score or 0
 			end
 		end
 	end
@@ -4213,7 +4213,7 @@ function AutoGearDetermineItemScore(info)
 	if score == 0 then
 		return E
 	else
-		return score
+		return score or 0
 	end
 end
 
