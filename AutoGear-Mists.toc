@@ -1,4 +1,4 @@
-## Interface: 50500
+## Interface: 50500, 50501
 ## Title: AutoGear
 ## Notes: Automatically chooses loot and equips gear
 ## Author: Synthetikaryote, BujuArena
