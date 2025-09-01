@@ -59,26 +59,25 @@ local shouldPrintHelp = false
 local maxPlayerLevel = GetMaxPlayerLevel and GetMaxPlayerLevel() or GetMaxLevelForExpansionLevel(GetExpansionLevel())
 local L = T.Localization
 local ContainerIDToInventoryID = ContainerIDToInventoryID or (C_Container and C_Container.ContainerIDToInventoryID)
-local GetContainerNumSlots = GetContainerNumSlots or (C_Container and C_Container.GetContainerNumSlots)
-local PickupContainerItem = PickupContainerItem or (C_Container and C_Container.PickupContainerItem)
 local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and C_Container.GetContainerNumFreeSlots)
-local GetItemInventorySlotInfo = GetItemInventorySlotInfo or (C_Item and C_Item.GetItemInventorySlotInfo)
+local GetContainerNumSlots = GetContainerNumSlots or (C_Container and C_Container.GetContainerNumSlots)
+local GetDetailedItemLevelInfo = (C_Item and C_Item.GetDetailedItemLevelInfo) or GetDetailedItemLevelInfo
 local GetItemCount = (C_Item and function(info, includeBank, includeUses, includeReagentBank, includeAccountBank)
 	if info then
 		return C_Item.GetItemCount(info, includeBank or false, includeUses or false, includeReagentBank or true, includeAccountBank or true)
 	end
 end) or GetItemCount
-local GetItemSpell = GetItemSpell or (C_Item and C_Item.GetItemSpell)
-local GetDetailedItemLevelInfo = (C_Item and C_Item.GetDetailedItemLevelInfo) or GetDetailedItemLevelInfo
 local GetItemInfo = GetItemInfo or (C_Item and C_Item.GetItemInfo)
 local GetItemInfoInstant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
-local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
-local GetSpecialization = GetSpecialization or (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization)
-local GetSpecializationInfo = GetSpecializationInfo or (C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo)
+local GetItemInventorySlotInfo = GetItemInventorySlotInfo or (C_Item and C_Item.GetItemInventorySlotInfo)
+local GetItemSpell = GetItemSpell or (C_Item and C_Item.GetItemSpell)
 local GetMouseFocus = GetMouseFocus or (GetMouseFoci and (function()
 	local frames = GetMouseFoci()
 	return frames and frames[1];
 end))
+local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
+local GetSpecialization = GetSpecialization or (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization)
+local GetSpecializationInfo = GetSpecializationInfo or (C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo)
 local InterfaceOptions_AddCategory = InterfaceOptions_AddCategory or function(frame, addOn, position)
 	frame.OnCommit = frame.okay
 	frame.OnDefault = frame.default
@@ -95,6 +94,8 @@ local InterfaceOptions_AddCategory = InterfaceOptions_AddCategory or function(fr
 	end
 end
 local InterfaceOptionsFrame_OpenToCategory = InterfaceOptionsFrame_OpenToCategory or Settings.OpenToCategory
+local IsPlayerSpell = C_SpellBook and C_SpellBook.IsSpellKnown or IsPlayerSpell
+local PickupContainerItem = PickupContainerItem or (C_Container and C_Container.PickupContainerItem)
 AutoGearWouldRoll = "nil"
 AutoGearSomeItemDataIsMissing = nil
 AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID(1) or 20
@@ -2285,7 +2286,7 @@ SlashCmdList["AutoGear"] = function(msg)
 		if usingPawn then
 			pawnScaleName, pawnScaleLocalizedName = AutoGearGetPawnScaleName()
 		end
-		AutoGearPrint("AutoGear: Looks like you are a"..(realSpec:find("^[AEIOUaeiou]") and "n " or " ")..RAID_CLASS_COLORS[realClass]:WrapTextInColorCode(realSpec.." "..localizedRealClass).."."..((usingPawn or (AutoGearDB.Override and ((realClassID ~= overrideClassID) or (realSpec ~= overrideSpec)))) and ("  However, AutoGear is using "..(usingPawn and ("Pawn scale \""..PawnGetScaleColor(pawnScaleName)..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"") or (RAID_CLASS_COLORS[overrideClass]:WrapTextInColorCode(overrideSpec.." "..localizedOverrideClass).." weights")).." for gear evaluation due to the \""..(usingPawn and "Use Pawn to evaluate upgrades" or "Override specialization").."\" option.") or ""), 0)
+		AutoGearPrint("AutoGear: Looks like you are a"..(realSpec:find("^[AEIOUaeiou]") and "n " or " ")..RAID_CLASS_COLORS[realClass]:WrapTextInColorCode(realSpec.." "..localizedRealClass).."."..((usingPawn or (AutoGearDB.Override and ((realClassID ~= overrideClassID) or (realSpec ~= overrideSpec)))) and ("  However, AutoGear is using "..(usingPawn and ("Pawn scale \""..PawnGetScaleColor(pawnScaleName)..(pawnScaleLocalizedName or pawnScaleName)..FONT_COLOR_CODE_CLOSE.."\"") or (RAID_CLASS_COLORS[overrideClass]:WrapTextInColorCode(overrideSpec.." "..localizedOverrideClass).." weights")).." for gear evaluation due to the \""..(usingPawn and "Use Pawn to evaluate upgrades" or "Override specialization").."\" option.") or "").."  AutoGear is using weapons value \""..weapons.."\" from \""..((AutoGearDB.Override and ((realClassID ~= overrideClassID) or (realSpec ~= overrideSpec))) and (RAID_CLASS_COLORS[overrideClass]:WrapTextInColorCode(overrideSpec.." "..localizedOverrideClass)) or (RAID_CLASS_COLORS[realClass]:WrapTextInColorCode(realSpec.." "..localizedRealClass))).."\" to determine which weapons are valid.  CanDualWield() returns \""..(CanDualWield() and "true" or "false").."\".", 0) 
 	elseif (param1 == "verbosity") or (param1 == "allowedverbosity") then
 		AutoGearSetAllowedVerbosity(param2)
 	elseif ((param1 == "setspec") or
@@ -3548,7 +3549,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				r, g, b = tooltipData.lines[i].leftColor:GetRGB()
 			end
 			if not textLeftText then
-				textLeftText = textLeft:GetText()
+				textLeftText = textLeft:GetText() or ""
 			end
 			local text = select(1,string.gsub(textLeftText:lower(),",",""))
 			if i==1 then
