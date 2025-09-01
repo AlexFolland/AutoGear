@@ -3110,8 +3110,8 @@ function AutoGearGetValidGearSlots(info)
 		                                               or (info.subclassID ~= Enum.ItemWeaponSubclass.Polearm)))
 		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
 		                                               or (((weapons == "any")
-		                                               or (weapons == "2h"))
-													   -- or ((weapons == "dual wield") and (not CanDualWield()))
+		                                               or (weapons == "2h")
+		                                               or ((weapons == "dual wield") and (not CanDualWield())))
 		                                               and { INVSLOT_TABARD }
 		                                               or nil),
 		[Enum.InventoryType.IndexWeaponmainhandType] = ((weapons == "any")
@@ -3127,9 +3127,9 @@ function AutoGearGetValidGearSlots(info)
 		                                               and ((weapons == "any")
 		                                               or (weapons == "dagger and any")
 		                                               or (weapons == "dagger")
-		                                               or ((weapons == "dual wield") and (not IsPlayerSpell(46917))))
+		                                               or ((weapons == "dual wield") and (not IsPlayerSpell(46917)))
 		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
-		                                               and (weapons == "ranged")))
+		                                               and (weapons == "ranged"))))
 		                                               and { INVSLOT_OFFHAND }
 		                                               or nil,
 		[Enum.InventoryType.IndexHoldableType]       = (weapons == "any")
@@ -3163,6 +3163,9 @@ function AutoGearGetValidGearSlots(info)
 	return gearSlotTable[info.invType]
 end
 
+-- indicates slots that go together as a set
+-- for example, the set of slots for a shield is { main-hand and off-hand } even though the shield can only be equipped in the off-hand
+-- this is useful to find which slots to use to add scores together from all items in those slots
 function AutoGearGetSetSlots(info)
 	local setSlotTable = {
 		[Enum.InventoryType.IndexNonEquipType]       = nil,
@@ -3204,7 +3207,8 @@ function AutoGearGetSetSlots(info)
 		                                               or (info.subclassID ~= Enum.ItemWeaponSubclass.Polearm)))
 		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
 		                                               or (((weapons == "any")
-		                                               or (weapons == "2h"))
+		                                               or (weapons == "2h")
+		                                               or ((weapons == "dual wield") and (not CanDualWield())))
 		                                               and { INVSLOT_TABARD }
 		                                               or nil),
 		[Enum.InventoryType.IndexWeaponmainhandType] = ((weapons == "any")
@@ -3220,9 +3224,9 @@ function AutoGearGetSetSlots(info)
 		                                               and ((weapons == "any")
 		                                               or (weapons == "dagger and any")
 		                                               or (weapons == "dagger")
-		                                               or ((weapons == "dual wield") and (not IsPlayerSpell(46917))))
+		                                               or ((weapons == "dual wield") and (not IsPlayerSpell(46917)))
 		                                               or ((TOC_VERSION_CURRENT < TOC_VERSION_MOP)
-		                                               and (weapons == "ranged")))
+		                                               and (weapons == "ranged"))))
 		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND }
 		                                               or nil,
 		[Enum.InventoryType.IndexHoldableType]       = (weapons == "any")
