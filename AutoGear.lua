@@ -3138,18 +3138,19 @@ function AutoGearGetValidGearSlots(info)
 		[Enum.InventoryType.IndexRangedType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
 		                                               or ((weapons == "ranged")
-													   and { INVSLOT_MAINHAND }
-													   or nil),
+		                                               and { INVSLOT_MAINHAND }
+		                                               or nil),
 		[Enum.InventoryType.IndexThrownType]         = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
 		                                               or ((weapons == "ranged")
-													   and { INVSLOT_MAINHAND }
-													   or nil),
+		                                               and { INVSLOT_MAINHAND }
+		                                               or nil),
 		[Enum.InventoryType.IndexRangedrightType]    = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
-		                                               or ((weapons == "ranged")
-													   and { INVSLOT_MAINHAND }
-													   or nil),
+		                                               or (((weapons == "ranged")
+													   or (info.subclassID == Enum.ItemWeaponSubclass.Wand))
+		                                               and { INVSLOT_MAINHAND }
+		                                               or nil),
 		[Enum.InventoryType.IndexRelicType]          = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
 		                                               or nil,
@@ -3245,8 +3246,10 @@ function AutoGearGetSetSlots(info)
 		[Enum.InventoryType.IndexRangedrightType]    = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
 		                                               or ((weapons == "ranged")
-													   and { INVSLOT_MAINHAND }
-													   or nil),
+		                                               and { INVSLOT_MAINHAND }
+		                                               or (((info.subclassID == Enum.ItemWeaponSubclass.Wand)
+		                                               and { INVSLOT_MAINHAND, INVSLOT_OFFHAND })
+		                                               or nil)),
 		[Enum.InventoryType.IndexRelicType]          = (TOC_VERSION_CURRENT < TOC_VERSION_MOP)
 		                                               and { INVSLOT_RANGED }
 		                                               or nil,
@@ -3273,18 +3276,14 @@ function AutoGearIsInvTypeOneHanded(invType)
 	(invType == Enum.InventoryType.IndexWeaponmainhandType) or
 	(invType == Enum.InventoryType.IndexWeaponoffhandType) or
 	(invType == Enum.InventoryType.IndexShieldType) or
-	(invType == Enum.InventoryType.IndexHoldableType)
+	(invType == Enum.InventoryType.IndexHoldableType) or
+	((TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (invType == Enum.InventoryType.IndexRangedrightType))
 end
 
 function AutoGearIsInvTypeTwoHanded(invType)
 	if not invType then return nil end
-	return (invType == Enum.InventoryType.Index2HweaponType) or (
-		(TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (
-			(invType == Enum.InventoryType.IndexRangedType) or (
-				invType == Enum.InventoryType.IndexRangedrightType
-			)
-		)
-	)
+	return (invType == Enum.InventoryType.Index2HweaponType) or
+	((TOC_VERSION_CURRENT >= TOC_VERSION_MOP) and (invType == Enum.InventoryType.IndexRangedType))
 end
 
 function AutoGearIsInvTypeRangedOrRelic(invType)
@@ -4483,21 +4482,21 @@ function AutoGearTooltipHook(tooltip, tooltipData)
 	local tooltipName = tooltip:GetName()
 	if (not (tooltipName=="GameTooltip" or tooltipName=="ShoppingTooltip1" or tooltipName=="ShoppingTooltip2" or tooltipName=="ItemRefTooltip")) or (not tooltip:IsVisible()) then return end
 	if (not AutoGearCurrentWeighting) then AutoGearSetStatWeights() end
+	local isAComparisonTooltip = tooltipName ~= "GameTooltip"
 	local name, link, equipped, guid
 	if tooltip.GetPrimaryTooltipData or tooltip.GetTooltipData then
 		if not tooltipData then
 			tooltipData = tooltip.GetPrimaryTooltipData and tooltip:GetPrimaryTooltipData() or (tooltip.GetTooltipData and tooltip:GetTooltipData())
 		end
 		if not tooltipData then tooltip:AddDoubleLine("AutoGear error:", "no tooltip data") return end
-		guid = tooltipData.guid
+		guid = tooltipData.guid or ((not isAComparisonTooltip) and AutoGearDetectHoveredItemGUID())
 		name = tooltipData.lines[1].leftText
 		link = tooltipData.hyperlink or (guid and C_Item.GetItemLinkByGUID(guid))
 		equipped = guid and AutoGearGetEquippedSlotFromItemGUID(guid)
 	elseif tooltip.GetItem then
 		name, link = tooltip:GetItem()
-		if tooltip.IsEquippedItem then
-			equipped = tooltip:IsEquippedItem(tooltip)
-		else return end
+		guid = (not isAComparisonTooltip) and AutoGearDetectHoveredItemGUID()
+		equipped = tooltip.IsEquippedItem and tooltip:IsEquippedItem(tooltip) or (guid and AutoGearGetEquippedSlotFromItemGUID(guid))
 	end
 	if not link then
 		if not guid then
@@ -4508,9 +4507,8 @@ function AutoGearTooltipHook(tooltip, tooltipData)
 	end
 	local info = AutoGearReadItemInfo(nil,nil,nil,nil,nil,link,tooltipData)
 
-	local isAComparisonTooltip = tooltipName ~= "GameTooltip"
 	if (not isAComparisonTooltip) and (not info.guid) then
-		info.guid = AutoGearDetectHoveredItemGUID()
+		info.guid = guid
 	end
 	local pawnScaleName
 	local pawnScaleLocalizedName
