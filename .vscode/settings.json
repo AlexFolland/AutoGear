@@ -96,7 +96,10 @@
         "EmbeddedItemTooltip",
         "SettingsPanel",
         "NORMAL_FONT_COLOR",
-        "SOUNDKIT"
+        "SOUNDKIT",
+        "ITEM_UNIQUE",
+        "ITEM_UNIQUE_EQUIPPABLE",
+        "ITEM_MOD_VERSATILITY"
     ],
     "Lua.runtime.version": "Lua 5.1",
     "Lua.runtime.builtin": {

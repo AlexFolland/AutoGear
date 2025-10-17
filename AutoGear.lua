@@ -96,6 +96,7 @@ end
 local InterfaceOptionsFrame_OpenToCategory = InterfaceOptionsFrame_OpenToCategory or Settings.OpenToCategory
 local IsPlayerSpell = C_SpellBook and C_SpellBook.IsSpellKnown or IsPlayerSpell
 local PickupContainerItem = PickupContainerItem or (C_Container and C_Container.PickupContainerItem)
+ITEM_UNIQUE_EQUIPPABLE_SANITIZED_PATTERN = select(1,string.gsub(ITEM_UNIQUE_EQUIPPABLE,"%-","%%-"))
 AutoGearWouldRoll = "nil"
 AutoGearSomeItemDataIsMissing = nil
 AutoGearFirstEquippableBagSlot = ContainerIDToInventoryID(1) or 20
@@ -1928,7 +1929,7 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 			AutoConfirmBinding = true,
 			AutoConfirmBindingBlues = false,
 			AutoConfirmBindingEpics = false,
-			AutoAcceptQuests = true,
+			AutoAcceptQuests = false,
 			AutoCompleteItemQuests = true,
 			AutoAcceptPartyInvitations = true,
 			ScoreInTooltips = true,
@@ -2631,8 +2632,10 @@ function AutoGearDecideRoll(link, lootRollID)
 			AutoGearPrint("AutoGear: "..rollItemInfo.link.." is not gear and \"Roll on non-gear loot\" is disabled, so not rolling.", 3)
 			--local rollDecision is nil, so no roll
 		elseif wouldNeed and canNeed then
-			if rollItemInfo.Within5levels or (rollItemInfo.isMount and (not rollItemInfo.alreadyKnown)) then
-				local maxNumberOfCopiesAllowedToNeed = (rollItemInfo.unique or (rollItemInfo.isMount and (not rollItemInfo.alreadyKnown))) and 1 or #rollItemInfo.validGearSlots
+			if rollItemInfo.Within5levels or (rollItemInfo.isMount and (not rollItemInfo.alreadyKnown)) or (not rollItemInfo.unusable) then
+				local maxNumberOfCopiesAllowedToNeed = (rollItemInfo.unique or (rollItemInfo.isMount and (not rollItemInfo.alreadyKnown))) and 1
+					or rollItemInfo.numEquippable
+					or #rollItemInfo.validGearSlots
 				local numberOfCopiesOwned = GetItemCount(rollItemInfo.id, true)
 				if numberOfCopiesOwned >= maxNumberOfCopiesAllowedToNeed then
 					AutoGearPrint("AutoGear: "..rollItemInfo.link.." is "..(rollItemInfo.isMount and "a mount" or "an upgrade usable within 5 levels")..", but you already have "..tostring(numberOfCopiesOwned).." cop"..(numberOfCopiesOwned == 1 and "y" or "ies")..", so rolling "..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE..".",3)
@@ -3586,6 +3589,16 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			(not info.bop) then
 				info.boe = 1
 			end
+			if textLeftText == ITEM_UNIQUE or textLeftText == ITEM_UNIQUE_EQUIPPABLE then
+				info.unique = 1
+			elseif string.find(textLeftText, ITEM_UNIQUE_EQUIPPABLE_SANITIZED_PATTERN) then
+				local uniqueType, numEquippable = string.match(textLeftText, ITEM_UNIQUE_EQUIPPABLE_SANITIZED_PATTERN..": ([^%(]+) %(([0-9]+)%)")
+				if uniqueType and numEquippable then
+					info.uniqueType = uniqueType
+					info.numEquippable = tonumber(numEquippable)
+				end
+				AutoGearPrint("AutoGear: uniqueType, numEquippable in \""..textLeftText.."\": \""..uniqueType.."\", "..tostring(numEquippable), 3)
+			end
 			local multiplier = 1.0
 			if string.find(text, "chance to") and not string.find(text, "improves") then multiplier = multiplier/3.0 end
 			if string.find(text, "use:") then multiplier = multiplier/6.0 end
@@ -3620,9 +3633,6 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 			and info.isAmmoBag
 			and string.find(text, "ranged attack speed") then
 				info.ammoBagRangedAttackSpeed = (info.ammoBagRangedAttackSpeed or 0) + value
-			end
-			if string.find(text, "unique") then
-				info.unique = 1
 			end
 			if string.find(text, "already known") then
 				info.alreadyKnown = 1
@@ -4374,6 +4384,7 @@ function AutoGearIsGearPairEquippableTogether(a, b)
 	or ((a.id == b.id)
 	and ((GetItemCount(a.id, true) < 2)
 	or (a.unique)))
+	or (a.uniqueType and (a.uniqueType == b.uniqueType) and (a.numEquippable < 2) and (b.numEquippable < 2))
 	or (a.ammoBagRangedAttackSpeed and b.ammoBagRangedAttackSpeed)
 	or ((a.is1hWeaponOrOffHand and b.is1hWeaponOrOffHand)
 	and ((weapons == "dagger and any")
@@ -4382,6 +4393,7 @@ function AutoGearIsGearPairEquippableTogether(a, b)
 	or ((weapons == "weapon and shield")
 	and (a.subclassID ~= Enum.ItemArmorSubclass.Shield)
 	and (b.subclassID ~= Enum.ItemArmorSubclass.Shield))) then
+		-- AutoGearPrint("AG: "..a.link.." ("..(a.guid or "missing guid")..") and "..b.link.." ("..(b.guid or "missing guid")..") are not equippable together", 3)
 		return
 	end
 	for _, firstSlot in pairs(a.validGearSlots) do
@@ -4394,6 +4406,7 @@ function AutoGearIsGearPairEquippableTogether(a, b)
 			and ((secondSlot == INVSLOT_MAINHAND)
 			or (secondSlot == INVSLOT_OFFHAND))))
 			then
+				-- AutoGearPrint("AG: "..a.link.." ("..(a.guid or "missing guid")..") and "..b.link.." ("..(b.guid or "missing guid")..") are equippable together", 3)
 				return 1
 			end
 		end
@@ -4706,7 +4719,7 @@ function AutoGearTooltipHook(tooltip, tooltipData)
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b,
 			HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b
 		)
-		-- local rollDecision = AutoGearDecideRoll(tooltipItemInfo.link)
+		-- local rollDecision = AutoGearDecideRoll(info.link)
 		-- tooltip:AddDoubleLine(
 		-- 	"AutoGear: would roll:",
 		-- 	(rollDecision == 1 and GREEN_FONT_COLOR_CODE.."NEED" or (rollDecision == 2 and RED_FONT_COLOR_CODE.."GREED" or HIGHLIGHT_FONT_COLOR_CODE.."no roll"))..FONT_COLOR_CODE_CLOSE,
