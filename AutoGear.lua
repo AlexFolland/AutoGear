@@ -75,7 +75,7 @@ local GetMouseFocus = GetMouseFocus or (GetMouseFoci and (function()
 	local frames = GetMouseFoci()
 	return frames and frames[1];
 end))
-local GetNumTalentTabs = GetNumSpecializations or GetNumTalentTabs
+local GetNumTalentTabs = GetNumTalentTabs or GetNumSpecializations
 local GetSpecialization = GetSpecialization or (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization)
 local GetSpecializationInfo = GetSpecializationInfo or (C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo)
 local InterfaceOptions_AddCategory = InterfaceOptions_AddCategory or function(frame, addOn, position)
