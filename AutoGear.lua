@@ -3702,7 +3702,7 @@ function AutoGearReadItemInfo(inventoryID, lootRollID, container, slot, questRew
 				if (not info.unusable and string.find(text, "requires level") and value - UnitLevel("player") <= 5) then
 					info.Within5levels = 1
 				end
-				info.reason = "(found red text: \""..textLeftText.."\")"
+				info.reason = "(found red text: \""..((textLeftText:len() > 25) and ((textLeftText):sub(1,20).."[...]") or textLeftText).."\")"
 				info.unusable = 1
 			end
 
