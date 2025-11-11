@@ -1,6 +1,6 @@
 ## Interface: 110107, 110200, 110205
 ## Interface-Mainline: 110205
-## Interface-Mists: 50500, 50501
+## Interface-Mists: 50500, 50501, 50502
 ## Interface-Cata: 40402
 ## Interface-Wrath: 30404, 30405
 ## Interface-TBC: 20404, 20505
