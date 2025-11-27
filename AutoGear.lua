@@ -492,6 +492,17 @@ if TOC_VERSION_CURRENT < TOC_VERSION_CATA then
 				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
 				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 2
+			},
+			["Devourer"] = {
+				weapons = "dual wield",
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1.05, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 1, SpellPenetration = E, Haste = 1.5, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 1.75,
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 0.9, MeleeProc = 1, RangedProc = E,
+				DPS = E
 			}
 		},
 		["DRUID"] = {
@@ -1037,6 +1048,17 @@ else
 				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
 				HealingProc = E, DamageProc = 1, DamageSpellProc = E, MeleeProc = 1, RangedProc = E,
 				DPS = 2
+			},
+			["Devourer"] = {
+				weapons = "dual wield",
+				Strength = E, Agility = E, Stamina = 0.05, Intellect = 1.05, Spirit = E,
+				Armor = 0.001, Dodge = E, Parry = E, Block = E, Defense = E,
+				SpellPower = 1, SpellPenetration = E, Haste = 1.5, Mp5 = E,
+				AttackPower = E, ArmorPenetration = E, Crit = 1.1, SpellCrit = 1.1, Hit = 1.75, SpellHit = 1.75,
+				Expertise = 1.85, Versatility = 0.8, Multistrike = 1, Mastery = 1.5, ExperienceGained = 100,
+				RedSockets = E, YellowSockets = E, BlueSockets = E, MetaSockets = E,
+				HealingProc = E, DamageProc = 1, DamageSpellProc = 0.9, MeleeProc = 1, RangedProc = E,
+				DPS = E
 			}
 		},
 		["DRUID"] = {
@@ -1556,7 +1578,7 @@ AutoGearOverrideSpecs = {
 	},
 	{
 		["label"] = "Demon Hunter",
-		["subLabels"] = {"None", "Havoc", "Vengeance"}
+		["subLabels"] = {"None", "Havoc", "Vengeance", "Devourer"}
 	},
 	{
 		["label"] = "Druid",
@@ -1908,10 +1930,13 @@ local function optionsSetup(optionsMenu)
 	frame[i]:SetScript("OnLeave", function() GameTooltip:Hide() end)
 end
 
-local optionsMenu = CreateFrame("Frame", "AutoGearOptionsPanel")
--- local optionsMenu = CreateFrame("Frame", "AutoGearOptionsPanel", InterfaceOptionsFramePanelContainer)
-optionsMenu.name = "AutoGear"
-InterfaceOptions_AddCategory(optionsMenu)
+local optionsMenu = CreateFrame("Frame", "AutoGearOptionsMenu")
+optionsMenu:SetWidth(1) -- must be set to at least 1 or the menu is invisible in the scroll frame, but will expand to show everything
+optionsMenu:SetHeight(1) -- must be set to at least 1 or the menu is invisible in the scroll frame, but will expand to show everything
+local optionsMenuParent = CreateFrame("ScrollFrame", "AutoGearOptionsMenuScrollFrame", nil, "UIPanelScrollFrameTemplate")
+optionsMenuParent.name = "AutoGear"
+optionsMenuParent:SetScrollChild(optionsMenu)
+InterfaceOptions_AddCategory(optionsMenuParent)
 if InterfaceAddOnsList_Update then InterfaceAddOnsList_Update() end
 
 --handle PLAYER_ENTERING_WORLD events for initialization
@@ -1926,12 +1951,13 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 			AutoRollOnBoEBlues = false,
 			AutoRollOnEpics = false,
 			RollOnNonGearLoot = true,
+			NeverAutoNeed = false,
 			AutoConfirmBinding = true,
 			AutoConfirmBindingBlues = false,
 			AutoConfirmBindingEpics = false,
 			AutoAcceptQuests = false,
-			AutoCompleteItemQuests = true,
-			AutoAcceptPartyInvitations = true,
+			AutoCompleteItemQuests = false,
+			AutoAcceptPartyInvitations = false,
 			ScoreInTooltips = true,
 			ReasonsInTooltips = false,
 			AlwaysCompareGear = GetCVarBool("alwaysCompareItems"),
@@ -2004,6 +2030,16 @@ optionsMenu:SetScript("OnEvent", function (self, event, arg1, arg2, ...)
 				["description"] = "Roll on all group loot, including loot that is not gear.  If this is enabled, AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
 				["toggleDescriptionTrue"] = "Rolling on non-gear loot is now enabled.  AutoGear will roll GREED on non-gear, non-mount loot and NEED on mounts.",
 				["toggleDescriptionFalse"] = "Rolling on non-gear loot is now disabled."
+			},
+			{
+				["option"] = "NeverAutoNeed",
+				["cliCommands"] = { "neverautoneed", "neverneed", "noneed", "onlyautogreed", "onlygreed", "greedonly", "justgreed" },
+				["cliTrue"] = { "enable", "on", "start" },
+				["cliFalse"] = { "disable", "off", "stop" },
+				["label"] = "Never auto-need; only greed",
+				["description"] = "Never automatically roll NEED.  If this is enabled, AutoGear will be prevented from automatically rolling NEED when it detects an upgrade, leaving the loot roll interactive to allow manual control of that roll.  It will still be allowed to roll GREED when an upgrade is not detected and automatic rolling is enabled for the detected rarity.",
+				["toggleDescriptionTrue"] = "Rolling only GREED automatically is now enabled.  AutoGear will be unable to roll NEED automatically.",
+				["toggleDescriptionFalse"] = "Rolling only GREED automatically is now disabled.  AutoGear will be able to roll NEED on detected upgrades automatically."
 			},
 			{
 				["option"] = "AutoConfirmBinding",
@@ -2367,6 +2403,7 @@ function AutoGearPrintHelp()
 	AutoGearPrint("AutoGear:    '/ag [gear/toggle]/[enable/on/start]/[disable/off/stop]': toggle automatic gearing", 0)
 	AutoGearPrint("AutoGear:    '/ag roll [enable/on/start]/[disable/off/stop]': toggle automatic loot rolling", 0)
 	AutoGearPrint("AutoGear:    '/ag bind [enable/on/start]/[disable/off/stop]': toggle automatic soul-binding confirmation", 0)
+	AutoGearPrint("AutoGear:    '/ag neverneed [enable/on/start]/[disable/off/stop]': toggle preventing automatically rolling NEED", 0)
 	AutoGearPrint("AutoGear:    '/ag quest [enable/on/start]/[disable/off/stop]': toggle automatic quest handling", 0)
 	AutoGearPrint("AutoGear:    '/ag party [enable/on/start]/[disable/off/stop]': toggle automatic acceptance of party invitations", 0)
 	AutoGearPrint("AutoGear:    '/ag tooltip [toggle/show/hide]': toggle showing score in item tooltips", 0)
@@ -4476,7 +4513,7 @@ function AutoGearDetectHoveredItemGUID()
 		focusParentName:match("Inv") or
 		focusParentName:match("Bag") or
 		focusParentName:match("Container")
-	 ) then
+	) then
 		local item = Item:CreateFromBagAndSlot(focusParent:GetID(), focus:GetID())
 		if (not item) or (not item.IsItemEmpty) or item:IsItemEmpty() then return end
 		return item:GetItemGUID()
@@ -4787,15 +4824,16 @@ function AutoGearMain()
 				if curAction.action == "roll" then
 					if GetTime() > curAction.t then
 						if curAction.rollType == 1 then
-							AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ")..GREEN_FONT_COLOR_CODE.."NEED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
+							AutoGearPrint("AutoGear: "..(((AutoGearDB.AutoLootRoll == true) and (AutoGearDB.NeverAutoNeed ~= true)) and "Rolling " or "If automatically rolling "..((AutoGearDB.NeverAutoNeed ~= true) and "" or (GREEN_FONT_COLOR_CODE.."NEED"..FONT_COLOR_CODE_CLOSE.." ")).."on loot was enabled, would roll ")..GREEN_FONT_COLOR_CODE.."NEED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
 						elseif curAction.rollType == 2 then
-							AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatic loot rolling was enabled, would roll ")..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
+							AutoGearPrint("AutoGear: "..((AutoGearDB.AutoLootRoll == true) and "Rolling " or "If automatically rolling on loot was enabled, would roll ")..RED_FONT_COLOR_CODE.."GREED"..FONT_COLOR_CODE_CLOSE.." on "..curAction.info.link..".", 1)
 						end
 						local rarity = curAction.info.rarity
-						if (((rarity < 3) or (rarity == 3 and not (curAction.info.boe))) and (AutoGearDB.AutoLootRoll == true)) or
+						if ((AutoGearDB.NeverAutoNeed ~= true) or (curAction.rollType ~= 1)) and
+						((((rarity < 3) or (rarity == 3 and not (curAction.info.boe))) and (AutoGearDB.AutoLootRoll == true)) or
 						((rarity == 3) and curAction.info.boe and (AutoGearDB.AutoRollOnBoEBlues == true)) or
-						((rarity == 4) and (AutoGearDB.AutoRollOnEpics == true)) then
-								RollOnLoot(curAction.rollID, curAction.rollType)
+						((rarity == 4) and (AutoGearDB.AutoRollOnEpics == true))) then
+							RollOnLoot(curAction.rollID, curAction.rollType)
 						end
 						table.remove(AutoGearActionQueue, i)
 					end
