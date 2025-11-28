@@ -40,31 +40,31 @@ jobs:
 
       # once cloned, we just run the GitHub Action for the packager project
       - name: Package and Release
-        uses: BigWigsMods/packager@ff6d62f02a715b81a56169c1fed2a6bbd470e2ce
+        uses: BigWigsMods/packager@master
 
       # the -g arg releases with all classic tags
       # uploading to CurseForge requires the X-Curse-Project-ID field in the toc file, or else no upload
       - name: Package and Release for Vanilla Classic
-        uses: BigWigsMods/packager@ff6d62f02a715b81a56169c1fed2a6bbd470e2ce
+        uses: BigWigsMods/packager@master
         with:
           args: -g classic
 
       - name: Package and Release for Burning Crusade Classic
-        uses: BigWigsMods/packager@ff6d62f02a715b81a56169c1fed2a6bbd470e2ce
+        uses: BigWigsMods/packager@master
         with:
           args: -g bcc
 
       - name: Package and Release for Wrath of the Lich King Classic
-        uses: BigWigsMods/packager@ff6d62f02a715b81a56169c1fed2a6bbd470e2ce
+        uses: BigWigsMods/packager@master
         with:
           args: -g wrath
 
       - name: Package and Release for Cataclysm Classic
-        uses: BigWigsMods/packager@ff6d62f02a715b81a56169c1fed2a6bbd470e2ce
+        uses: BigWigsMods/packager@master
         with:
           args: -g cata
 
       - name: Package and Release for Mists of Pandaria Classic
-        uses: BigWigsMods/packager@ff6d62f02a715b81a56169c1fed2a6bbd470e2ce
+        uses: BigWigsMods/packager@master
         with:
           args: -g mists
